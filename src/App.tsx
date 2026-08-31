@@ -11,6 +11,7 @@ type Section =
   | "clinics"
   | "members"
   | "pros"
+  | "approvals" 
   | "opportunity"
   | "settings";
 
@@ -73,6 +74,20 @@ type Booking = {
   outside_location_operating_hours?: boolean;
   operating_hours_warning?: string | null;
 };
+type RoleRequest = {
+  id: string;
+  club_id: string;
+  user_id: string;
+  requested_role: string;
+  status: string;
+  applicant_name: string | null;
+  applicant_email: string;
+  applicant_note: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  created_at: string;
+};
 
 type BookingsResponse = {
   date: string | null;
@@ -124,6 +139,11 @@ const navigationItems: {
     icon: "♜",
   },
   {
+  id: "approvals",
+  label: "Approvals",
+  icon: "✓",
+  },
+  {
     id: "opportunity",
     label: "Opportunity Center",
     icon: "✦",
@@ -169,10 +189,24 @@ function App() {
   const [bookings, setBookings] =
   useState<Booking[]>([]);
 
+  const [roleRequests, setRoleRequests] =
+  useState<RoleRequest[]>([]);
+
+const [roleRequestsLoading, setRoleRequestsLoading] =
+  useState(false);
+
+const [roleRequestsError, setRoleRequestsError] =
+  useState<string | null>(null);
+
 const [bookingsLoading, setBookingsLoading] =
   useState(false);
 
 const [bookingsError, setBookingsError] =
+  useState<string | null>(null);
+const [approvalActionId, setApprovalActionId] =
+  useState<string | null>(null);
+
+const [approvalActionError, setApprovalActionError] =
   useState<string | null>(null);
 
 const [calendarDate, setCalendarDate] =
@@ -422,6 +456,163 @@ useEffect(() => {
   calendarDate,
   session?.access_token,
 ]);
+useEffect(() => {
+  if (
+    section !== "approvals" ||
+    !session?.access_token
+  ) {
+    return;
+  }
+
+  let cancelled = false;
+
+  async function loadRoleRequests() {
+    try {
+      setRoleRequestsLoading(true);
+      setRoleRequestsError(null);
+
+      const { data, error } =
+        await supabase
+          .from("club_role_requests")
+          .select("*")
+          .eq("club_id", CLUB_ID)
+          .eq("status", "pending")
+          .order("created_at", {
+            ascending: true,
+          });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!cancelled) {
+        setRoleRequests(
+          (data as RoleRequest[]) || []
+        );
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setRoleRequestsError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load approval requests."
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setRoleRequestsLoading(false);
+      }
+    }
+  }
+
+  loadRoleRequests();
+
+  return () => {
+    cancelled = true;
+  };
+}, [
+  section,
+  session?.access_token,
+]);
+useEffect(() => {
+  if (
+    section !== "approvals" ||
+    !session?.access_token
+  ) {
+    return;
+  }
+
+  let cancelled = false;
+
+  async function loadRoleRequests() {
+    try {
+      setRoleRequestsLoading(true);
+      setRoleRequestsError(null);
+
+      const { data, error } =
+        await supabase
+          .from("club_role_requests")
+          .select("*")
+          .eq("club_id", CLUB_ID)
+          .eq("status", "pending")
+          .order("created_at", {
+            ascending: true,
+          });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!cancelled) {
+        setRoleRequests(
+          (data as RoleRequest[]) || []
+        );
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setRoleRequestsError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load approval requests."
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setRoleRequestsLoading(false);
+      }
+    }
+  }
+
+  loadRoleRequests();
+
+  return () => {
+    cancelled = true;
+  };
+}, [
+  section,
+  session?.access_token,
+]);
+async function handleRoleRequestDecision(
+  requestId: string,
+  decision: "approve" | "decline"
+) {
+  try {
+    setApprovalActionId(requestId);
+    setApprovalActionError(null);
+
+    const functionName =
+      decision === "approve"
+        ? "approve_club_role_request"
+        : "decline_club_role_request";
+
+    const { error } = await supabase.rpc(
+      functionName,
+      {
+        target_request_id: requestId,
+        manager_note: null,
+      }
+    );
+
+    if (error) {
+      throw error;
+    }
+
+    setRoleRequests((current) =>
+      current.filter(
+        (request) =>
+          request.id !== requestId
+      )
+    );
+  } catch (error) {
+    setApprovalActionError(
+      error instanceof Error
+        ? error.message
+        : "Unable to process request."
+    );
+  } finally {
+    setApprovalActionId(null);
+  }
+}
 
   async function handleLogin(
     event: React.FormEvent<HTMLFormElement>
@@ -699,6 +890,20 @@ useEffect(() => {
             description="Manage schedules, location assignments, compensation and availability."
           />
         )}
+        {section === "approvals" && (
+          <ApprovalsPage
+            requests={roleRequests}
+            loading={roleRequestsLoading}
+            error={
+              roleRequestsError ||
+              approvalActionError
+            }
+            actionId={approvalActionId}
+            onDecision={
+              handleRoleRequestDecision
+            }
+          />
+        )}
 
         {section === "opportunity" && (
           <PlaceholderPage
@@ -717,6 +922,7 @@ useEffect(() => {
     </div>
   );
 }
+
 
 function OverviewPage() {
   return (
@@ -1460,6 +1666,189 @@ function MembersPage({
                 </div>
               </button>
             ))}
+          </div>
+        )}
+    </section>
+  );
+}
+function ApprovalsPage({
+  requests,
+  loading,
+  error,
+  actionId,
+  onDecision,
+}: {
+  requests: RoleRequest[];
+  loading: boolean;
+  error: string | null;
+  actionId: string | null;
+  onDecision: (
+    requestId: string,
+    decision: "approve" | "decline"
+  ) => Promise<void>;
+}) {
+  return (
+    <section className="members-card">
+      <div className="card-heading">
+        <div>
+          <p className="card-kicker">
+            ACCESS CONTROL
+          </p>
+
+          <h3>
+            Pending Approvals
+          </h3>
+
+          <p className="card-description">
+            Review new account requests
+            before granting club access.
+          </p>
+        </div>
+
+        <span className="member-count">
+          {requests.length} pending
+        </span>
+      </div>
+
+      {loading && (
+        <div className="member-message">
+          Loading approval requests...
+        </div>
+      )}
+
+      {error && (
+        <div className="member-message error">
+          {error}
+        </div>
+      )}
+
+      {!loading &&
+        !error &&
+        requests.length === 0 && (
+          <div className="approval-empty">
+            <div className="approval-empty-icon">
+              ✓
+            </div>
+
+            <h3>
+              No pending requests
+            </h3>
+
+            <p>
+              New pro, member, or guest
+              requests will appear here.
+            </p>
+          </div>
+        )}
+
+      {!loading &&
+        !error &&
+        requests.length > 0 && (
+          <div className="approval-list">
+            {requests.map(
+              (request) => (
+                <div
+                  key={request.id}
+                  className="approval-card"
+                >
+                  <div className="approval-person">
+                    <div className="approval-avatar">
+                      {request.applicant_name
+                        ?.charAt(0)
+                        .toUpperCase() ||
+                        request.applicant_email
+                          .charAt(0)
+                          .toUpperCase()}
+                    </div>
+
+                    <div>
+                      <strong>
+                        {request.applicant_name ||
+                          "Unnamed applicant"}
+                      </strong>
+
+                      <span>
+                        {request.applicant_email}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="approval-details">
+                    <div>
+                      <span>
+                        Requested role
+                      </span>
+
+                      <strong>
+                        {request.requested_role}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        Requested
+                      </span>
+
+                      <strong>
+                        {new Date(
+                          request.created_at
+                        ).toLocaleDateString()}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {request.applicant_note && (
+                    <div className="approval-note">
+                      <span>
+                        Applicant note
+                      </span>
+
+                      <p>
+                        {request.applicant_note}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="approval-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      disabled={
+                        actionId === request.id
+                      }
+                      onClick={() =>
+                        onDecision(
+                          request.id,
+                          "decline"
+                        )
+                      }
+                    >
+                      {actionId === request.id
+                        ? "Processing..."
+                        : "Decline"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="primary-button"
+                      disabled={
+                        actionId === request.id
+                      }
+                      onClick={() =>
+                        onDecision(
+                          request.id,
+                          "approve"
+                        )
+                      }
+                    >
+                      {actionId === request.id
+                        ? "Processing..."
+                        : "Accept"}
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
           </div>
         )}
     </section>

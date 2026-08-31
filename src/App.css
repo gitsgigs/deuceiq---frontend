@@ -1422,3 +1422,39 @@ button {
   margin: 0;
   font-size: 11px;
 }
+.login-help-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -4px 0 14px;
+}
+
+.login-link,
+.login-back-button {
+  border: 0;
+  background: transparent;
+  color: #c47b9d;
+  font-size: 11px;
+  padding: 0;
+}
+
+.login-link:hover,
+.login-back-button:hover {
+  color: #e0a4bd;
+}
+
+.login-help-message {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background:
+    rgba(160, 72, 112, 0.08);
+  color: #b8a9c1;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.login-back-button {
+  width: 100%;
+  margin-top: 12px;
+}

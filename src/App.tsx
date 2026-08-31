@@ -167,12 +167,35 @@ function App() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  const [passwordRecoveryMode, setPasswordRecoveryMode] =
+  useState(false);
+
+  const [newPassword, setNewPassword] =
+    useState("");
+
+  const [newPasswordConfirm, setNewPasswordConfirm] =
+    useState("");
+
+  const [passwordUpdateMessage, setPasswordUpdateMessage] =
+    useState<string | null>(null);
 
   const [loginLoading, setLoginLoading] =
     useState(false);
 
   const [loginError, setLoginError] =
     useState<string | null>(null);
+  const [resetMode, setResetMode] =
+    useState(false);
+
+  const [resetLoading, setResetLoading] =
+    useState(false);
+
+  const [resetMessage, setResetMessage] =
+    useState<string | null>(null);
+
+  const [forgotEmailMessage, setForgotEmailMessage] =
+    useState(false);
 
   const [members, setMembers] =
     useState<Member[]>([]);
@@ -262,9 +285,13 @@ const [calendarDate, setCalendarDate] =
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      (event, newSession) => {
         setSession(newSession);
         setAuthLoading(false);
+
+        if (event === "PASSWORD_RECOVERY") {
+          setPasswordRecoveryMode(true);
+        }
       }
     );
 
@@ -613,6 +640,94 @@ async function handleRoleRequestDecision(
     setApprovalActionId(null);
   }
 }
+async function handlePasswordReset(
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  setResetLoading(true);
+  setResetMessage(null);
+
+  try {
+    const { error } =
+      await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        {
+          redirectTo:
+            "http://localhost:5173/reset-password",
+        }
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    setResetMessage(
+      "Password reset email sent. Check your inbox."
+    );
+  } catch (error) {
+    setResetMessage(
+      error instanceof Error
+        ? error.message
+        : "Unable to send reset email."
+    );
+  } finally {
+    setResetLoading(false);
+  }
+}
+async function handleUpdatePassword(
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  setPasswordUpdateMessage(null);
+
+  if (newPassword.length < 8) {
+    setPasswordUpdateMessage(
+      "Password must be at least 8 characters."
+    );
+    return;
+  }
+
+  if (newPassword !== newPasswordConfirm) {
+    setPasswordUpdateMessage(
+      "Passwords do not match."
+    );
+    return;
+  }
+
+  const { error } =
+    await supabase.auth.updateUser({
+      password: newPassword,
+    });
+
+  if (error) {
+    setPasswordUpdateMessage(
+      error.message
+    );
+    return;
+  }
+
+  setPasswordUpdateMessage(
+    "Password updated successfully! Returning to login, Player"
+  );
+
+  setNewPassword("");
+  setNewPasswordConfirm("");
+
+  await supabase.auth.signOut();
+
+  window.setTimeout(() => {
+    setPasswordRecoveryMode(false);
+    setPasswordUpdateMessage(null);
+
+    window.history.replaceState(
+      {},
+      "",
+      "/"
+    );
+  }, 1500);
+}
 
   async function handleLogin(
     event: React.FormEvent<HTMLFormElement>
@@ -668,73 +783,210 @@ async function handleRoleRequestDecision(
       </div>
     );
   }
+  if (passwordRecoveryMode) {
+  return (
+    <div className="login-shell">
+      <form
+        className="login-card"
+        onSubmit={handleUpdatePassword}
+      >
+        <div className="login-logo">
+          DIQ
+        </div>
+
+        <div className="login-heading">
+          <h1>Set new password</h1>
+
+          <p>
+            Choose a new password for your
+            DeuceIQ account.
+          </p>
+        </div>
+
+        <label className="form-field">
+          <span>New password</span>
+
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(event) =>
+              setNewPassword(event.target.value)
+            }
+            autoComplete="new-password"
+            required
+          />
+        </label>
+
+        <label className="form-field">
+          <span>Confirm new password</span>
+
+          <input
+            type="password"
+            value={newPasswordConfirm}
+            onChange={(event) =>
+              setNewPasswordConfirm(
+                event.target.value
+              )
+            }
+            autoComplete="new-password"
+            required
+          />
+        </label>
+
+        {passwordUpdateMessage && (
+          <div className="login-help-message">
+            {passwordUpdateMessage}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="primary-button login-button"
+        >
+          Update password
+        </button>
+      </form>
+    </div>
+  );
+}
 
   if (!session) {
     return (
       <div className="login-shell">
-        <form
-          className="login-card"
-          onSubmit={handleLogin}
-        >
-          <div className="login-logo">
-            DIQ
-          </div>
-
-          <div className="login-heading">
-            <h1>DeuceIQ</h1>
-
-            <p>
-              Tennis intelligence for club
-              management.
-            </p>
-          </div>
-
-          <label className="form-field">
-            <span>Email</span>
-
-            <input
-              type="email"
-              value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
-              placeholder="staff@example.com"
-              autoComplete="email"
-              required
-            />
-          </label>
-
-          <label className="form-field">
-            <span>Password</span>
-
-            <input
-              type="password"
-              value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
-              placeholder="Password"
-              autoComplete="current-password"
-              required
-            />
-          </label>
-
-          {loginError && (
-            <div className="login-error">
-              {loginError}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="primary-button login-button"
-            disabled={loginLoading}
+                  <form
+            className="login-card"
+            onSubmit={
+              resetMode
+                ? handlePasswordReset
+                : handleLogin
+            }
           >
-            {loginLoading
-              ? "Signing in..."
-              : "Sign in"}
-          </button>
-        </form>
+            <div className="login-logo">
+              DIQ
+            </div>
+
+            <div className="login-heading">
+              <h1>DeuceIQ</h1>
+
+              <p>
+                {resetMode
+                  ? "Reset your password."
+                  : "Tennis intelligence for club management."}
+              </p>
+            </div>
+
+            <label className="form-field">
+              <span>Email</span>
+
+              <input
+                type="email"
+                value={email}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
+                placeholder="staff@example.com"
+                autoComplete="email"
+                required
+              />
+            </label>
+
+            {!resetMode && (
+              <label className="form-field">
+                <span>Password</span>
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(event.target.value)
+                  }
+                  placeholder="Password"
+                  autoComplete="current-password"
+                  required
+                />
+              </label>
+            )}
+
+            {!resetMode && (
+              <div className="login-help-row">
+                <button
+                  type="button"
+                  className="login-link"
+                  onClick={() => {
+                    setResetMode(true);
+                    setLoginError(null);
+                    setResetMessage(null);
+                  }}
+                >
+                  Forgot password?
+                </button>
+
+                <button
+                  type="button"
+                  className="login-link"
+                  onClick={() =>
+                    setForgotEmailMessage(
+                      (current) => !current
+                    )
+                  }
+                >
+                  Forgot email?
+                </button>
+              </div>
+            )}
+
+            {forgotEmailMessage &&
+              !resetMode && (
+                <div className="login-help-message">
+                  Contact your club manager or
+                  DeuceIQ support to confirm the
+                  email associated with your account.
+                </div>
+              )}
+
+            {loginError && !resetMode && (
+              <div className="login-error">
+                {loginError}
+              </div>
+            )}
+
+            {resetMessage && (
+              <div className="login-help-message">
+                {resetMessage}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="primary-button login-button"
+              disabled={
+                resetMode
+                  ? resetLoading
+                  : loginLoading
+              }
+            >
+              {resetMode
+                ? resetLoading
+                  ? "Sending..."
+                  : "Send reset email"
+                : loginLoading
+                  ? "Signing in..."
+                  : "Sign in"}
+            </button>
+
+            {resetMode && (
+              <button
+                type="button"
+                className="login-back-button"
+                onClick={() => {
+                  setResetMode(false);
+                  setResetMessage(null);
+                }}
+              >
+                Back to sign in
+              </button>
+            )}
+          </form>
       </div>
     );
   }

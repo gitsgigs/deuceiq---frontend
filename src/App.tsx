@@ -922,15 +922,40 @@ function CalendarPage({
   loading: boolean;
   error: string | null;
   calendarDate: string;
-  setCalendarDate: (
-    date: string
-  ) => void;
+  setCalendarDate: (date: string) => void;
 }) {
-  function changeDate(days: number) {
-    const date =
-      new Date(
-        `${calendarDate}T12:00:00`
+  const courts = [
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5",
+    "H6",
+    "H7",
+    "H8",
+    "H9",
+    "H10",
+    "H11",
+  ];
+
+  const timeSlots: string[] = [];
+
+  for (let hour = 6; hour <= 18; hour++) {
+    timeSlots.push(
+      String(hour).padStart(2, "0") + ":00"
+    );
+
+    if (hour < 18) {
+      timeSlots.push(
+        String(hour).padStart(2, "0") + ":30"
       );
+    }
+  }
+
+  function changeDate(days: number) {
+    const date = new Date(
+      calendarDate + "T12:00:00"
+    );
 
     date.setDate(
       date.getDate() + days
@@ -950,13 +975,101 @@ function CalendarPage({
       ).padStart(2, "0");
 
     setCalendarDate(
-      `${year}-${month}-${day}`
+      year + "-" + month + "-" + day
     );
+  }
+
+  function formatTime(
+    isoString: string
+  ) {
+    return new Intl.DateTimeFormat(
+      "en-US",
+      {
+        timeZone:
+          "America/New_York",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }
+    ).format(
+      new Date(isoString)
+    );
+  }
+
+  function getBookingForCell(
+    courtName: string,
+    slot: string
+  ) {
+    return bookings.find(
+      (booking) => {
+        if (
+          booking.court?.name !==
+          courtName
+        ) {
+          return false;
+        }
+
+        const start =
+          formatTime(
+            booking.starts_at
+          );
+
+        const end =
+          formatTime(
+            booking.ends_at
+          );
+
+        return (
+          slot >= start &&
+          slot < end
+        );
+      }
+    );
+  }
+
+  function getBookingClass(
+    booking: Booking
+  ) {
+    const category =
+      booking.lesson_type
+        ?.category;
+
+    if (category === "clinic") {
+      return "calendar-booking clinic-booking";
+    }
+
+    if (
+      category ===
+      "semi_private"
+    ) {
+      return "calendar-booking semi-booking";
+    }
+
+    if (category === "rental") {
+      return "calendar-booking rental-booking";
+    }
+
+    if (booking.is_recurring) {
+      return "calendar-booking recurring-booking";
+    }
+
+    return "calendar-booking private-booking";
+  }
+
+  function getProName(
+    booking: Booking
+  ) {
+    return [
+      booking.pro?.first_name,
+      booking.pro?.last_name,
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
 
   return (
     <section className="schedule-card full-calendar">
-      <div className="card-heading">
+      <div className="card-heading calendar-header">
         <div>
           <p className="card-kicker">
             COURT SHEET
@@ -1012,108 +1125,174 @@ function CalendarPage({
         </div>
       )}
 
-      {!loading &&
-        !error &&
-        bookings.length === 0 && (
-          <div className="calendar-empty">
-            <div className="calendar-empty-icon">
-              🎾
+      {!loading && !error && (
+        <div className="court-sheet-scroll">
+          <div
+            className="court-sheet-grid"
+            style={{
+              gridTemplateColumns:
+                "72px repeat(" +
+                courts.length +
+                ", minmax(120px, 1fr))",
+            }}
+          >
+            <div className="court-sheet-corner">
+              Time
             </div>
 
-            <h3>
-              No bookings for this day
-            </h3>
+            {courts.map((court) => (
+              <div
+                key={court}
+                className="court-header-cell"
+              >
+                {court}
+              </div>
+            ))}
 
-            <p>
-              The court sheet is clear.
-            </p>
-          </div>
-        )}
+            {timeSlots.map((slot) => (
+              <div
+                key={slot}
+                className="court-sheet-row"
+                style={{
+                  display: "contents",
+                }}
+              >
+                <div className="time-cell">
+                  {new Date(
+                    "2026-01-01T" +
+                      slot +
+                      ":00"
+                  ).toLocaleTimeString(
+                    "en-US",
+                    {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    }
+                  )}
+                </div>
 
-      {!loading &&
-        !error &&
-        bookings.length > 0 && (
-          <div className="live-booking-list">
-            {bookings.map(
-              (booking) => {
-                const proName =
-              [
-                booking.pro?.first_name,
-                booking.pro?.last_name,
-              ]
-                .filter(Boolean)
-                .join(" ") || "No pro";
+                {courts.map(
+                  (court) => {
+                    const booking =
+                      getBookingForCell(
+                        court,
+                        slot
+                      );
 
-                const courtName =
-                  booking.court?.name ||
-                  (booking.court?.court_number
-                    ? `Court ${booking.court.court_number}`
-                    : "Court");
+                    if (!booking) {
+                      return (
+                        <div
+                          key={
+                            court +
+                            "-" +
+                            slot
+                          }
+                          className="court-cell open-cell"
+                        >
+                          <span>
+                            Open
+                          </span>
+                        </div>
+                      );
+                    }
 
-                return (
-                  <div
-                    key={booking.id}
-                    className="live-booking-row"
-                  >
-                    <div className="booking-time">
-                        <strong>
-                          {new Date(
-                            booking.starts_at
-                          ).toLocaleTimeString("en-US", {
-                            timeZone: "America/New_York",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
-                        </strong>
+                    const start =
+                      formatTime(
+                        booking.starts_at
+                      );
 
-                        <span>
-                          {new Date(
-                            booking.ends_at
-                          ).toLocaleTimeString("en-US", {
-                            timeZone: "America/New_York",
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                    if (
+                      start !== slot
+                    ) {
+                      return (
+                        <div
+                          key={
+                            court +
+                            "-" +
+                            slot
+                          }
+                          className="court-cell booking-continuation"
+                        />
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={
+                          court +
+                          "-" +
+                          slot
+                        }
+                        className="court-cell"
+                      >
+                        <div
+                          className={
+                            getBookingClass(
+                              booking
+                            )
+                          }
+                        >
+                          <strong>
+                            {booking
+                              .lesson_type
+                              ?.name ||
+                              "Booking"}
+                          </strong>
+
+                          <span>
+                            {getProName(
+                              booking
+                            ) ||
+                              "No pro"}
+                          </span>
+
+                          <small>
+                            {new Date(
+                              booking.starts_at
+                            ).toLocaleTimeString(
+                              "en-US",
+                              {
+                                timeZone:
+                                  "America/New_York",
+                                hour:
+                                  "numeric",
+                                minute:
+                                  "2-digit",
+                              }
+                            )}
+
+                            {" - "}
+
+                            {new Date(
+                              booking.ends_at
+                            ).toLocaleTimeString(
+                              "en-US",
+                              {
+                                timeZone:
+                                  "America/New_York",
+                                hour:
+                                  "numeric",
+                                minute:
+                                  "2-digit",
+                              }
+                            )}
+                          </small>
+
+                          {booking.is_recurring && (
+                            <em>
+                              Recurring
+                            </em>
+                          )}
+                        </div>
                       </div>
-
-                    <div className="booking-court">
-                      {courtName}
-                    </div>
-
-                    <div className="booking-details">
-                      <strong>
-                        {booking
-                          .lesson_type
-                          ?.name ||
-                          "Booking"}
-                      </strong>
-
-                      <span>
-                        {proName}
-                      </span>
-                    </div>
-
-                    <div className="booking-player-count">
-                      {booking.player_count ??
-                        0}{" "}
-                      player
-                      {booking.player_count ===
-                      1
-                        ? ""
-                        : "s"}
-                    </div>
-
-                    <div className="booking-status">
-                      {booking.status ||
-                        "scheduled"}
-                    </div>
-                  </div>
-                );
-              }
-            )}
+                    );
+                  }
+                )}
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+      )}
     </section>
   );
 }

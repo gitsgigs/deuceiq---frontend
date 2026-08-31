@@ -49,9 +49,10 @@ button {
 }
 
 .sidebar {
-  width: 248px;
+  width: 210px;
   min-height: 100vh;
-  padding: 18px 4px 18px 0px;
+  padding: 14px 12px 14px 0px;
+  margin-left: -55px;
   display: flex;
   flex-direction: column;
   background:
@@ -68,8 +69,8 @@ button {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 4px 8px 28px 6px;
+  gap: 10px;
+  padding: 4px 6px 24px 2px;
 }
 
 .brand-logo,
@@ -107,7 +108,7 @@ button {
 }
 
 .sidebar-label {
-  padding: 0 8px 10px 6px;
+  padding: 0 6px 10px 2px;
   color: #756980;
   font-size: 10px;
   font-weight: 800;
@@ -126,7 +127,7 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 10px 11px 8px;
+  padding: 10px 8px 10px 4px;
   border-radius: 10px;
   background: transparent;
   color: #b9afc3;
@@ -1061,4 +1062,241 @@ button {
   font-size: 9px;
   text-align: center;
   text-transform: capitalize;
+}
+.calendar-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.court-sheet-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 72vh;
+}
+
+.court-sheet-grid {
+  display: grid;
+  min-width: 1500px;
+}
+
+.court-sheet-corner,
+.court-header-cell,
+.time-cell,
+.court-cell {
+  border-right:
+    1px solid rgba(255, 255, 255, 0.06);
+
+  border-bottom:
+    1px solid rgba(255, 255, 255, 0.06);
+}
+
+.court-sheet-corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 4;
+
+  display: grid;
+  place-items: center;
+
+  min-height: 42px;
+
+  background: #1d1525;
+
+  color: #776a82;
+
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.court-header-cell {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+
+  min-height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  background: #211728;
+
+  color: #d4c8d9;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.time-cell {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+
+  min-height: 66px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+
+  padding: 9px 9px 0 4px;
+
+  background: #19121f;
+
+  color: #766a7f;
+
+  font-size: 10px;
+}
+
+.court-cell {
+  min-height: 66px;
+  padding: 4px;
+
+  background:
+    rgba(255, 255, 255, 0.008);
+}
+
+.open-cell {
+  display: grid;
+  place-items: center;
+}
+
+.open-cell span {
+  opacity: 0;
+  color: #554b5d;
+  font-size: 9px;
+  transition:
+    opacity 0.15s ease;
+}
+
+.open-cell:hover {
+  background:
+    rgba(255, 255, 255, 0.025);
+}
+
+.open-cell:hover span {
+  opacity: 1;
+}
+
+.calendar-booking {
+  width: 100%;
+  min-height: 56px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+
+  padding: 7px 8px;
+
+  border-radius: 7px;
+
+  overflow: hidden;
+}
+
+.calendar-booking strong {
+  overflow: hidden;
+
+  font-size: 10px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-booking span {
+  overflow: hidden;
+
+  font-size: 9px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-booking small {
+  font-size: 8px;
+  opacity: 0.7;
+}
+
+.calendar-booking em {
+  margin-top: 2px;
+
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 800;
+
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.private-booking {
+  border:
+    1px solid rgba(191, 75, 119, 0.35);
+
+  background:
+    rgba(166, 56, 101, 0.18);
+
+  color: #e2a2bb;
+}
+
+.semi-booking {
+  border:
+    1px solid rgba(200, 102, 132, 0.35);
+
+  background:
+    rgba(173, 86, 115, 0.15);
+
+  color: #e2acbd;
+}
+
+.clinic-booking {
+  border:
+    1px solid rgba(118, 78, 161, 0.38);
+
+  background:
+    rgba(96, 62, 139, 0.22);
+
+  color: #c6addb;
+}
+
+.rental-booking {
+  border:
+    1px solid rgba(80, 139, 148, 0.35);
+
+  background:
+    rgba(62, 113, 123, 0.18);
+
+  color: #9cc9ce;
+}
+
+.recurring-booking {
+  border:
+    1px solid rgba(163, 105, 188, 0.38);
+
+  background:
+    rgba(128, 77, 153, 0.2);
+
+  color: #d0addf;
+}
+
+.booking-continuation {
+  background:
+    rgba(162, 65, 111, 0.06);
+}
+
+.calendar-controls input {
+  padding: 9px 12px;
+
+  border:
+    1px solid rgba(255, 255, 255, 0.1);
+
+  border-radius: 9px;
+
+  outline: none;
+
+  background: #1d1525;
+
+  color: #d9cfe0;
 }

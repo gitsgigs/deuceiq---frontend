@@ -232,8 +232,11 @@ const [approvalActionId, setApprovalActionId] =
 const [approvalActionError, setApprovalActionError] =
   useState<string | null>(null);
 
-  const [inviteMode, setInviteMode] =
-  useState(false);
+const [inviteMode, setInviteMode] =
+useState(false);
+
+const [inviteModeType, setInviteModeType] =
+useState<"new" | "existing" | null>(null);
 
 const [inviteToken, setInviteToken] =
   useState<string | null>(null);
@@ -287,10 +290,21 @@ const [calendarDate, setCalendarDate] =
   if (url.pathname === "/invite") {
     setInviteMode(true);
 
-    const token = url.searchParams.get("token");
+    const token =
+      url.searchParams.get("token");
+
+    const mode =
+      url.searchParams.get("mode");
 
     if (token) {
       setInviteToken(token);
+    }
+
+    if (
+      mode === "new" ||
+      mode === "existing"
+    ) {
+      setInviteModeType(mode);
     }
   }
   }, []);
@@ -311,7 +325,7 @@ const [calendarDate, setCalendarDate] =
 
     loadSession();
 
-    const {
+        const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
@@ -319,6 +333,26 @@ const [calendarDate, setCalendarDate] =
         setAuthLoading(false);
 
         if (event === "PASSWORD_RECOVERY") {
+          const currentUrl = new URL(
+            window.location.href
+          );
+
+          if (currentUrl.pathname === "/invite") {
+            setInviteMode(true);
+            setPasswordRecoveryMode(false);
+
+            const token =
+              currentUrl.searchParams.get(
+                "token"
+              );
+
+            if (token) {
+              setInviteToken(token);
+            }
+
+            return;
+          }
+
           setPasswordRecoveryMode(true);
         }
       }
@@ -433,6 +467,7 @@ const [calendarDate, setCalendarDate] =
   ) {
     return;
   }
+
 
   const controller =
     new AbortController();
@@ -789,6 +824,26 @@ async function handleUpdatePassword(
       setLoginLoading(false);
     }
   }
+ async function handleInviteLogin(
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  setInviteMessage(null);
+
+  const { error } =
+    await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+  if (error) {
+    setInviteMessage(error.message);
+    return;
+  }
+
+  await handleAcceptInvitation();
+}
 async function handleInviteSetPassword(
   event: React.FormEvent<HTMLFormElement>
 ) {
@@ -922,6 +977,104 @@ async function handleAcceptInvitation() {
   }
 
   if (inviteMode) {
+  if (inviteModeType === "existing") {
+    return (
+      <div className="login-shell">
+        <form
+          className="login-card"
+          onSubmit={handleInviteLogin}
+        >
+          <div className="login-logo">
+            DIQ
+          </div>
+
+          <div className="login-heading">
+            <h1>Join DeuceIQ</h1>
+
+            <p>
+              Sign in to accept your club
+              invitation.
+            </p>
+          </div>
+
+          <label className="form-field">
+            <span>Email</span>
+
+            <input
+              type="email"
+              value={email}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
+              autoComplete="email"
+              required
+            />
+          </label>
+
+          <label className="form-field">
+            <span>Password</span>
+
+            <input
+              type="password"
+              value={password}
+              onChange={(event) =>
+                setPassword(event.target.value)
+              }
+              autoComplete="current-password"
+              required
+            />
+          </label>
+
+          {inviteMessage && (
+            <div className="login-help-message">
+              {inviteMessage}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="primary-button login-button"
+          >
+            Sign in and accept invitation
+          </button>
+          <button
+  type="button"
+  className="login-back-button"
+  onClick={async () => {
+    setInviteMessage(null);
+
+    const { error } =
+      await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        {
+          redirectTo:
+            "https://app.deuceiq.com/invite"
+            + "?token="
+            + encodeURIComponent(
+                inviteToken ?? ""
+              )
+            + "&mode=existing",
+        }
+      );
+
+    if (error) {
+      setInviteMessage(error.message);
+      return;
+    }
+
+    setInviteMessage(
+      "Password setup email sent. Open it to continue your invitation."
+    );
+  }}
+>
+  Set or reset password
+</button>
+        </form>
+      </div>
+    );
+  }
+  
+
   return (
     <div className="login-shell">
       <form

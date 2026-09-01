@@ -232,6 +232,21 @@ const [approvalActionId, setApprovalActionId] =
 const [approvalActionError, setApprovalActionError] =
   useState<string | null>(null);
 
+  const [inviteMode, setInviteMode] =
+  useState(false);
+
+const [inviteToken, setInviteToken] =
+  useState<string | null>(null);
+
+const [invitePassword, setInvitePassword] =
+  useState("");
+
+const [invitePasswordConfirm, setInvitePasswordConfirm] =
+  useState("");
+
+const [inviteMessage, setInviteMessage] =
+  useState<string | null>(null);
+
 const [calendarDate, setCalendarDate] =
   useState(() => {
     const formatter = new Intl.DateTimeFormat(
@@ -265,6 +280,20 @@ const [calendarDate, setCalendarDate] =
 
     return `${year}-${month}-${day}`;
   });
+
+  useEffect(() => {
+  const url = new URL(window.location.href);
+
+  if (url.pathname === "/invite") {
+    setInviteMode(true);
+
+    const token = url.searchParams.get("token");
+
+    if (token) {
+      setInviteToken(token);
+    }
+  }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -396,7 +425,8 @@ const [calendarDate, setCalendarDate] =
     memberSearchUrl,
     session?.access_token,
   ]);
-useEffect(() => {
+
+  useEffect(() => {
   if (
     section !== "calendar" ||
     !session?.access_token
@@ -759,6 +789,113 @@ async function handleUpdatePassword(
       setLoginLoading(false);
     }
   }
+async function handleInviteSetPassword(
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  setInviteMessage(null);
+
+  if (!inviteToken) {
+    setInviteMessage(
+      "Invitation token is missing."
+    );
+    return;
+  }
+
+  if (invitePassword.length < 8) {
+    setInviteMessage(
+      "Password must be at least 8 characters."
+    );
+    return;
+  }
+
+  if (
+    invitePassword !==
+    invitePasswordConfirm
+  ) {
+    setInviteMessage(
+      "Passwords do not match."
+    );
+    return;
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    setInviteMessage(
+      "Your invitation session is not active. Please reopen the invitation email."
+    );
+    return;
+  }
+
+  const { error } =
+    await supabase.auth.updateUser({
+      password: invitePassword,
+    });
+
+  if (error) {
+    setInviteMessage(error.message);
+    return;
+  }
+
+  await handleAcceptInvitation();
+}
+async function handleAcceptInvitation() {
+  if (!inviteToken) {
+    setInviteMessage(
+      "Invitation token is missing."
+    );
+    return;
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    setInviteMessage(
+      "Please sign in or create your account first."
+    );
+    return;
+  }
+
+  const { data, error } =
+    await supabase.rpc(
+      "accept_club_invitation",
+      {
+        invitation_token: inviteToken,
+      }
+    );
+
+  if (error) {
+    setInviteMessage(error.message);
+    return;
+  }
+
+  if (data?.status === "expired") {
+    setInviteMessage(
+      "This invitation has expired."
+    );
+    return;
+  }
+
+  setInviteMessage(
+    "Invitation accepted. Welcome to DeuceIQ."
+  );
+  window.setTimeout(() => {
+  setInviteMode(false);
+  setInviteToken(null);
+
+  window.history.replaceState(
+    {},
+    "",
+    "/"
+  );
+}, 1200);
+}
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -783,6 +920,76 @@ async function handleUpdatePassword(
       </div>
     );
   }
+
+  if (inviteMode) {
+  return (
+    <div className="login-shell">
+      <form
+        className="login-card"
+        onSubmit={handleInviteSetPassword}
+      >
+        <div className="login-logo">
+          DIQ
+        </div>
+
+        <div className="login-heading">
+          <h1>Join DeuceIQ</h1>
+
+          <p>
+            Set a password to finish joining
+            your club.
+          </p>
+        </div>
+
+        <label className="form-field">
+          <span>Create password</span>
+
+          <input
+            type="password"
+            value={invitePassword}
+            onChange={(event) =>
+              setInvitePassword(
+                event.target.value
+              )
+            }
+            autoComplete="new-password"
+            required
+          />
+        </label>
+
+        <label className="form-field">
+          <span>Confirm password</span>
+
+          <input
+            type="password"
+            value={invitePasswordConfirm}
+            onChange={(event) =>
+              setInvitePasswordConfirm(
+                event.target.value
+              )
+            }
+            autoComplete="new-password"
+            required
+          />
+        </label>
+
+        {inviteMessage && (
+          <div className="login-help-message">
+            {inviteMessage}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          className="primary-button login-button"
+        >
+          Accept invitation
+        </button>
+      </form>
+    </div>
+  );
+}
+
   if (passwordRecoveryMode) {
   return (
     <div className="login-shell">

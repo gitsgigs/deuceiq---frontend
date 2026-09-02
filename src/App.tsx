@@ -719,7 +719,7 @@ async function handlePasswordReset(
         email.trim(),
         {
           redirectTo:
-            "http://localhost:5173/reset-password",
+            "https://app.deuceiq.com/reset-password",
         }
       );
 

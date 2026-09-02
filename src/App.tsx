@@ -95,7 +95,7 @@ type BookingsResponse = {
   count: number;
   bookings: Booking[];
 };
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://api.deuceiq.com";
 
 const CLUB_ID =
   "0c7bb910-7918-4011-9993-f2836967ba5f";

@@ -4,11 +4,16 @@ import type { Session } from "@supabase/supabase-js";
 import "./App.css";
 import { supabase } from "./lib/supabase";
 
-type ClubUser = {
-  club_id: string;
-  user_id: string;
-  role: string;
-  active: boolean;
+type ClubUser = { club_id: string; user_id: string; role: string; active: boolean };
+type Club = { id: string; name: string };
+type Location = { id: string; club_id: string; name: string };
+type Court = {
+  id: string;
+  location_id: string;
+  name: string;
+  surface?: string | null;
+  court_number?: number | null;
+  active?: boolean;
 };
 
 type Section =
@@ -18,7 +23,7 @@ type Section =
   | "clinics"
   | "members"
   | "pros"
-  | "approvals" 
+  | "approvals"
   | "opportunity"
   | "settings";
 
@@ -32,25 +37,21 @@ type Member = {
   skill_level: string | null;
   active: boolean;
 };
+
 type Booking = {
   id: string;
   club_id: string;
   location_id: string;
   booking_series_id?: string | null;
   clinic_registration_capacity?: number | null;
-
   starts_at: string;
   ends_at: string;
-
   status?: string;
   source?: string;
-
   player_count?: number | null;
   revenue_total?: number | null;
   pro_cost_total?: number | null;
-
   notes?: string | null;
-
   court?: {
     id: string;
     name: string;
@@ -58,29 +59,21 @@ type Booking = {
     location_id?: string;
     court_number?: number;
   } | null;
-
-  pro?: {
-    id: string;
-    first_name?: string;
-    last_name?: string;
-  } | null;
-
+  pro?: { id: string; first_name?: string; last_name?: string } | null;
   lesson_type?: {
     id: string;
     name?: string;
     category?: string;
     default_duration_minutes?: number;
   } | null;
-
   is_recurring?: boolean;
   booking_series_name?: string | null;
-
   outside_normal_pro_schedule?: boolean;
   schedule_warning?: string | null;
-
   outside_location_operating_hours?: boolean;
   operating_hours_warning?: string | null;
 };
+
 type RoleRequest = {
   id: string;
   club_id: string;
@@ -102,13 +95,29 @@ type BookingsResponse = {
   count: number;
   bookings: Booking[];
 };
-const API_BASE = "https://api.deuceiq.com";
 
-const CLUB_ID =
-  "0c7bb910-7918-4011-9993-f2836967ba5f";
+type MemberClinic = {
+  booking_id: string;
+  name: string;
+  starts_at: string;
+  ends_at: string;
+  location_id: string | null;
+  location_name: string | null;
+  pro_id: string | null;
+  pro_name: string | null;
+  capacity: number;
+  enrolled_count: number;
+  spots_remaining: number;
+  waitlist_count: number;
+  is_full: boolean;
+  registration_status: "open" | "waitlist";
+};
 
-const LOCATION_ID =
-  "2fb95b8c-73a7-464b-b825-1b9906dba718";  
+type MemberClinicsResponse = { count: number; clinics: MemberClinic[] };
+
+const API_BASE = import.meta.env.VITE_API_BASE || "https://api.deuceiq.com";
+const DEFAULT_SIGNUP_CLUB_ID =
+  import.meta.env.VITE_DEFAULT_SIGNUP_CLUB_ID || "";
 
 const navigationItems: {
   id: Section;
@@ -116,298 +125,142 @@ const navigationItems: {
   icon: string;
   roles: string[];
 }[] = [
-  {
-    id: "overview",
-    label: "Overview",
-    icon: "⌂",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-      "front_desk",
-      "pro",
-      "member",
-    ],
-  },
-  {
-    id: "calendar",
-    label: "Calendar",
-    icon: "▦",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-      "front_desk",
-      "pro",
-    ],
-  },
-  {
-    id: "bookings",
-    label: "Bookings",
-    icon: "◫",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-      "front_desk",
-    ],
-  },
-  {
-    id: "clinics",
-    label: "Clinics",
-    icon: "◎",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-      "front_desk",
-      "member",
-    ],
-  },
-  {
-    id: "members",
-    label: "Members",
-    icon: "♙",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-      "front_desk",
-    ],
-  },
-  {
-    id: "pros",
-    label: "Pros",
-    icon: "♜",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-      "front_desk",
-      "pro",
-      "member",
-    ],
-  },
-  {
-    id: "approvals",
-    label: "Approvals",
-    icon: "✓",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-    ],
-  },
-  {
-    id: "opportunity",
-    label: "Opportunity Center",
-    icon: "✦",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-    ],
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    icon: "⚙",
-    roles: [
-      "owner",
-      "director",
-      "manager",
-    ],
-  },
+  { id: "overview", label: "Overview", icon: "⌂", roles: ["owner", "director", "manager", "front_desk", "pro", "member"] },
+  { id: "calendar", label: "Calendar", icon: "▦", roles: ["owner", "director", "manager", "front_desk", "pro"] },
+  { id: "bookings", label: "Bookings", icon: "◫", roles: ["owner", "director", "manager", "front_desk", "member"] },
+  { id: "clinics", label: "Clinics", icon: "◎", roles: ["owner", "director", "manager", "front_desk", "member"] },
+  { id: "members", label: "Members", icon: "♙", roles: ["owner", "director", "manager", "front_desk"] },
+  { id: "pros", label: "Pros", icon: "♜", roles: ["owner", "director", "manager", "front_desk", "pro", "member"] },
+  { id: "approvals", label: "Approvals", icon: "✓", roles: ["owner", "director", "manager"] },
+  { id: "opportunity", label: "Opportunity Center", icon: "✦", roles: ["owner", "director", "manager"] },
+  { id: "settings", label: "Settings", icon: "⚙", roles: ["owner", "director", "manager"] },
 ];
 
+function getTodayInNewYork() {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = formatter.formatToParts(new Date());
+  const year = parts.find((part) => part.type === "year")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  return `${year}-${month}-${day}`;
+}
+
 function App() {
-  
-const [clubRole, setClubRole] =
-  useState<string | null>(null);
+  const [section, setSection] = useState<Section>("overview");
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-const [clubRoleLoading, setClubRoleLoading] =
-  useState(false);
+  const [clubMemberships, setClubMemberships] = useState<ClubUser[]>([]);
+  const [currentClubId, setCurrentClubId] = useState<string | null>(null);
+  const [clubName, setClubName] = useState("DeuceIQ Club");
+  const [clubRoleLoading, setClubRoleLoading] = useState(false);
+  const [clubRoleError, setClubRoleError] = useState<string | null>(null);
 
-const [clubRoleError, setClubRoleError] =
-  useState<string | null>(null);  
-  
-  const [section, setSection] =
-    useState<Section>("overview");
-
-  const [session, setSession] =
-    useState<Session | null>(null);
-
-  const [authLoading, setAuthLoading] =
-    useState(true);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [currentLocationId, setCurrentLocationId] = useState<string | null>(null);
+  const [courts, setCourts] = useState<Court[]>([]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
-  const [passwordRecoveryMode, setPasswordRecoveryMode] =
-  useState(false);
+  const [passwordRecoveryMode, setPasswordRecoveryMode] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
+  const [passwordUpdateMessage, setPasswordUpdateMessage] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [resetMode, setResetMode] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
+  const [forgotEmailMessage, setForgotEmailMessage] = useState(false);
 
-  const [newPassword, setNewPassword] =
-    useState("");
+  const [signupMode, setSignupMode] = useState(false);
+  const [signupFirstName, setSignupFirstName] = useState("");
+  const [signupLastName, setSignupLastName] = useState("");
+  const [signupPhone, setSignupPhone] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupPasswordConfirm, setSignupPasswordConfirm] = useState("");
+  const [signupLoading, setSignupLoading] = useState(false);
+  const [signupMessage, setSignupMessage] = useState<string | null>(null);
 
-  const [newPasswordConfirm, setNewPasswordConfirm] =
-    useState("");
+  const [inviteMode, setInviteMode] = useState(false);
+  const [inviteModeType, setInviteModeType] = useState<"new" | "existing" | null>(null);
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [invitePassword, setInvitePassword] = useState("");
+  const [invitePasswordConfirm, setInvitePasswordConfirm] = useState("");
+  const [inviteMessage, setInviteMessage] = useState<string | null>(null);
 
-  const [passwordUpdateMessage, setPasswordUpdateMessage] =
-    useState<string | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [memberSearch, setMemberSearch] = useState("");
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState<string | null>(null);
 
-  const [loginLoading, setLoginLoading] =
-    useState(false);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [bookingsError, setBookingsError] = useState<string | null>(null);
 
-  const [loginError, setLoginError] =
-    useState<string | null>(null);
-  const [resetMode, setResetMode] =
-    useState(false);
+  const [roleRequests, setRoleRequests] = useState<RoleRequest[]>([]);
+  const [roleRequestsLoading, setRoleRequestsLoading] = useState(false);
+  const [roleRequestsError, setRoleRequestsError] = useState<string | null>(null);
+  const [approvalActionId, setApprovalActionId] = useState<string | null>(null);
+  const [approvalActionError, setApprovalActionError] = useState<string | null>(null);
 
-  const [resetLoading, setResetLoading] =
-    useState(false);
+  const [availableClinics, setAvailableClinics] = useState<MemberClinic[]>([]);
+  const [availableClinicsLoading, setAvailableClinicsLoading] = useState(false);
+  const [availableClinicsError, setAvailableClinicsError] = useState<string | null>(null);
 
-  const [resetMessage, setResetMessage] =
-    useState<string | null>(null);
+  const [calendarDate, setCalendarDate] = useState(() => getTodayInNewYork());
 
-  const [forgotEmailMessage, setForgotEmailMessage] =
-    useState(false);
+  const signupClubId = useMemo(() => {
+    const url = new URL(window.location.href);
+    return url.searchParams.get("club_id") || DEFAULT_SIGNUP_CLUB_ID;
+  }, []);
 
-  const [members, setMembers] =
-    useState<Member[]>([]);
+  const currentMembership = useMemo(
+    () => clubMemberships.find((membership) => membership.club_id === currentClubId) ?? null,
+    [clubMemberships, currentClubId]
+  );
 
-  const [memberSearch, setMemberSearch] =
-    useState("");
+  const clubRole = currentMembership?.role ?? null;
 
-  const [membersLoading, setMembersLoading] =
-    useState(false);
+  const visibleNavigationItems = useMemo(
+    () =>
+      navigationItems.filter(
+        (item) => clubRole !== null && item.roles.includes(clubRole)
+      ),
+    [clubRole]
+  );
 
-  const [membersError, setMembersError] =
-    useState<string | null>(null);
-  
-  const [bookings, setBookings] =
-  useState<Booking[]>([]);
+  const canManageBookings =
+    clubRole !== null &&
+    ["owner", "director", "manager", "front_desk"].includes(clubRole);
 
-  const [roleRequests, setRoleRequests] =
-  useState<RoleRequest[]>([]);
+  const canViewCourtSheet =
+    clubRole !== null &&
+    ["owner", "director", "manager", "front_desk", "pro"].includes(clubRole);
 
-const [roleRequestsLoading, setRoleRequestsLoading] =
-  useState(false);
-
-const [roleRequestsError, setRoleRequestsError] =
-  useState<string | null>(null);
-
-const [bookingsLoading, setBookingsLoading] =
-  useState(false);
-
-const [bookingsError, setBookingsError] =
-  useState<string | null>(null);
-const [approvalActionId, setApprovalActionId] =
-  useState<string | null>(null);
-
-const [approvalActionError, setApprovalActionError] =
-  useState<string | null>(null);
-
-const [inviteMode, setInviteMode] =
-useState(false);
-
-const [inviteModeType, setInviteModeType] =
-useState<"new" | "existing" | null>(null);
-
-const [inviteToken, setInviteToken] =
-  useState<string | null>(null);
-
-const [invitePassword, setInvitePassword] =
-  useState("");
-
-const [invitePasswordConfirm, setInvitePasswordConfirm] =
-  useState("");
-
-const [inviteMessage, setInviteMessage] =
-  useState<string | null>(null);
-
-const [signupMode, setSignupMode] =
-  useState(false);
-
-const [signupFirstName, setSignupFirstName] =
-  useState("");
-
-const [signupLastName, setSignupLastName] =
-  useState("");
-
-const [signupLoading, setSignupLoading] =
-  useState(false);
-
-const [signupMessage, setSignupMessage] =
-  useState<string | null>(null);
-
-const [signupPhone, setSignupPhone] =
-  useState("");
-
-const [signupPassword, setSignupPassword] =
-  useState("");
-
-const [
-  signupPasswordConfirm,
-  setSignupPasswordConfirm,
-] = useState("");  
-
-const [calendarDate, setCalendarDate] =
-  useState(() => {
-    const formatter = new Intl.DateTimeFormat(
-      "en-US",
-      {
-        timeZone: "America/New_York",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }
-    );
-
-    const parts = formatter.formatToParts(
-      new Date()
-    );
-
-    const year =
-      parts.find(
-        (part) => part.type === "year"
-      )?.value ?? "";
-
-    const month =
-      parts.find(
-        (part) => part.type === "month"
-      )?.value ?? "";
-
-    const day =
-      parts.find(
-        (part) => part.type === "day"
-      )?.value ?? "";
-
-    return `${year}-${month}-${day}`;
-  });
 
   useEffect(() => {
-  const url = new URL(window.location.href);
+    const url = new URL(window.location.href);
 
-  if (url.pathname === "/invite") {
-    setInviteMode(true);
+    if (url.pathname === "/invite") {
+      setInviteMode(true);
 
-    const token =
-      url.searchParams.get("token");
+      const token = url.searchParams.get("token");
+      const mode = url.searchParams.get("mode");
 
-    const mode =
-      url.searchParams.get("mode");
+      if (token) {
+        setInviteToken(token);
+      }
 
-    if (token) {
-      setInviteToken(token);
+      if (mode === "new" || mode === "existing") {
+        setInviteModeType(mode);
+      }
     }
-
-    if (
-      mode === "new" ||
-      mode === "existing"
-    ) {
-      setInviteModeType(mode);
-    }
-  }
   }, []);
 
   useEffect(() => {
@@ -426,7 +279,7 @@ const [calendarDate, setCalendarDate] =
 
     loadSession();
 
-        const {
+    const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
@@ -434,18 +287,13 @@ const [calendarDate, setCalendarDate] =
         setAuthLoading(false);
 
         if (event === "PASSWORD_RECOVERY") {
-          const currentUrl = new URL(
-            window.location.href
-          );
+          const currentUrl = new URL(window.location.href);
 
           if (currentUrl.pathname === "/invite") {
             setInviteMode(true);
             setPasswordRecoveryMode(false);
 
-            const token =
-              currentUrl.searchParams.get(
-                "token"
-              );
+            const token = currentUrl.searchParams.get("token");
 
             if (token) {
               setInviteToken(token);
@@ -465,182 +313,409 @@ const [calendarDate, setCalendarDate] =
     };
   }, []);
 
-useEffect(() => {
-  if (!session?.user?.id) {
-    return;
-  }
-  const sessionEmail =
-  session.user.email ?? "";
+  useEffect(() => {
+    if (!session?.user?.id) {
+      return;
+    }
 
-  const metadata =
-    session.user.user_metadata;
+    const userId =
+      session.user.id;
 
-  if (
-    metadata?.signup_intent !== "member"
-  ) {
-    return;
-  }
+    const metadata = session.user.user_metadata;
 
-  const signupClubId =
-    metadata?.signup_club_id;
+    if (metadata?.signup_intent !== "member") {
+      return;
+    }
 
-  if (!signupClubId) {
-    return;
-  }
+    const targetClubId = metadata?.signup_club_id;
 
-  let cancelled = false;
+    if (typeof targetClubId !== "string" || !targetClubId) {
+      return;
+    }
 
-  async function finishMemberSignup() {
-    try {
-      const firstName =
-        typeof metadata.first_name === "string"
-          ? metadata.first_name
-          : "";
+    const sessionEmail = session.user.email ?? "";
+    let cancelled = false;
 
-      const lastName =
-        typeof metadata.last_name === "string"
-          ? metadata.last_name
-          : "";
+    async function finishMemberSignup() {
+      try {
+        const firstName =
+          typeof metadata.first_name === "string" ? metadata.first_name : "";
 
-      const applicantName = [
-        firstName.trim(),
-        lastName.trim(),
-      ]
-        .filter(Boolean)
-        .join(" ");
+        const lastName =
+          typeof metadata.last_name === "string" ? metadata.last_name : "";
 
-      const applicantEmail =
-        sessionEmail;
+        const applicantName = [firstName.trim(), lastName.trim()]
+          .filter(Boolean)
+          .join(" ");
 
-      const { error } =
-        await supabase.rpc(
-          "request_member_access",
+        const { data: existingAccess, error: accessError } =
+          await supabase
+            .from("club_users")
+            .select("club_id,role,active")
+            .eq("user_id", userId)
+            .eq("club_id", targetClubId)
+            .eq("active", true)
+            .maybeSingle();
+
+        if (accessError) {
+          throw accessError;
+        }
+
+        if (!existingAccess) {
+          const { error } =
+            await supabase.rpc(
+              "request_member_access",
+              {
+                target_club_id:
+                  targetClubId,
+                applicant_name:
+                  applicantName,
+                applicant_email:
+                  sessionEmail,
+                applicant_note: null,
+              }
+            );
+
+          if (error) {
+            throw error;
+          }
+        }
+
+        const { error: metadataError } =
+          await supabase.auth.updateUser({
+            data: {
+              signup_intent: "complete",
+            },
+          });
+
+        if (metadataError) {
+          throw metadataError;
+        }
+
+        if (!cancelled) {
+          setSignupMessage(
+            "Your member request has been sent to the club for approval."
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setSignupMessage(
+            error instanceof Error
+              ? error.message
+              : "Unable to finish member signup."
+          );
+        }
+      }
+    }
+
+    finishMemberSignup();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setClubMemberships([]);
+      setCurrentClubId(null);
+      setClubRoleError(null);
+      return;
+    }
+
+    const userId = session.user.id;
+    let cancelled = false;
+
+    async function loadMemberships() {
+      try {
+        setClubRoleLoading(true);
+        setClubRoleError(null);
+
+        const { data, error } = await supabase
+          .from("club_users")
+          .select("club_id,user_id,role,active")
+          .eq("user_id", userId)
+          .eq("active", true);
+
+        if (error) {
+          throw error;
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const memberships = (data as ClubUser[]) || [];
+        setClubMemberships(memberships);
+
+        const savedClubId = window.localStorage.getItem(
+          "deuceiq_current_club_id"
+        );
+
+        const savedIsValid =
+          savedClubId !== null &&
+          memberships.some(
+            (membership) => membership.club_id === savedClubId
+          );
+
+        const nextClubId = savedIsValid
+          ? savedClubId
+          : memberships[0]?.club_id ?? null;
+
+        setCurrentClubId(nextClubId);
+      } catch (error) {
+        if (!cancelled) {
+          setClubMemberships([]);
+          setCurrentClubId(null);
+
+          setClubRoleError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load club access."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setClubRoleLoading(false);
+        }
+      }
+    }
+
+    loadMemberships();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (!currentClubId) {
+      setClubName("DeuceIQ Club");
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadClub() {
+      try {
+        const { data, error } = await supabase
+          .from("clubs")
+          .select("id,name")
+          .eq("id", currentClubId)
+          .maybeSingle();
+
+        if (error) {
+          throw error;
+        }
+
+        if (!cancelled) {
+          const club = data as Club | null;
+          setClubName(club?.name ?? "DeuceIQ Club");
+        }
+      } catch {
+        if (!cancelled) {
+          setClubName("DeuceIQ Club");
+        }
+      }
+    }
+
+    loadClub();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentClubId]);
+
+  useEffect(() => {
+    if (!session?.access_token || !currentClubId) {
+      setLocations([]);
+      setCurrentLocationId(null);
+      return;
+    }
+
+    const accessToken =
+      session.access_token;
+
+    const clubId =
+      currentClubId;
+
+    const controller = new AbortController();
+
+    async function loadLocations() {
+      try {
+        const params = new URLSearchParams({
+          club_id: clubId,
+        });
+
+        const response = await fetch(
+          `${API_BASE}/locations?${params.toString()}`,
           {
-            target_club_id:
-              signupClubId,
-            applicant_name:
-              applicantName,
-            applicant_email:
-              applicantEmail,
-            applicant_note: null,
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            signal: controller.signal,
           }
         );
 
-      if (error) {
-        throw error;
-      }
+        if (!response.ok) {
+          throw new Error(
+            `Unable to load locations. HTTP ${response.status}`
+          );
+        }
 
-      if (!cancelled) {
-        setSignupMessage(
-          "Your member request has been sent to the club for approval."
+        const body =
+          await response.json();
+
+        const data: Location[] =
+          Array.isArray(body)
+            ? body
+            : Array.isArray(body?.locations)
+              ? body.locations
+              : [];
+
+        setLocations(data);
+
+        const savedLocationId = window.localStorage.getItem(
+          `deuceiq_location_${currentClubId}`
         );
-      }
-    } catch (error) {
-      if (!cancelled) {
-        setSignupMessage(
-          error instanceof Error
-            ? error.message
-            : "Unable to finish member signup."
+
+        const savedIsValid =
+          savedLocationId !== null &&
+          data.some(
+            (location) => location.id === savedLocationId
+          );
+
+        setCurrentLocationId(
+          savedIsValid ? savedLocationId : data[0]?.id ?? null
         );
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        setLocations([]);
+        setCurrentLocationId(null);
       }
     }
-  }
 
-  finishMemberSignup();
+    loadLocations();
 
-  return () => {
-    cancelled = true;
-  };
-}, [
-  session?.user?.id,
-]);
+    return () => {
+      controller.abort();
+    };
+  }, [currentClubId, session?.access_token]);
 
   useEffect(() => {
-  if (!session?.user?.id) {
-    setClubRole(null);
-    return;
-  }
-  const userId = session.user.id;
+    if (
+      !session?.access_token ||
+      !currentClubId ||
+      !currentLocationId
+    ) {
+      setCourts([]);
+      return;
+    }
 
-  let cancelled = false;
+    const accessToken =
+      session.access_token;
 
-  async function loadClubRole() {
-    try {
-      setClubRoleLoading(true);
-      setClubRoleError(null);
+    const clubId =
+      currentClubId;
 
-      const { data, error } =
-        await supabase
-          .from("club_users")
-          .select(
-            "club_id,user_id,role,active"
-          )
-          .eq("club_id", CLUB_ID)
-          .eq(
-            "user_id",
-            userId
-          )
-          .eq("active", true)
-          .limit(1)
-          .maybeSingle();
+    const locationId =
+      currentLocationId;
 
-      if (error) {
-        throw error;
-      }
+    const controller = new AbortController();
 
-      if (!cancelled) {
-        const clubUser =
-          data as ClubUser | null;
+    async function loadCourts() {
+      try {
+        const params = new URLSearchParams({
+          club_id: clubId,
+          location_id: locationId,
+        });
 
-        setClubRole(
-          clubUser?.role ?? null
+        const response = await fetch(
+          `${API_BASE}/courts?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            signal: controller.signal,
+          }
         );
-      }
-    } catch (error) {
-      if (!cancelled) {
-        setClubRole(null);
 
-        setClubRoleError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load club role."
+        if (!response.ok) {
+          throw new Error(
+            `Unable to load courts. HTTP ${response.status}`
+          );
+        }
+
+        const data: Court[] = await response.json();
+
+        setCourts(
+          data.filter(
+            (court) => court.active !== false
+          )
         );
-      }
-    } finally {
-      if (!cancelled) {
-        setClubRoleLoading(false);
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        setCourts([]);
       }
     }
-  }
 
-  loadClubRole();
+    loadCourts();
 
-  return () => {
-    cancelled = true;
-  };
-}, [
-  session?.user?.id,
-]);
+    return () => {
+      controller.abort();
+    };
+  }, [
+    currentClubId,
+    currentLocationId,
+    session?.access_token,
+  ]);
+
+  useEffect(() => {
+    if (
+      !clubRole ||
+      visibleNavigationItems.some(
+        (item) => item.id === section
+      )
+    ) {
+      return;
+    }
+
+    setSection("overview");
+  }, [clubRole, section, visibleNavigationItems]);
 
   const memberSearchUrl = useMemo(() => {
+    if (!currentClubId) {
+      return null;
+    }
+
     const params = new URLSearchParams({
-      club_id: CLUB_ID,
+      club_id: currentClubId,
     });
 
     if (memberSearch.trim()) {
-      params.set(
-        "search",
-        memberSearch.trim()
-      );
+      params.set("search", memberSearch.trim());
     }
 
     return `${API_BASE}/members?${params.toString()}`;
-  }, [memberSearch]);
+  }, [memberSearch, currentClubId]);
 
   useEffect(() => {
     if (
       section !== "members" ||
-      !session?.access_token
+      !session?.access_token ||
+      !memberSearchUrl
     ) {
       return;
     }
@@ -657,8 +732,7 @@ useEffect(() => {
             memberSearchUrl,
             {
               headers: {
-                Authorization:
-                  `Bearer ${session.access_token}`,
+                Authorization: `Bearer ${session.access_token}`,
               },
               signal: controller.signal,
             }
@@ -669,7 +743,6 @@ useEffect(() => {
 
             try {
               const body = await response.json();
-
               detail =
                 typeof body?.detail === "string"
                   ? body.detail
@@ -684,9 +757,7 @@ useEffect(() => {
             );
           }
 
-          const data: Member[] =
-            await response.json();
-
+          const data: Member[] = await response.json();
           setMembers(data);
         } catch (error) {
           if (
@@ -719,395 +790,501 @@ useEffect(() => {
   ]);
 
   useEffect(() => {
-  if (
-    section !== "calendar" ||
-    !session?.access_token
-  ) {
-    return;
-  }
+    if (
+      section !== "calendar" ||
+      !session?.access_token ||
+      !currentClubId ||
+      !currentLocationId
+    ) {
+      return;
+    }
+    
+    const accessToken =
+      session.access_token;
 
+    const clubId =
+      currentClubId;
 
-  const controller =
-    new AbortController();
+    const locationId =
+      currentLocationId;
 
-  async function loadBookings() {
-    try {
-      setBookingsLoading(true);
-      setBookingsError(null);
+    const controller = new AbortController();
 
-      const params =
-        new URLSearchParams({
-          club_id: CLUB_ID,
+    async function loadBookings() {
+      try {
+        setBookingsLoading(true);
+        setBookingsError(null);
+
+        const params = new URLSearchParams({
+          club_id: clubId,
           booking_date: calendarDate,
-          location_id: LOCATION_ID,
+          location_id: locationId,
         });
 
-      const response = await fetch(
-        `${API_BASE}/bookings?${params.toString()}`,
-        {
-          headers: {
-            Authorization:
-              `Bearer ${session?.access_token}`,
-          },
-          signal: controller.signal,
-        }
-      );
-
-      if (!response.ok) {
-        let detail = "";
-
-        try {
-          const body =
-            await response.json();
-
-          detail =
-            typeof body?.detail === "string"
-              ? body.detail
-              : "";
-        } catch {
-          // Ignore parsing errors.
-        }
-
-        throw new Error(
-          detail ||
-            `Unable to load bookings. HTTP ${response.status}`
+        const response = await fetch(
+          `${API_BASE}/bookings?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            signal: controller.signal,
+          }
         );
+
+        if (!response.ok) {
+          let detail = "";
+
+          try {
+            const body = await response.json();
+            detail =
+              typeof body?.detail === "string"
+                ? body.detail
+                : "";
+          } catch {
+            // Ignore parsing error.
+          }
+
+          throw new Error(
+            detail ||
+              `Unable to load bookings. HTTP ${response.status}`
+          );
+        }
+
+        const data: BookingsResponse = await response.json();
+        setBookings(data.bookings);
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        setBookingsError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load bookings."
+        );
+      } finally {
+        setBookingsLoading(false);
       }
-
-      const data: BookingsResponse =
-        await response.json();
-
-      setBookings(data.bookings);
-
-    } catch (error) {
-      if (
-        error instanceof DOMException &&
-        error.name === "AbortError"
-      ) {
-        return;
-      }
-
-      setBookingsError(
-        error instanceof Error
-          ? error.message
-          : "Unable to load bookings."
-      );
-    } finally {
-      setBookingsLoading(false);
     }
-  }
 
-  loadBookings();
+    loadBookings();
 
-  return () => {
-    controller.abort();
-  };
-}, [
-  section,
-  calendarDate,
-  session?.access_token,
-]);
+    return () => {
+      controller.abort();
+    };
+  }, [
+    section,
+    calendarDate,
+    session?.access_token,
+    currentClubId,
+    currentLocationId,
+  ]);
 
-useEffect(() => {
-  if (
-    section !== "approvals" ||
-    !session?.access_token
-  ) {
-    return;
-  }
+  useEffect(() => {
+    if (
+      section !== "clinics" ||
+      clubRole !== "member" ||
+      !session?.access_token ||
+      !currentClubId
+    ) {
+      return;
+    }
 
-  let cancelled = false;
+    const accessToken =
+      session.access_token;
 
-  async function loadRoleRequests() {
-    try {
-      setRoleRequestsLoading(true);
-      setRoleRequestsError(null);
+    const clubId =
+      currentClubId;
 
-      const { data, error } =
-        await supabase
+    const controller = new AbortController();
+
+    async function loadMemberClinics() {
+      try {
+        setAvailableClinicsLoading(true);
+        setAvailableClinicsError(null);
+
+        const params = new URLSearchParams({
+          club_id: clubId,
+        });
+
+        const response = await fetch(
+          `${API_BASE}/member/clinics?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok) {
+          let detail = "";
+
+          try {
+            const body = await response.json();
+            detail =
+              typeof body?.detail === "string"
+                ? body.detail
+                : "";
+          } catch {
+            // Ignore parsing error.
+          }
+
+          throw new Error(
+            detail ||
+              `Unable to load clinics. HTTP ${response.status}`
+          );
+        }
+
+        const data: MemberClinicsResponse =
+          await response.json();
+
+        setAvailableClinics(data.clinics);
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        setAvailableClinicsError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load clinics."
+        );
+      } finally {
+        setAvailableClinicsLoading(false);
+      }
+    }
+
+    loadMemberClinics();
+
+    return () => {
+      controller.abort();
+    };
+  }, [
+    section,
+    clubRole,
+    currentClubId,
+    session?.access_token,
+  ]);
+
+  useEffect(() => {
+    if (
+      section !== "approvals" ||
+      !session?.access_token ||
+      !currentClubId
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadRoleRequests() {
+      try {
+        setRoleRequestsLoading(true);
+        setRoleRequestsError(null);
+
+        const { data, error } = await supabase
           .from("club_role_requests")
           .select("*")
-          .eq("club_id", CLUB_ID)
+          .eq("club_id", currentClubId)
           .eq("status", "pending")
           .order("created_at", {
             ascending: true,
           });
 
+        if (error) {
+          throw error;
+        }
+
+        if (!cancelled) {
+          setRoleRequests(
+            (data as RoleRequest[]) || []
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setRoleRequestsError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load approval requests."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setRoleRequestsLoading(false);
+        }
+      }
+    }
+
+    loadRoleRequests();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    section,
+    session?.access_token,
+    currentClubId,
+  ]);
+
+
+  async function handleRoleRequestDecision(
+    requestId: string,
+    decision: "approve" | "decline"
+  ) {
+    try {
+      setApprovalActionId(requestId);
+      setApprovalActionError(null);
+
+      const functionName =
+        decision === "approve"
+          ? "approve_club_role_request"
+          : "decline_club_role_request";
+
+      const { error } = await supabase.rpc(
+        functionName,
+        {
+          target_request_id: requestId,
+          manager_note: null,
+        }
+      );
+
       if (error) {
         throw error;
       }
 
-      if (!cancelled) {
-        setRoleRequests(
-          (data as RoleRequest[]) || []
-        );
-      }
-    } catch (error) {
-      if (!cancelled) {
-        setRoleRequestsError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load approval requests."
-        );
-      }
-    } finally {
-      if (!cancelled) {
-        setRoleRequestsLoading(false);
-      }
-    }
-  }
-
-  loadRoleRequests();
-
-  return () => {
-    cancelled = true;
-  };
-}, [
-  section,
-  session?.access_token,
-]);
-async function handleRoleRequestDecision(
-  requestId: string,
-  decision: "approve" | "decline"
-) {
-  try {
-    setApprovalActionId(requestId);
-    setApprovalActionError(null);
-
-    const functionName =
-      decision === "approve"
-        ? "approve_club_role_request"
-        : "decline_club_role_request";
-
-    const { error } = await supabase.rpc(
-      functionName,
-      {
-        target_request_id: requestId,
-        manager_note: null,
-      }
-    );
-
-    if (error) {
-      throw error;
-    }
-
-    setRoleRequests((current) =>
-      current.filter(
-        (request) =>
-          request.id !== requestId
-      )
-    );
-  } catch (error) {
-    setApprovalActionError(
-      error instanceof Error
-        ? error.message
-        : "Unable to process request."
-    );
-  } finally {
-    setApprovalActionId(null);
-  }
-}
-async function handlePasswordReset(
-  event: React.FormEvent<HTMLFormElement>
-) {
-  event.preventDefault();
-
-  setResetLoading(true);
-  setResetMessage(null);
-
-  try {
-    const { error } =
-      await supabase.auth.resetPasswordForEmail(
-        email.trim(),
-        {
-          redirectTo:
-            "https://app.deuceiq.com/reset-password",
-        }
+      setRoleRequests((current) =>
+        current.filter(
+          (request) => request.id !== requestId
+        )
       );
-
-    if (error) {
-      throw error;
+    } catch (error) {
+      setApprovalActionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to process request."
+      );
+    } finally {
+      setApprovalActionId(null);
     }
-
-    setResetMessage(
-      "Password reset email sent. Check your inbox."
-    );
-  } catch (error) {
-    setResetMessage(
-      error instanceof Error
-        ? error.message
-        : "Unable to send reset email."
-    );
-  } finally {
-    setResetLoading(false);
-  }
-}
-async function handleUpdatePassword(
-  event: React.FormEvent<HTMLFormElement>
-) {
-  event.preventDefault();
-
-  setPasswordUpdateMessage(null);
-
-  if (newPassword.length < 8) {
-    setPasswordUpdateMessage(
-      "Password must be at least 8 characters."
-    );
-    return;
   }
 
-  if (newPassword !== newPasswordConfirm) {
-    setPasswordUpdateMessage(
-      "Passwords do not match."
-    );
-    return;
+  async function handlePasswordReset(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    setResetLoading(true);
+    setResetMessage(null);
+
+    try {
+      const { error } =
+        await supabase.auth.resetPasswordForEmail(
+          email.trim(),
+          {
+            redirectTo:
+              `${window.location.origin}/reset-password`,
+          }
+        );
+
+      if (error) {
+        throw error;
+      }
+
+      setResetMessage(
+        "Password reset email sent. Check your inbox."
+      );
+    } catch (error) {
+      setResetMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to send reset email."
+      );
+    } finally {
+      setResetLoading(false);
+    }
   }
 
-  const { error } =
-    await supabase.auth.updateUser({
-      password: newPassword,
-    });
+  async function handleUpdatePassword(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-  if (error) {
-    setPasswordUpdateMessage(
-      error.message
-    );
-    return;
-  }
-
-  setPasswordUpdateMessage(
-    "Password updated successfully! Returning to login, Player"
-  );
-
-  setNewPassword("");
-  setNewPasswordConfirm("");
-
-  await supabase.auth.signOut();
-
-  window.setTimeout(() => {
-    setPasswordRecoveryMode(false);
     setPasswordUpdateMessage(null);
 
-    window.history.replaceState(
-      {},
-      "",
-      "/"
-    );
-  }, 1500);
-}
-
-async function handleMemberSignup(
-  event: React.FormEvent<HTMLFormElement>
-) {
-  event.preventDefault();
-
-  setSignupLoading(true);
-  setSignupMessage(null);
-
-  try {
-    if (signupPassword.length < 8) {
-      throw new Error(
+    if (newPassword.length < 8) {
+      setPasswordUpdateMessage(
         "Password must be at least 8 characters."
       );
+      return;
     }
 
-    if (
-      signupPassword !==
-      signupPasswordConfirm
-    ) {
-      throw new Error(
+    if (newPassword !== newPasswordConfirm) {
+      setPasswordUpdateMessage(
         "Passwords do not match."
       );
+      return;
     }
-    
-    window.localStorage.setItem(
-      "deuceiq_member_signup_pending",
-      "true"
-    );
 
-    window.localStorage.setItem(
-      "deuceiq_member_signup_profile",
-      JSON.stringify({
-        firstName: signupFirstName.trim(),
-        lastName: signupLastName.trim(),
-        email: email.trim(),
-        phone: signupPhone.trim(),
-      })
-    );
-
-    const { data, error } =
-      await supabase.auth.signUp({
-        email: email.trim(),
-        password: signupPassword,
-        options: {
-          data: {
-            first_name:
-              signupFirstName.trim(),
-            last_name:
-              signupLastName.trim(),
-            phone:
-              signupPhone.trim() || null,
-            signup_intent: "member",
-            signup_club_id: CLUB_ID,
-          },
-        },
+    const { error } =
+      await supabase.auth.updateUser({
+        password: newPassword,
       });
 
     if (error) {
-      throw error;
+      setPasswordUpdateMessage(
+        error.message
+      );
+      return;
     }
 
-   if (!data.user) {
-    throw new Error(
-      "Member account could not be created."
-    );
-  }
-
-  if (!data.session) {
-    setSignupMessage(
-      "Account created. Check your email to confirm your account, then sign in to finish joining the club."
+    setPasswordUpdateMessage(
+      "Password updated successfully. Returning to sign in."
     );
 
-    return;
+    setNewPassword("");
+    setNewPasswordConfirm("");
+
+    await supabase.auth.signOut();
+
+    window.setTimeout(() => {
+      setPasswordRecoveryMode(false);
+      setPasswordUpdateMessage(null);
+
+      window.history.replaceState(
+        {},
+        "",
+        "/"
+      );
+    }, 1500);
   }
 
-  const applicantName = [
-    signupFirstName.trim(),
-    signupLastName.trim(),
-  ]
-    .filter(Boolean)
-    .join(" ");
+  async function handleMemberSignup(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
 
-  const { error: requestError } =
-    await supabase.rpc(
-      "request_member_access",
-      {
-        target_club_id: CLUB_ID,
-        applicant_name:
-          applicantName,
-        applicant_email:
-          email.trim(),
-        applicant_note: null,
+    setSignupLoading(true);
+    setSignupMessage(null);
+
+    try {
+      if (!signupClubId) {
+        throw new Error(
+          "This signup page is not connected to a club."
+        );
       }
-    );
 
-  if (requestError) {
-    throw requestError;
-  }
+      if (signupPassword.length < 8) {
+        throw new Error(
+          "Password must be at least 8 characters."
+        );
+      }
 
-  setSignupMessage(
-    "Account created. Your member request has been sent to the club for approval."
-  );
-  } catch (error) {
-    setSignupMessage(
-      error instanceof Error
-        ? error.message
-        : "Unable to create member account."
-    );
-  } finally {
-    setSignupLoading(false);
+      if (
+        signupPassword !==
+        signupPasswordConfirm
+      ) {
+        throw new Error(
+          "Passwords do not match."
+        );
+      }
+
+      const { data, error } =
+        await supabase.auth.signUp({
+          email: email.trim(),
+          password: signupPassword,
+          options: {
+            emailRedirectTo:
+              window.location.origin,
+            data: {
+              first_name:
+                signupFirstName.trim(),
+              last_name:
+                signupLastName.trim(),
+              phone:
+                signupPhone.trim() ||
+                null,
+              signup_intent:
+                "member",
+              signup_club_id:
+                signupClubId,
+            },
+          },
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.user) {
+        throw new Error(
+          "Member account could not be created."
+        );
+      }
+
+      if (!data.session) {
+        setSignupMessage(
+          "Account created. Check your email to confirm your account, then sign in to finish joining the club."
+        );
+        return;
+      }
+
+      const applicantName = [
+        signupFirstName.trim(),
+        signupLastName.trim(),
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      const { error: requestError } =
+        await supabase.rpc(
+          "request_member_access",
+          {
+            target_club_id:
+              signupClubId,
+            applicant_name:
+              applicantName,
+            applicant_email:
+              email.trim(),
+            applicant_note: null,
+          }
+        );
+
+      if (requestError) {
+        throw requestError;
+      }
+
+      const { error: metadataError } =
+        await supabase.auth.updateUser({
+          data: {
+            signup_intent:
+              "complete",
+          },
+        });
+
+      if (metadataError) {
+        throw metadataError;
+      }
+
+      setSignupMessage(
+        "Account created. Your member request has been sent to the club for approval."
+      );
+    } catch (error) {
+      setSignupMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to create member account."
+      );
+    } finally {
+      setSignupLoading(false);
+    }
   }
-}
 
   async function handleLogin(
     event: React.FormEvent<HTMLFormElement>
@@ -1139,143 +1316,182 @@ async function handleMemberSignup(
       setLoginLoading(false);
     }
   }
- async function handleInviteLogin(
-  event: React.FormEvent<HTMLFormElement>
-) {
-  event.preventDefault();
 
-  setInviteMessage(null);
-
-  const { error } =
-    await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
-  if (error) {
-    setInviteMessage(error.message);
-    return;
-  }
-
-  await handleAcceptInvitation();
-}
-async function handleInviteSetPassword(
-  event: React.FormEvent<HTMLFormElement>
-) {
-  event.preventDefault();
-
-  setInviteMessage(null);
-
-  if (!inviteToken) {
-    setInviteMessage(
-      "Invitation token is missing."
-    );
-    return;
-  }
-
-  if (invitePassword.length < 8) {
-    setInviteMessage(
-      "Password must be at least 8 characters."
-    );
-    return;
-  }
-
-  if (
-    invitePassword !==
-    invitePasswordConfirm
+  async function handleInviteLogin(
+    event: React.FormEvent<HTMLFormElement>
   ) {
+    event.preventDefault();
+
+    setInviteMessage(null);
+
+    const { error } =
+      await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+    if (error) {
+      setInviteMessage(error.message);
+      return;
+    }
+
+    await handleAcceptInvitation();
+  }
+
+  async function handleInviteSetPassword(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    setInviteMessage(null);
+
+    if (!inviteToken) {
+      setInviteMessage(
+        "Invitation token is missing."
+      );
+      return;
+    }
+
+    if (invitePassword.length < 8) {
+      setInviteMessage(
+        "Password must be at least 8 characters."
+      );
+      return;
+    }
+
+    if (
+      invitePassword !==
+      invitePasswordConfirm
+    ) {
+      setInviteMessage(
+        "Passwords do not match."
+      );
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      setInviteMessage(
+        "Your invitation session is not active. Please reopen the invitation email."
+      );
+      return;
+    }
+
+    const { error } =
+      await supabase.auth.updateUser({
+        password: invitePassword,
+      });
+
+    if (error) {
+      setInviteMessage(error.message);
+      return;
+    }
+
+    await handleAcceptInvitation();
+  }
+
+  async function handleAcceptInvitation() {
+    if (!inviteToken) {
+      setInviteMessage(
+        "Invitation token is missing."
+      );
+      return;
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      setInviteMessage(
+        "Please sign in or create your account first."
+      );
+      return;
+    }
+
+    const { data, error } =
+      await supabase.rpc(
+        "accept_club_invitation",
+        {
+          invitation_token:
+            inviteToken,
+        }
+      );
+
+    if (error) {
+      setInviteMessage(error.message);
+      return;
+    }
+
+    if (data?.status === "expired") {
+      setInviteMessage(
+        "This invitation has expired."
+      );
+      return;
+    }
+
     setInviteMessage(
-      "Passwords do not match."
-    );
-    return;
-  }
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    setInviteMessage(
-      "Your invitation session is not active. Please reopen the invitation email."
-    );
-    return;
-  }
-
-  const { error } =
-    await supabase.auth.updateUser({
-      password: invitePassword,
-    });
-
-  if (error) {
-    setInviteMessage(error.message);
-    return;
-  }
-
-  await handleAcceptInvitation();
-}
-async function handleAcceptInvitation() {
-  if (!inviteToken) {
-    setInviteMessage(
-      "Invitation token is missing."
-    );
-    return;
-  }
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    setInviteMessage(
-      "Please sign in or create your account first."
-    );
-    return;
-  }
-
-  const { data, error } =
-    await supabase.rpc(
-      "accept_club_invitation",
-      {
-        invitation_token: inviteToken,
-      }
+      "Invitation accepted. Welcome to DeuceIQ."
     );
 
-  if (error) {
-    setInviteMessage(error.message);
-    return;
+    window.setTimeout(() => {
+      setInviteMode(false);
+      setInviteToken(null);
+
+      window.history.replaceState(
+        {},
+        "",
+        "/"
+      );
+    }, 1200);
   }
-
-  if (data?.status === "expired") {
-    setInviteMessage(
-      "This invitation has expired."
-    );
-    return;
-  }
-
-  setInviteMessage(
-    "Invitation accepted. Welcome to DeuceIQ."
-  );
-  window.setTimeout(() => {
-  setInviteMode(false);
-  setInviteToken(null);
-
-  window.history.replaceState(
-    {},
-    "",
-    "/"
-  );
-}, 1200);
-}
 
   async function handleLogout() {
     await supabase.auth.signOut();
-    
-    setClubRole(null);
-    setClubRoleError(null);
 
+    setClubMemberships([]);
+    setCurrentClubId(null);
+    setLocations([]);
+    setCurrentLocationId(null);
+    setCourts([]);
     setMembers([]);
     setMemberSearch("");
     setMembersError(null);
+    setRoleRequests([]);
+    setAvailableClinics([]);
+    setSection("overview");
+  }
+
+  function handleClubChange(
+    clubId: string
+  ) {
+    setCurrentClubId(clubId);
+
+    window.localStorage.setItem(
+      "deuceiq_current_club_id",
+      clubId
+    );
+
+    setCurrentLocationId(null);
+    setSection("overview");
+  }
+
+  function handleLocationChange(
+    locationId: string
+  ) {
+    setCurrentLocationId(
+      locationId
+    );
+
+    if (currentClubId) {
+      window.localStorage.setItem(
+        `deuceiq_location_${currentClubId}`,
+        locationId
+      );
+    }
   }
 
   if (authLoading) {
@@ -1287,20 +1503,120 @@ async function handleAcceptInvitation() {
           </div>
 
           <h1>DeuceIQ</h1>
-
-          <p>Loading staff workspace...</p>
+          <p>Loading workspace...</p>
         </div>
       </div>
     );
   }
 
   if (inviteMode) {
-  if (inviteModeType === "existing") {
+    if (inviteModeType === "existing") {
+      return (
+        <div className="login-shell">
+          <form
+            className="login-card"
+            onSubmit={handleInviteLogin}
+          >
+            <div className="login-logo">
+              DIQ
+            </div>
+
+            <div className="login-heading">
+              <h1>Join DeuceIQ</h1>
+              <p>
+                Sign in to accept your
+                club invitation.
+              </p>
+            </div>
+
+            <label className="form-field">
+              <span>Email</span>
+
+              <input
+                type="email"
+                value={email}
+                onChange={(event) =>
+                  setEmail(
+                    event.target.value
+                  )
+                }
+                autoComplete="email"
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Password</span>
+
+              <input
+                type="password"
+                value={password}
+                onChange={(event) =>
+                  setPassword(
+                    event.target.value
+                  )
+                }
+                autoComplete="current-password"
+                required
+              />
+            </label>
+
+            {inviteMessage && (
+              <div className="login-help-message">
+                {inviteMessage}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="primary-button login-button"
+            >
+              Sign in and accept invitation
+            </button>
+
+            <button
+              type="button"
+              className="login-back-button"
+              onClick={async () => {
+                setInviteMessage(null);
+
+                const { error } =
+                  await supabase.auth.resetPasswordForEmail(
+                    email.trim(),
+                    {
+                      redirectTo:
+                        `${window.location.origin}/invite?token=${encodeURIComponent(
+                          inviteToken ?? ""
+                        )}&mode=existing`,
+                    }
+                  );
+
+                if (error) {
+                  setInviteMessage(
+                    error.message
+                  );
+                  return;
+                }
+
+                setInviteMessage(
+                  "Password setup email sent. Open it to continue your invitation."
+                );
+              }}
+            >
+              Set or reset password
+            </button>
+          </form>
+        </div>
+      );
+    }
+
     return (
       <div className="login-shell">
         <form
           className="login-card"
-          onSubmit={handleInviteLogin}
+          onSubmit={
+            handleInviteSetPassword
+          }
         >
           <div className="login-logo">
             DIQ
@@ -1308,37 +1624,42 @@ async function handleAcceptInvitation() {
 
           <div className="login-heading">
             <h1>Join DeuceIQ</h1>
-
             <p>
-              Sign in to accept your club
-              invitation.
+              Set a password to finish
+              joining your club.
             </p>
           </div>
 
           <label className="form-field">
-            <span>Email</span>
+            <span>Create password</span>
 
             <input
-              type="email"
-              value={email}
+              type="password"
+              value={invitePassword}
               onChange={(event) =>
-                setEmail(event.target.value)
+                setInvitePassword(
+                  event.target.value
+                )
               }
-              autoComplete="email"
+              autoComplete="new-password"
               required
             />
           </label>
 
           <label className="form-field">
-            <span>Password</span>
+            <span>Confirm password</span>
 
             <input
               type="password"
-              value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
+              value={
+                invitePasswordConfirm
               }
-              autoComplete="current-password"
+              onChange={(event) =>
+                setInvitePasswordConfirm(
+                  event.target.value
+                )
+              }
+              autoComplete="new-password"
               required
             />
           </label>
@@ -1348,324 +1669,243 @@ async function handleAcceptInvitation() {
               {inviteMessage}
             </div>
           )}
-          
+
           <button
             type="submit"
             className="primary-button login-button"
           >
-            Sign in and accept invitation
+            Accept invitation
           </button>
-          <button
-  type="button"
-  className="login-back-button"
-  onClick={async () => {
-    setInviteMessage(null);
-
-    const { error } =
-      await supabase.auth.resetPasswordForEmail(
-        email.trim(),
-        {
-          redirectTo:
-            "https://app.deuceiq.com/invite"
-            + "?token="
-            + encodeURIComponent(
-                inviteToken ?? ""
-              )
-            + "&mode=existing",
-        }
-      );
-
-    if (error) {
-      setInviteMessage(error.message);
-      return;
-    }
-
-    setInviteMessage(
-      "Password setup email sent. Open it to continue your invitation."
-    );
-  }}
->
-  Set or reset password
-</button>
         </form>
       </div>
     );
   }
-  
-
-  return (
-    <div className="login-shell">
-      <form
-        className="login-card"
-        onSubmit={handleInviteSetPassword}
-      >
-        <div className="login-logo">
-          DIQ
-        </div>
-
-        <div className="login-heading">
-          <h1>Join DeuceIQ</h1>
-
-          <p>
-            Set a password to finish joining
-            your club.
-          </p>
-        </div>
-
-        <label className="form-field">
-          <span>Create password</span>
-
-          <input
-            type="password"
-            value={invitePassword}
-            onChange={(event) =>
-              setInvitePassword(
-                event.target.value
-              )
-            }
-            autoComplete="new-password"
-            required
-          />
-        </label>
-
-        <label className="form-field">
-          <span>Confirm password</span>
-
-          <input
-            type="password"
-            value={invitePasswordConfirm}
-            onChange={(event) =>
-              setInvitePasswordConfirm(
-                event.target.value
-              )
-            }
-            autoComplete="new-password"
-            required
-          />
-        </label>
-
-        {inviteMessage && (
-          <div className="login-help-message">
-            {inviteMessage}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          className="primary-button login-button"
-        >
-          Accept invitation
-        </button>
-      </form>
-    </div>
-  );
-}
 
   if (passwordRecoveryMode) {
-  return (
-    <div className="login-shell">
-      <form
-        className="login-card"
-        onSubmit={handleUpdatePassword}
-      >
-        <div className="login-logo">
-          DIQ
-        </div>
-
-        <div className="login-heading">
-          <h1>Set new password</h1>
-
-          <p>
-            Choose a new password for your
-            DeuceIQ account.
-          </p>
-        </div>
-
-        <label className="form-field">
-          <span>New password</span>
-
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(event) =>
-              setNewPassword(event.target.value)
-            }
-            autoComplete="new-password"
-            required
-          />
-        </label>
-
-        <label className="form-field">
-          <span>Confirm new password</span>
-
-          <input
-            type="password"
-            value={newPasswordConfirm}
-            onChange={(event) =>
-              setNewPasswordConfirm(
-                event.target.value
-              )
-            }
-            autoComplete="new-password"
-            required
-          />
-        </label>
-
-        {passwordUpdateMessage && (
-          <div className="login-help-message">
-            {passwordUpdateMessage}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          className="primary-button login-button"
+    return (
+      <div className="login-shell">
+        <form
+          className="login-card"
+          onSubmit={
+            handleUpdatePassword
+          }
         >
-          Update password
-        </button>
-      </form>
-    </div>
-  );
-}
+          <div className="login-logo">
+            DIQ
+          </div>
+
+          <div className="login-heading">
+            <h1>Set new password</h1>
+            <p>
+              Choose a new password
+              for your DeuceIQ account.
+            </p>
+          </div>
+
+          <label className="form-field">
+            <span>New password</span>
+
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(event) =>
+                setNewPassword(
+                  event.target.value
+                )
+              }
+              autoComplete="new-password"
+              required
+            />
+          </label>
+
+          <label className="form-field">
+            <span>
+              Confirm new password
+            </span>
+
+            <input
+              type="password"
+              value={
+                newPasswordConfirm
+              }
+              onChange={(event) =>
+                setNewPasswordConfirm(
+                  event.target.value
+                )
+              }
+              autoComplete="new-password"
+              required
+            />
+          </label>
+
+          {passwordUpdateMessage && (
+            <div className="login-help-message">
+              {passwordUpdateMessage}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="primary-button login-button"
+          >
+            Update password
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   if (!session) {
     return (
       <div className="login-shell">
-                  <form
-            className="login-card"
-            onSubmit={
-              signupMode
-                ? handleMemberSignup
+        <form
+          className="login-card"
+          onSubmit={
+            signupMode
+              ? handleMemberSignup
+              : resetMode
+                ? handlePasswordReset
+                : handleLogin
+          }
+        >
+          <div className="login-logo">
+            DIQ
+          </div>
+
+          <div className="login-heading">
+            <h1>
+              {signupMode
+                ? "Create member account"
+                : "DeuceIQ"}
+            </h1>
+
+            <p>
+              {signupMode
+                ? "Join your club as a member."
                 : resetMode
-                  ? handlePasswordReset
-                  : handleLogin
-            }
-          >
-            <div className="login-logo">
-              DIQ
-            </div>
+                  ? "Reset your password."
+                  : "Tennis intelligence for club management."}
+            </p>
+          </div>
 
-            <div className="login-heading">
-              <h1>
-                {signupMode
-                  ? "Create member account"
-                  : "DeuceIQ"}
-              </h1>
-
-              <p>
-                {signupMode
-                  ? "Join your club as a member."
-                  : resetMode
-                    ? "Reset your password."
-                    : "Tennis intelligence for club management."}
-              </p>
-            </div>
-
-            {signupMode && (
-              <>
-                <label className="form-field">
-                  <span>First name</span>
-
-                  <input
-                    type="text"
-                    value={signupFirstName}
-                    onChange={(event) =>
-                      setSignupFirstName(
-                        event.target.value
-                      )
-                    }
-                    autoComplete="given-name"
-                    required
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Last name</span>
-
-                  <input
-                    type="text"
-                    value={signupLastName}
-                    onChange={(event) =>
-                      setSignupLastName(
-                        event.target.value
-                      )
-                    }
-                    autoComplete="family-name"
-                    required
-                  />
-                </label>
-              </>
-            )}
-
-            <label className="form-field">
-              <span>Email</span>
-
-              <input
-                type="email"
-                value={email}
-                onChange={(event) =>
-                  setEmail(event.target.value)
-                }
-                placeholder="staff@example.com"
-                autoComplete="email"
-                required
-              />
-            </label>
-
-            {signupMode && (
+          {signupMode && (
+            <>
               <label className="form-field">
-                <span>Phone number (optional)</span>
-
+                <span>First name</span>
                 <input
-                  type="tel"
-                  value={signupPhone}
+                  type="text"
+                  value={
+                    signupFirstName
+                  }
                   onChange={(event) =>
-                    setSignupPhone(
+                    setSignupFirstName(
                       event.target.value
                     )
                   }
-                  autoComplete="tel"
+                  autoComplete="given-name"
+                  required
                 />
               </label>
-            )}
 
-            {signupMode && (
-              <>
-                <label className="form-field">
-                  <span>Password</span>
+              <label className="form-field">
+                <span>Last name</span>
+                <input
+                  type="text"
+                  value={
+                    signupLastName
+                  }
+                  onChange={(event) =>
+                    setSignupLastName(
+                      event.target.value
+                    )
+                  }
+                  autoComplete="family-name"
+                  required
+                />
+              </label>
+            </>
+          )}
 
-                  <input
-                    type="password"
-                    value={signupPassword}
-                    onChange={(event) =>
-                      setSignupPassword(
-                        event.target.value
-                      )
-                    }
-                    autoComplete="new-password"
-                    required
-                  />
-                </label>
+          <label className="form-field">
+            <span>Email</span>
 
-                <label className="form-field">
-                  <span>Confirm password</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) =>
+                setEmail(
+                  event.target.value
+                )
+              }
+              placeholder="you@example.com"
+              autoComplete="email"
+              required
+            />
+          </label>
 
-                  <input
-                    type="password"
-                    value={signupPasswordConfirm}
-                    onChange={(event) =>
-                      setSignupPasswordConfirm(
-                        event.target.value
-                      )
-                    }
-                    autoComplete="new-password"
-                    required
-                  />
-                </label>
-              </>
-            )}
+          {signupMode && (
+            <label className="form-field">
+              <span>
+                Phone number (optional)
+              </span>
 
-            {!resetMode && !signupMode && (
+              <input
+                type="tel"
+                value={signupPhone}
+                onChange={(event) =>
+                  setSignupPhone(
+                    event.target.value
+                  )
+                }
+                autoComplete="tel"
+              />
+            </label>
+          )}
+
+          {signupMode && (
+            <>
+              <label className="form-field">
+                <span>Password</span>
+
+                <input
+                  type="password"
+                  value={
+                    signupPassword
+                  }
+                  onChange={(event) =>
+                    setSignupPassword(
+                      event.target.value
+                    )
+                  }
+                  autoComplete="new-password"
+                  required
+                />
+              </label>
+
+              <label className="form-field">
+                <span>
+                  Confirm password
+                </span>
+
+                <input
+                  type="password"
+                  value={
+                    signupPasswordConfirm
+                  }
+                  onChange={(event) =>
+                    setSignupPasswordConfirm(
+                      event.target.value
+                    )
+                  }
+                  autoComplete="new-password"
+                  required
+                />
+              </label>
+            </>
+          )}
+
+          {!resetMode &&
+            !signupMode && (
               <label className="form-field">
                 <span>Password</span>
 
@@ -1673,7 +1913,9 @@ async function handleAcceptInvitation() {
                   type="password"
                   value={password}
                   onChange={(event) =>
-                    setPassword(event.target.value)
+                    setPassword(
+                      event.target.value
+                    )
                   }
                   placeholder="Password"
                   autoComplete="current-password"
@@ -1682,7 +1924,8 @@ async function handleAcceptInvitation() {
               </label>
             )}
 
-            {!resetMode && !signupMode && (
+          {!resetMode &&
+            !signupMode && (
               <div className="login-help-row">
                 <button
                   type="button"
@@ -1695,23 +1938,14 @@ async function handleAcceptInvitation() {
                 >
                   Forgot password?
                 </button>
-                
-                <button
-                  type="button"
-                  className="login-back-button"
-                  onClick={() => {
-                    // member signup mode comes next
-                  }}
-                >
-                  Create member account
-                </button>
 
                 <button
                   type="button"
                   className="login-link"
                   onClick={() =>
                     setForgotEmailMessage(
-                      (current) => !current
+                      (current) =>
+                        !current
                     )
                   }
                 >
@@ -1720,97 +1954,184 @@ async function handleAcceptInvitation() {
               </div>
             )}
 
-            {forgotEmailMessage &&
-              !resetMode && (
-                <div className="login-help-message">
-                  Contact your club manager or
-                  DeuceIQ support to confirm the
-                  email associated with your account.
-                </div>
-              )}
+          {forgotEmailMessage &&
+            !resetMode &&
+            !signupMode && (
+              <div className="login-help-message">
+                Contact your club manager or
+                DeuceIQ support to confirm the
+                email associated with your account.
+              </div>
+            )}
 
-            {loginError && !resetMode && (
+          {loginError &&
+            !resetMode &&
+            !signupMode && (
               <div className="login-error">
                 {loginError}
               </div>
             )}
 
-            {resetMessage && (
-              <div className="login-help-message">
-                {resetMessage}
-              </div>
-            )}
-            {signupMessage && (
-              <div className="login-help-message">
-                {signupMessage}
-              </div>
-            )}
-            <button
-              type="submit"
-              className="primary-button login-button"
-              disabled={
-                signupMode
-                  ? signupLoading
-                  : resetMode
-                    ? resetLoading
-                    : loginLoading
-              }
-            >
-              {signupMode
+          {resetMessage && (
+            <div className="login-help-message">
+              {resetMessage}
+            </div>
+          )}
+
+          {signupMessage && (
+            <div className="login-help-message">
+              {signupMessage}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="primary-button login-button"
+            disabled={
+              signupMode
                 ? signupLoading
-                  ? "Creating account..."
-                  : "Create member account"
                 : resetMode
                   ? resetLoading
-                    ? "Sending..."
-                    : "Send reset email"
                   : loginLoading
-                    ? "Signing in..."
-                    : "Sign in"}
+            }
+          >
+            {signupMode
+              ? signupLoading
+                ? "Creating account..."
+                : "Create member account"
+              : resetMode
+                ? resetLoading
+                  ? "Sending..."
+                  : "Send reset email"
+                : loginLoading
+                  ? "Signing in..."
+                  : "Sign in"}
+          </button>
+
+          {!resetMode && (
+            <button
+              type="button"
+              className="login-back-button"
+              onClick={() => {
+                setSignupMode(
+                  (current) =>
+                    !current
+                );
+                setLoginError(null);
+                setResetMessage(null);
+                setSignupMessage(null);
+              }}
+            >
+              {signupMode
+                ? "Back to sign in"
+                : "Create member account"}
             </button>
+          )}
 
-            {!resetMode && (
-                <button
-                  type="button"
-                  className="login-back-button"
-                  onClick={() => {
-                    setSignupMode(
-                      (current) => !current
-                    );
-
-                    setLoginError(null);
-                    setResetMessage(null);
-                    setSignupMessage(null);
-                  }}
-                >
-                  {signupMode
-                    ? "Back to sign in"
-                    : "Create member account"}
-                </button>
-              )}
-              
-              {resetMode && (
-                <button
-                  type="button"
-                  className="login-back-button"
-                  onClick={() => {
-                    setResetMode(false);
-                    setResetMessage(null);
-                  }}
-                >
-                  Back to sign in
-                </button>
-              )}
-          </form>
+          {resetMode && (
+            <button
+              type="button"
+              className="login-back-button"
+              onClick={() => {
+                setResetMode(false);
+                setResetMessage(null);
+              }}
+            >
+              Back to sign in
+            </button>
+          )}
+        </form>
       </div>
     );
   }
-  const visibleNavigationItems =
-  navigationItems.filter(
-    (item) =>
-      clubRole !== null &&
-      item.roles.includes(clubRole)
-  );
+
+
+  if (clubRoleLoading) {
+    return (
+      <div className="login-shell">
+        <div className="login-card">
+          <div className="login-logo">
+            DIQ
+          </div>
+
+          <h1>DeuceIQ</h1>
+          <p>Loading club access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (
+    !currentMembership ||
+    !currentClubId
+  ) {
+    return (
+      <div className="login-shell">
+        <div className="login-card">
+          <div className="login-logo">
+            DIQ
+          </div>
+
+          <div className="login-heading">
+            <h1>
+              Club access pending
+            </h1>
+
+            <p>
+              Your account is signed in,
+              but it does not yet have
+              active access to a club.
+            </p>
+          </div>
+
+          {signupMessage && (
+            <div className="login-help-message">
+              {signupMessage}
+            </div>
+          )}
+
+          {clubRoleError && (
+            <div className="login-error">
+              {clubRoleError}
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="login-back-button"
+            onClick={handleLogout}
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const activeClubRole =
+  currentMembership.role;
+
+  const currentLocation =
+  Array.isArray(locations)
+    ? locations.find(
+        (location) =>
+          location.id ===
+          currentLocationId
+      ) ?? null
+    : null;
+
+  const displayPageTitle =
+    section === "bookings" &&
+    clubRole === "member"
+      ? "My Bookings"
+      : section === "clinics" &&
+          clubRole === "member"
+        ? "Available Clinics"
+        : visibleNavigationItems.find(
+            (item) =>
+              item.id === section
+          )?.label ?? "DeuceIQ";
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -1821,37 +2142,50 @@ async function handleAcceptInvitation() {
 
           <div className="brand-copy">
             <h1>DeuceIQ</h1>
-            <p>Montauk Tennis</p>
+            <p>{clubName}</p>
           </div>
         </div>
 
         <div className="sidebar-label">
-          MANAGEMENT
+          {clubRole === "member"
+            ? "MEMBER"
+            : "MANAGEMENT"}
         </div>
 
         <nav className="navigation">
-          {visibleNavigationItems.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={
-                section === item.id
-                  ? "nav-item active"
-                  : "nav-item"
-              }
-              onClick={() =>
-                setSection(item.id)
-              }
-            >
-              <span className="nav-icon">
-                {item.icon}
-              </span>
+          {visibleNavigationItems.map(
+            (item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={
+                  section === item.id
+                    ? "nav-item active"
+                    : "nav-item"
+                }
+                onClick={() =>
+                  setSection(item.id)
+                }
+              >
+                <span className="nav-icon">
+                  {item.icon}
+                </span>
 
-              <span>
-                {item.label}
-              </span>
-            </button>
-          ))}
+                <span>
+                  {item.id ===
+                    "bookings" &&
+                  clubRole === "member"
+                    ? "My Bookings"
+                    : item.id ===
+                          "clinics" &&
+                        clubRole ===
+                          "member"
+                      ? "Available Clinics"
+                      : item.label}
+                </span>
+              </button>
+            )
+          )}
         </nav>
 
         <div className="sidebar-footer">
@@ -1859,15 +2193,21 @@ async function handleAcceptInvitation() {
             <div className="user-avatar">
               {session.user.email
                 ?.charAt(0)
-                .toUpperCase() || "S"}
+                .toUpperCase() ||
+                "U"}
             </div>
 
             <div className="user-copy">
-              <span>Signed in</span>
+              <span>
+                {clubRole?.replace(
+                  "_",
+                  " "
+                ) ?? "user"}
+              </span>
 
               <strong>
                 {session.user.email ||
-                  "Staff User"}
+                  "DeuceIQ User"}
               </strong>
             </div>
           </div>
@@ -1886,91 +2226,211 @@ async function handleAcceptInvitation() {
         <header className="topbar">
           <div>
             <p className="eyebrow">
-              MONTAUK TENNIS
+              {clubName.toUpperCase()}
             </p>
 
-            <h2>
-              {
-                visibleNavigationItems.find(
-                  (item) =>
-                    item.id === section
-                )?.label
-              }
-            </h2>
+            <h2>{displayPageTitle}</h2>
           </div>
 
           <div className="topbar-actions">
-            <button
-              type="button"
-              className="secondary-button"
-            >
-              View Court Sheet
-            </button>
+            {clubMemberships.length >
+              1 && (
+              <select
+                value={currentClubId}
+                onChange={(event) =>
+                  handleClubChange(
+                    event.target.value
+                  )
+                }
+              >
+                {clubMemberships.map(
+                  (membership) => (
+                    <option
+                      key={
+                        membership.club_id
+                      }
+                      value={
+                        membership.club_id
+                      }
+                    >
+                      {
+                        membership.club_id
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+            )}
 
-            <button
-              type="button"
-              className="primary-button"
-            >
-              + Create Booking
-            </button>
+            {locations.length > 1 && (
+              <select
+                value={
+                  currentLocationId ??
+                  ""
+                }
+                onChange={(event) =>
+                  handleLocationChange(
+                    event.target.value
+                  )
+                }
+              >
+                {locations.map(
+                  (location) => (
+                    <option
+                      key={location.id}
+                      value={location.id}
+                    >
+                      {location.name}
+                    </option>
+                  )
+                )}
+              </select>
+            )}
+
+            {canViewCourtSheet && (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  setSection("calendar")
+                }
+              >
+                View Court Sheet
+              </button>
+            )}
+
+            {canManageBookings && (
+              <button
+                type="button"
+                className="primary-button"
+              >
+                + Create Booking
+              </button>
+            )}
           </div>
         </header>
 
         {section === "overview" && (
-          <OverviewPage />
+          <OverviewPage
+            clubRole={activeClubRole}
+            clubName={clubName}
+            locationName={
+              currentLocation?.name ??
+              null
+            }
+            locationsCount={
+              locations.length
+            }
+            courts={courts}
+            availableClinicsCount={
+              availableClinics.length
+            }
+            canManageBookings={
+              canManageBookings
+            }
+            onOpenCalendar={() =>
+              setSection("calendar")
+            }
+            onOpenClinics={() =>
+              setSection("clinics")
+            }
+            onOpenMembers={() =>
+              setSection("members")
+            }
+          />
         )}
 
         {section === "calendar" && (
-          <CalendarPage 
+          <CalendarPage
             bookings={bookings}
-            loading={bookingsLoading}
+            courts={courts}
+            loading={
+              bookingsLoading
+            }
             error={bookingsError}
-            calendarDate={calendarDate}
-            setCalendarDate={setCalendarDate}
+            calendarDate={
+              calendarDate
+            }
+            setCalendarDate={
+              setCalendarDate
+            }
           />
         )}
 
-        {section === "bookings" && (
-          <PlaceholderPage
-            title="Bookings"
-            description="Create, edit and manage lessons, rentals and recurring bookings."
-          />
-        )}
+        {section === "bookings" &&
+          (clubRole === "member" ? (
+            <MemberBookingsPage />
+          ) : (
+            <PlaceholderPage
+              title="Bookings"
+              description="Create, edit and manage lessons, rentals and recurring bookings."
+            />
+          ))}
 
-        {section === "clinics" && (
-          <PlaceholderPage
-            title="Clinics"
-            description="Manage clinic rosters, court capacity, registrations and waitlists."
-          />
-        )}
+        {section === "clinics" &&
+          (clubRole === "member" ? (
+            <MemberClinicsPage
+              clinics={
+                availableClinics
+              }
+              loading={
+                availableClinicsLoading
+              }
+              error={
+                availableClinicsError
+              }
+            />
+          ) : (
+            <PlaceholderPage
+              title="Clinics"
+              description="Manage clinic rosters, court capacity, registrations and waitlists."
+            />
+          ))}
 
         {section === "members" && (
           <MembersPage
             members={members}
-            memberSearch={memberSearch}
+            memberSearch={
+              memberSearch
+            }
             setMemberSearch={
               setMemberSearch
             }
-            loading={membersLoading}
-            error={membersError}
+            loading={
+              membersLoading
+            }
+            error={
+              membersError
+            }
           />
         )}
 
-        {section === "pros" && (
-          <PlaceholderPage
-            title="Pros"
-            description="Manage schedules, location assignments, compensation and availability."
-          />
-        )}
+        {section === "pros" &&
+          (clubRole === "member" ? (
+            <PlaceholderPage
+              title="Pros"
+              description="Browse club professionals and lesson options."
+            />
+          ) : (
+            <PlaceholderPage
+              title="Pros"
+              description="Manage schedules, location assignments, compensation and availability."
+            />
+          ))}
+
         {section === "approvals" && (
           <ApprovalsPage
             requests={roleRequests}
-            loading={roleRequestsLoading}
+            loading={
+              roleRequestsLoading
+            }
             error={
               roleRequestsError ||
               approvalActionError
             }
-            actionId={approvalActionId}
+            actionId={
+              approvalActionId
+            }
             onDecision={
               handleRoleRequestDecision
             }
@@ -1995,8 +2455,29 @@ async function handleAcceptInvitation() {
   );
 }
 
-
-function OverviewPage() {
+function OverviewPage({
+  clubRole,
+  clubName,
+  locationName,
+  locationsCount,
+  courts,
+  availableClinicsCount,
+  canManageBookings,
+  onOpenCalendar,
+  onOpenClinics,
+  onOpenMembers,
+}: {
+  clubRole: string;
+  clubName: string;
+  locationName: string | null;
+  locationsCount: number;
+  courts: Court[];
+  availableClinicsCount: number;
+  canManageBookings: boolean;
+  onOpenCalendar: () => void;
+  onOpenClinics: () => void;
+  onOpenMembers: () => void;
+}) {
   return (
     <section className="overview">
       <div className="overview-grid">
@@ -2004,235 +2485,303 @@ function OverviewPage() {
           <div className="card-heading">
             <div>
               <p className="card-kicker">
-                WEATHER MONITOR
+                CLUB OVERVIEW
               </p>
 
-              <h3>
-                Montauk, New York
-              </h3>
+              <h3>{clubName}</h3>
             </div>
 
-            <span className="weather-status">
-              Outdoor Play
-            </span>
+            {locationName && (
+              <span className="weather-status">
+                {locationName}
+              </span>
+            )}
           </div>
 
           <div className="weather-main">
-            <div className="weather-temp">
-              72°
-            </div>
-
             <div className="weather-description">
               <strong>
-                Partly cloudy
+                {locationsCount}
+                {locationsCount === 1
+                  ? " location"
+                  : " locations"}
               </strong>
 
               <span>
-                Court conditions look
-                favorable
+                {courts.length}
+                {courts.length === 1
+                  ? " active court"
+                  : " active courts"}
               </span>
             </div>
           </div>
 
-          <div className="weather-details">
-            <div>
-              <span>Rain</span>
-              <strong>12%</strong>
-            </div>
-
-            <div>
-              <span>Wind</span>
-              <strong>9 mph</strong>
-            </div>
-
-            <div>
-              <span>Humidity</span>
-              <strong>61%</strong>
-            </div>
-
-            <div>
-              <span>Sunset</span>
-              <strong>7:24 PM</strong>
-            </div>
-          </div>
-
           <div className="weather-note">
-            Weather data will be connected
-            to the live weather service in
-            the next pass.
+            Live weather will appear here
+            once the weather integration is
+            connected. No placeholder weather
+            values are being shown.
           </div>
         </div>
 
-        <div className="quick-actions-card">
-          <div className="card-heading">
+        {canManageBookings && (
+          <div className="quick-actions-card">
+            <div className="card-heading">
+              <div>
+                <p className="card-kicker">
+                  QUICK ACTIONS
+                </p>
+
+                <h3>
+                  Start something
+                </h3>
+              </div>
+            </div>
+
+            <div className="quick-actions">
+              <button>
+                <span>＋</span>
+                Create Booking
+              </button>
+
+              <button>
+                <span>◎</span>
+                Create Clinic
+              </button>
+
+              <button
+                onClick={
+                  onOpenMembers
+                }
+              >
+                <span>♙</span>
+                Add Member
+              </button>
+
+              <button
+                onClick={
+                  onOpenCalendar
+                }
+              >
+                <span>▦</span>
+                View Calendar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="metric-grid">
+        {clubRole === "member" ? (
+          <>
+            <MetricCard
+              label="My Bookings"
+              value="View"
+              detail="Upcoming reservations"
+            />
+
+            <MetricCard
+              label="Available Clinics"
+              value={String(
+                availableClinicsCount
+              )}
+              detail="Future signup opportunities"
+            />
+
+            <MetricCard
+              label="Club Courts"
+              value={String(
+                courts.length
+              )}
+              detail="At selected location"
+            />
+
+            <MetricCard
+              label="Court Availability"
+              value="Next"
+              detail="Member booking availability endpoint"
+            />
+          </>
+        ) : (
+          <>
+            <MetricCard
+              label="Locations"
+              value={String(
+                locationsCount
+              )}
+              detail="Active workspace"
+            />
+
+            <MetricCard
+              label="Courts"
+              value={String(
+                courts.length
+              )}
+              detail="Selected location"
+            />
+
+            <MetricCard
+              label="Clinics"
+              value="Open"
+              detail="Manage programs"
+            />
+
+            <MetricCard
+              label="Opportunity Center"
+              value="AI"
+              detail="Operational intelligence"
+            />
+          </>
+        )}
+      </div>
+
+      {clubRole === "member" ? (
+        <div className="schedule-card">
+          <div className="card-heading schedule-heading">
             <div>
               <p className="card-kicker">
-                QUICK ACTIONS
+                COURT STATUS
               </p>
 
               <h3>
-                Start something
+                Court Availability
               </h3>
             </div>
           </div>
 
-          <div className="quick-actions">
-            <button>
-              <span>＋</span>
-              Create Booking
-            </button>
+          <div className="empty-state">
+            <strong>
+              {courts.length}
+              {courts.length === 1
+                ? " court"
+                : " courts"}{" "}
+              configured
+            </strong>
 
-            <button>
-              <span>◎</span>
-              Create Clinic
-            </button>
-
-            <button>
-              <span>♙</span>
-              Add Member
-            </button>
-
-            <button>
-              <span>▦</span>
-              View Calendar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="metric-grid">
-        <MetricCard
-          label="Today's Bookings"
-          value="0"
-          detail="Scheduled"
-        />
-
-        <MetricCard
-          label="Clinics"
-          value="0"
-          detail="Active today"
-        />
-
-        <MetricCard
-          label="Waitlisted"
-          value="0"
-          detail="Players waiting"
-        />
-
-        <MetricCard
-          label="Open Courts"
-          value="11"
-          detail="Available now"
-        />
-      </div>
-
-      <div className="schedule-card">
-        <div className="card-heading schedule-heading">
-          <div>
-            <p className="card-kicker">
-              CLUB SCHEDULE
+            <p>
+              Live open and occupied time
+              will appear here through the
+              member-safe booking availability
+              endpoint. Internal booking details
+              will not be exposed.
             </p>
-
-            <h3>
-              Today's Court Activity
-            </h3>
           </div>
-
-          <button
-            type="button"
-            className="secondary-button"
-          >
-            Open Full Calendar
-          </button>
         </div>
+      ) : (
+        <div className="schedule-card">
+          <div className="card-heading schedule-heading">
+            <div>
+              <p className="card-kicker">
+                CLUB SCHEDULE
+              </p>
 
-        <div className="schedule-placeholder">
-          <div className="time-column">
-            <span>8 AM</span>
-            <span>10 AM</span>
-            <span>12 PM</span>
-            <span>2 PM</span>
-            <span>4 PM</span>
-            <span>6 PM</span>
+              <h3>
+                Court Activity
+              </h3>
+            </div>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={
+                onOpenCalendar
+              }
+            >
+              Open Full Calendar
+            </button>
           </div>
 
-          <div className="court-grid">
-            {[
-              "Court 1",
-              "Court 2",
-              "Court 3",
-              "Court 4",
-            ].map((court) => (
-              <div
-                className="court-column"
-                key={court}
-              >
-                <strong>
-                  {court}
-                </strong>
+          <div className="empty-state">
+            Use the full calendar to view
+            live booking activity for the
+            selected location.
+          </div>
+        </div>
+      )}
 
-                <div className="court-slot"></div>
-                <div className="court-slot booked">
-                  Private
-                </div>
-                <div className="court-slot"></div>
-                <div className="court-slot clinic">
-                  Clinic
-                </div>
-                <div className="court-slot"></div>
+      {clubRole === "member" &&
+        availableClinicsCount > 0 && (
+          <div className="schedule-card">
+            <div className="card-heading schedule-heading">
+              <div>
+                <p className="card-kicker">
+                  CLINICS
+                </p>
+
+                <h3>
+                  Upcoming Opportunities
+                </h3>
               </div>
-            ))}
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={
+                  onOpenClinics
+                }
+              >
+                View Clinics
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
     </section>
   );
 }
 
+
 function CalendarPage({
   bookings,
+  courts,
   loading,
   error,
   calendarDate,
   setCalendarDate,
 }: {
   bookings: Booking[];
+  courts: Court[];
   loading: boolean;
   error: string | null;
   calendarDate: string;
-  setCalendarDate: (date: string) => void;
+  setCalendarDate: (
+    date: string
+  ) => void;
 }) {
-  const courts = [
-    "H1",
-    "H2",
-    "H3",
-    "H4",
-    "H5",
-    "H6",
-    "H7",
-    "H8",
-    "H9",
-    "H10",
-    "H11",
-  ];
+  const courtNames =
+    courts.map(
+      (court) => court.name
+    );
 
   const timeSlots: string[] = [];
 
-  for (let hour = 6; hour <= 18; hour++) {
+  for (
+    let hour = 6;
+    hour <= 18;
+    hour++
+  ) {
     timeSlots.push(
-      String(hour).padStart(2, "0") + ":00"
+      String(hour).padStart(
+        2,
+        "0"
+      ) + ":00"
     );
 
     if (hour < 18) {
       timeSlots.push(
-        String(hour).padStart(2, "0") + ":30"
+        String(hour).padStart(
+          2,
+          "0"
+        ) + ":30"
       );
     }
   }
 
-  function changeDate(days: number) {
+  function changeDate(
+    days: number
+  ) {
     const date = new Date(
-      calendarDate + "T12:00:00"
+      calendarDate +
+        "T12:00:00"
     );
 
     date.setDate(
@@ -2253,7 +2802,11 @@ function CalendarPage({
       ).padStart(2, "0");
 
     setCalendarDate(
-      year + "-" + month + "-" + day
+      year +
+        "-" +
+        month +
+        "-" +
+        day
     );
   }
 
@@ -2312,7 +2865,9 @@ function CalendarPage({
       booking.lesson_type
         ?.category;
 
-    if (category === "clinic") {
+    if (
+      category === "clinic"
+    ) {
       return "calendar-booking clinic-booking";
     }
 
@@ -2323,11 +2878,15 @@ function CalendarPage({
       return "calendar-booking semi-booking";
     }
 
-    if (category === "rental") {
+    if (
+      category === "rental"
+    ) {
       return "calendar-booking rental-booking";
     }
 
-    if (booking.is_recurring) {
+    if (
+      booking.is_recurring
+    ) {
       return "calendar-booking recurring-booking";
     }
 
@@ -2371,7 +2930,9 @@ function CalendarPage({
 
           <input
             type="date"
-            value={calendarDate}
+            value={
+              calendarDate
+            }
             onChange={(event) =>
               setCalendarDate(
                 event.target.value
@@ -2403,174 +2964,359 @@ function CalendarPage({
         </div>
       )}
 
-      {!loading && !error && (
-        <div className="court-sheet-scroll">
-          <div
-            className="court-sheet-grid"
-            style={{
-              gridTemplateColumns:
-                "72px repeat(" +
-                courts.length +
-                ", minmax(120px, 1fr))",
-            }}
-          >
-            <div className="court-sheet-corner">
-              Time
-            </div>
-
-            {courts.map((court) => (
-              <div
-                key={court}
-                className="court-header-cell"
-              >
-                {court}
-              </div>
-            ))}
-
-            {timeSlots.map((slot) => (
-              <div
-                key={slot}
-                className="court-sheet-row"
-                style={{
-                  display: "contents",
-                }}
-              >
-                <div className="time-cell">
-                  {new Date(
-                    "2026-01-01T" +
-                      slot +
-                      ":00"
-                  ).toLocaleTimeString(
-                    "en-US",
-                    {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    }
-                  )}
-                </div>
-
-                {courts.map(
-                  (court) => {
-                    const booking =
-                      getBookingForCell(
-                        court,
-                        slot
-                      );
-
-                    if (!booking) {
-                      return (
-                        <div
-                          key={
-                            court +
-                            "-" +
-                            slot
-                          }
-                          className="court-cell open-cell"
-                        >
-                          <span>
-                            Open
-                          </span>
-                        </div>
-                      );
-                    }
-
-                    const start =
-                      formatTime(
-                        booking.starts_at
-                      );
-
-                    if (
-                      start !== slot
-                    ) {
-                      return (
-                        <div
-                          key={
-                            court +
-                            "-" +
-                            slot
-                          }
-                          className="court-cell booking-continuation"
-                        />
-                      );
-                    }
-
-                    return (
-                      <div
-                        key={
-                          court +
-                          "-" +
-                          slot
-                        }
-                        className="court-cell"
-                      >
-                        <div
-                          className={
-                            getBookingClass(
-                              booking
-                            )
-                          }
-                        >
-                          <strong>
-                            {booking
-                              .lesson_type
-                              ?.name ||
-                              "Booking"}
-                          </strong>
-
-                          <span>
-                            {getProName(
-                              booking
-                            ) ||
-                              "No pro"}
-                          </span>
-
-                          <small>
-                            {new Date(
-                              booking.starts_at
-                            ).toLocaleTimeString(
-                              "en-US",
-                              {
-                                timeZone:
-                                  "America/New_York",
-                                hour:
-                                  "numeric",
-                                minute:
-                                  "2-digit",
-                              }
-                            )}
-
-                            {" - "}
-
-                            {new Date(
-                              booking.ends_at
-                            ).toLocaleTimeString(
-                              "en-US",
-                              {
-                                timeZone:
-                                  "America/New_York",
-                                hour:
-                                  "numeric",
-                                minute:
-                                  "2-digit",
-                              }
-                            )}
-                          </small>
-
-                          {booking.is_recurring && (
-                            <em>
-                              Recurring
-                            </em>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-            ))}
+      {!loading &&
+        !error &&
+        courtNames.length ===
+          0 && (
+          <div className="empty-state">
+            No courts are configured
+            for this location.
           </div>
+        )}
+
+      {!loading &&
+        !error &&
+        courtNames.length > 0 && (
+          <div className="court-sheet-scroll">
+            <div
+              className="court-sheet-grid"
+              style={{
+                gridTemplateColumns:
+                  "72px repeat(" +
+                  courtNames.length +
+                  ", minmax(120px, 1fr))",
+              }}
+            >
+              <div className="court-sheet-corner">
+                Time
+              </div>
+
+              {courtNames.map(
+                (court) => (
+                  <div
+                    key={court}
+                    className="court-header-cell"
+                  >
+                    {court}
+                  </div>
+                )
+              )}
+
+              {timeSlots.map(
+                (slot) => (
+                  <div
+                    key={slot}
+                    className="court-sheet-row"
+                    style={{
+                      display:
+                        "contents",
+                    }}
+                  >
+                    <div className="time-cell">
+                      {new Date(
+                        "2026-01-01T" +
+                          slot +
+                          ":00"
+                      ).toLocaleTimeString(
+                        "en-US",
+                        {
+                          hour:
+                            "numeric",
+                          minute:
+                            "2-digit",
+                        }
+                      )}
+                    </div>
+
+                    {courtNames.map(
+                      (court) => {
+                        const booking =
+                          getBookingForCell(
+                            court,
+                            slot
+                          );
+
+                        if (!booking) {
+                          return (
+                            <div
+                              key={
+                                court +
+                                "-" +
+                                slot
+                              }
+                              className="court-cell open-cell"
+                            >
+                              <span>
+                                Open
+                              </span>
+                            </div>
+                          );
+                        }
+
+                        const start =
+                          formatTime(
+                            booking.starts_at
+                          );
+
+                        if (
+                          start !==
+                          slot
+                        ) {
+                          return (
+                            <div
+                              key={
+                                court +
+                                "-" +
+                                slot
+                              }
+                              className="court-cell booking-continuation"
+                            />
+                          );
+                        }
+
+                        return (
+                          <div
+                            key={
+                              court +
+                              "-" +
+                              slot
+                            }
+                            className="court-cell"
+                          >
+                            <div
+                              className={
+                                getBookingClass(
+                                  booking
+                                )
+                              }
+                            >
+                              <strong>
+                                {booking
+                                  .lesson_type
+                                  ?.name ||
+                                  "Booking"}
+                              </strong>
+
+                              <span>
+                                {getProName(
+                                  booking
+                                ) ||
+                                  "No pro"}
+                              </span>
+
+                              <small>
+                                {new Date(
+                                  booking.starts_at
+                                ).toLocaleTimeString(
+                                  "en-US",
+                                  {
+                                    timeZone:
+                                      "America/New_York",
+                                    hour:
+                                      "numeric",
+                                    minute:
+                                      "2-digit",
+                                  }
+                                )}
+
+                                {" - "}
+
+                                {new Date(
+                                  booking.ends_at
+                                ).toLocaleTimeString(
+                                  "en-US",
+                                  {
+                                    timeZone:
+                                      "America/New_York",
+                                    hour:
+                                      "numeric",
+                                    minute:
+                                      "2-digit",
+                                  }
+                                )}
+                              </small>
+
+                              {booking.is_recurring && (
+                                <em>
+                                  Recurring
+                                </em>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+    </section>
+  );
+}
+
+function MemberBookingsPage() {
+  return (
+    <section className="members-card">
+      <div className="card-heading">
+        <div>
+          <p className="card-kicker">
+            MY ACCOUNT
+          </p>
+
+          <h3>
+            My Bookings
+          </h3>
+
+          <p className="card-description">
+            Your upcoming court rentals,
+            lessons and clinic registrations
+            will appear here.
+          </p>
+        </div>
+      </div>
+
+      <div className="empty-state">
+        The member-safe My Bookings backend
+        endpoint is the next connection for
+        this page. The internal staff booking
+        feed is intentionally not used.
+      </div>
+    </section>
+  );
+}
+
+function MemberClinicsPage({
+  clinics,
+  loading,
+  error,
+}: {
+  clinics: MemberClinic[];
+  loading: boolean;
+  error: string | null;
+}) {
+  return (
+    <section className="members-card">
+      <div className="card-heading">
+        <div>
+          <p className="card-kicker">
+            UPCOMING CLINICS
+          </p>
+
+          <h3>
+            Available Clinics
+          </h3>
+
+          <p className="card-description">
+            Browse future clinics,
+            available spots and waitlist
+            status.
+          </p>
+        </div>
+
+        <span className="member-count">
+          {clinics.length} available
+        </span>
+      </div>
+
+      {loading && (
+        <div className="member-message">
+          Loading clinics...
         </div>
       )}
+
+      {error && (
+        <div className="member-message error">
+          {error}
+        </div>
+      )}
+
+      {!loading &&
+        !error &&
+        clinics.length === 0 && (
+          <div className="empty-state">
+            No upcoming clinics are
+            available right now.
+          </div>
+        )}
+
+      {!loading &&
+        !error &&
+        clinics.length > 0 && (
+          <div className="member-list">
+            {clinics.map(
+              (clinic) => (
+                <div
+                  className="member-row"
+                  key={
+                    clinic.booking_id
+                  }
+                >
+                  <div className="member-main">
+                    <strong>
+                      {clinic.name}
+                    </strong>
+
+                    <span>
+                      {new Date(
+                        clinic.starts_at
+                      ).toLocaleString(
+                        "en-US",
+                        {
+                          timeZone:
+                            "America/New_York",
+                          weekday:
+                            "short",
+                          month:
+                            "short",
+                          day:
+                            "numeric",
+                          hour:
+                            "numeric",
+                          minute:
+                            "2-digit",
+                        }
+                      )}
+                    </span>
+
+                    <span>
+                      {clinic.location_name ||
+                        "Location TBD"}
+                      {clinic.pro_name
+                        ? ` • ${clinic.pro_name}`
+                        : ""}
+                    </span>
+                  </div>
+
+                  <div className="member-meta">
+                    <span>
+                      {clinic.spots_remaining >
+                      0
+                        ? `${clinic.spots_remaining} spots open`
+                        : "Waitlist"}
+                    </span>
+
+                    <span>
+                      {clinic.enrolled_count}/
+                      {clinic.capacity} enrolled
+                    </span>
+
+                    {clinic.waitlist_count >
+                      0 && (
+                      <span>
+                        {
+                          clinic.waitlist_count
+                        }{" "}
+                        waitlisted
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        )}
     </section>
   );
 }
@@ -2587,9 +3333,7 @@ function MetricCard({
   return (
     <div className="metric-card">
       <span>{label}</span>
-
       <strong>{value}</strong>
-
       <small>{detail}</small>
     </div>
   );
@@ -2609,7 +3353,6 @@ function PlaceholderPage({
       </p>
 
       <h3>{title}</h3>
-
       <p>{description}</p>
 
       <div className="placeholder-orbit">
@@ -2647,8 +3390,8 @@ function MembersPage({
           <h3>Members</h3>
 
           <p className="card-description">
-            Search players by first or
-            last name.
+            Search players by first
+            or last name.
           </p>
         </div>
 
@@ -2696,53 +3439,56 @@ function MembersPage({
         !error &&
         members.length > 0 && (
           <div className="member-list">
-            {members.map((member) => (
-              <button
-                type="button"
-                className="member-row"
-                key={member.id}
-              >
-                <div className="member-avatar">
-                  {member.first_name
-                    .charAt(0)
-                    .toUpperCase()}
+            {members.map(
+              (member) => (
+                <button
+                  type="button"
+                  className="member-row"
+                  key={member.id}
+                >
+                  <div className="member-avatar">
+                    {member.first_name
+                      .charAt(0)
+                      .toUpperCase()}
 
-                  {member.last_name
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
+                    {member.last_name
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
 
-                <div className="member-main">
-                  <strong>
-                    {member.first_name}{" "}
-                    {member.last_name}
-                  </strong>
+                  <div className="member-main">
+                    <strong>
+                      {member.first_name}{" "}
+                      {member.last_name}
+                    </strong>
 
-                  <span>
-                    {member.email ||
-                      "No email"}
-                  </span>
-                </div>
+                    <span>
+                      {member.email ||
+                        "No email"}
+                    </span>
+                  </div>
 
-                <div className="member-meta">
-                  <span>
-                    {member.membership_type ||
-                      "No membership type"}
-                  </span>
+                  <div className="member-meta">
+                    <span>
+                      {member.membership_type ||
+                        "No membership type"}
+                    </span>
 
-                  <span>
-                    {member.skill_level
-                      ? `Level ${member.skill_level}`
-                      : "No level"}
-                  </span>
-                </div>
-              </button>
-            ))}
+                    <span>
+                      {member.skill_level
+                        ? `Level ${member.skill_level}`
+                        : "No level"}
+                    </span>
+                  </div>
+                </button>
+              )
+            )}
           </div>
         )}
     </section>
   );
 }
+
 function ApprovalsPage({
   requests,
   loading,
@@ -2756,7 +3502,9 @@ function ApprovalsPage({
   actionId: string | null;
   onDecision: (
     requestId: string,
-    decision: "approve" | "decline"
+    decision:
+      | "approve"
+      | "decline"
   ) => Promise<void>;
 }) {
   return (
@@ -2807,7 +3555,7 @@ function ApprovalsPage({
             </h3>
 
             <p>
-              New pro, member, or guest
+              New pro, member or guest
               requests will appear here.
             </p>
           </div>
@@ -2840,7 +3588,9 @@ function ApprovalsPage({
                       </strong>
 
                       <span>
-                        {request.applicant_email}
+                        {
+                          request.applicant_email
+                        }
                       </span>
                     </div>
                   </div>
@@ -2852,7 +3602,9 @@ function ApprovalsPage({
                       </span>
 
                       <strong>
-                        {request.requested_role}
+                        {
+                          request.requested_role
+                        }
                       </strong>
                     </div>
 
@@ -2876,7 +3628,9 @@ function ApprovalsPage({
                       </span>
 
                       <p>
-                        {request.applicant_note}
+                        {
+                          request.applicant_note
+                        }
                       </p>
                     </div>
                   )}
@@ -2886,7 +3640,8 @@ function ApprovalsPage({
                       type="button"
                       className="secondary-button"
                       disabled={
-                        actionId === request.id
+                        actionId ===
+                        request.id
                       }
                       onClick={() =>
                         onDecision(
@@ -2895,7 +3650,8 @@ function ApprovalsPage({
                         )
                       }
                     >
-                      {actionId === request.id
+                      {actionId ===
+                      request.id
                         ? "Processing..."
                         : "Decline"}
                     </button>
@@ -2904,7 +3660,8 @@ function ApprovalsPage({
                       type="button"
                       className="primary-button"
                       disabled={
-                        actionId === request.id
+                        actionId ===
+                        request.id
                       }
                       onClick={() =>
                         onDecision(
@@ -2913,7 +3670,8 @@ function ApprovalsPage({
                         )
                       }
                     >
-                      {actionId === request.id
+                      {actionId ===
+                      request.id
                         ? "Processing..."
                         : "Accept"}
                     </button>

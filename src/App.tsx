@@ -4,6 +4,13 @@ import type { Session } from "@supabase/supabase-js";
 import "./App.css";
 import { supabase } from "./lib/supabase";
 
+type ClubUser = {
+  club_id: string;
+  user_id: string;
+  role: string;
+  active: boolean;
+};
+
 type Section =
   | "overview"
   | "calendar"
@@ -101,61 +108,129 @@ const CLUB_ID =
   "0c7bb910-7918-4011-9993-f2836967ba5f";
 
 const LOCATION_ID =
-  "2fb95b8c-73a7-464b-b825-1b9906dba718";
+  "2fb95b8c-73a7-464b-b825-1b9906dba718";  
 
 const navigationItems: {
   id: Section;
   label: string;
   icon: string;
+  roles: string[];
 }[] = [
   {
     id: "overview",
     label: "Overview",
     icon: "⌂",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+      "front_desk",
+      "pro",
+      "member",
+    ],
   },
   {
     id: "calendar",
     label: "Calendar",
     icon: "▦",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+      "front_desk",
+      "pro",
+    ],
   },
   {
     id: "bookings",
     label: "Bookings",
     icon: "◫",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+      "front_desk",
+    ],
   },
   {
     id: "clinics",
     label: "Clinics",
     icon: "◎",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+      "front_desk",
+      "member",
+    ],
   },
   {
     id: "members",
     label: "Members",
     icon: "♙",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+      "front_desk",
+    ],
   },
   {
     id: "pros",
     label: "Pros",
     icon: "♜",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+      "front_desk",
+      "pro",
+      "member",
+    ],
   },
   {
-  id: "approvals",
-  label: "Approvals",
-  icon: "✓",
+    id: "approvals",
+    label: "Approvals",
+    icon: "✓",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+    ],
   },
   {
     id: "opportunity",
     label: "Opportunity Center",
     icon: "✦",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+    ],
   },
   {
     id: "settings",
     label: "Settings",
     icon: "⚙",
+    roles: [
+      "owner",
+      "director",
+      "manager",
+    ],
   },
 ];
 
 function App() {
+  
+const [clubRole, setClubRole] =
+  useState<string | null>(null);
+
+const [clubRoleLoading, setClubRoleLoading] =
+  useState(false);
+
+const [clubRoleError, setClubRoleError] =
+  useState<string | null>(null);  
+  
   const [section, setSection] =
     useState<Section>("overview");
 
@@ -249,6 +324,32 @@ const [invitePasswordConfirm, setInvitePasswordConfirm] =
 
 const [inviteMessage, setInviteMessage] =
   useState<string | null>(null);
+
+const [signupMode, setSignupMode] =
+  useState(false);
+
+const [signupFirstName, setSignupFirstName] =
+  useState("");
+
+const [signupLastName, setSignupLastName] =
+  useState("");
+
+const [signupLoading, setSignupLoading] =
+  useState(false);
+
+const [signupMessage, setSignupMessage] =
+  useState<string | null>(null);
+
+const [signupPhone, setSignupPhone] =
+  useState("");
+
+const [signupPassword, setSignupPassword] =
+  useState("");
+
+const [
+  signupPasswordConfirm,
+  setSignupPasswordConfirm,
+] = useState("");  
 
 const [calendarDate, setCalendarDate] =
   useState(() => {
@@ -363,6 +464,163 @@ const [calendarDate, setCalendarDate] =
       subscription.unsubscribe();
     };
   }, []);
+
+useEffect(() => {
+  if (!session?.user?.id) {
+    return;
+  }
+  const sessionEmail =
+  session.user.email ?? "";
+
+  const metadata =
+    session.user.user_metadata;
+
+  if (
+    metadata?.signup_intent !== "member"
+  ) {
+    return;
+  }
+
+  const signupClubId =
+    metadata?.signup_club_id;
+
+  if (!signupClubId) {
+    return;
+  }
+
+  let cancelled = false;
+
+  async function finishMemberSignup() {
+    try {
+      const firstName =
+        typeof metadata.first_name === "string"
+          ? metadata.first_name
+          : "";
+
+      const lastName =
+        typeof metadata.last_name === "string"
+          ? metadata.last_name
+          : "";
+
+      const applicantName = [
+        firstName.trim(),
+        lastName.trim(),
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      const applicantEmail =
+        sessionEmail;
+
+      const { error } =
+        await supabase.rpc(
+          "request_member_access",
+          {
+            target_club_id:
+              signupClubId,
+            applicant_name:
+              applicantName,
+            applicant_email:
+              applicantEmail,
+            applicant_note: null,
+          }
+        );
+
+      if (error) {
+        throw error;
+      }
+
+      if (!cancelled) {
+        setSignupMessage(
+          "Your member request has been sent to the club for approval."
+        );
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setSignupMessage(
+          error instanceof Error
+            ? error.message
+            : "Unable to finish member signup."
+        );
+      }
+    }
+  }
+
+  finishMemberSignup();
+
+  return () => {
+    cancelled = true;
+  };
+}, [
+  session?.user?.id,
+]);
+
+  useEffect(() => {
+  if (!session?.user?.id) {
+    setClubRole(null);
+    return;
+  }
+  const userId = session.user.id;
+
+  let cancelled = false;
+
+  async function loadClubRole() {
+    try {
+      setClubRoleLoading(true);
+      setClubRoleError(null);
+
+      const { data, error } =
+        await supabase
+          .from("club_users")
+          .select(
+            "club_id,user_id,role,active"
+          )
+          .eq("club_id", CLUB_ID)
+          .eq(
+            "user_id",
+            userId
+          )
+          .eq("active", true)
+          .limit(1)
+          .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!cancelled) {
+        const clubUser =
+          data as ClubUser | null;
+
+        setClubRole(
+          clubUser?.role ?? null
+        );
+      }
+    } catch (error) {
+      if (!cancelled) {
+        setClubRole(null);
+
+        setClubRoleError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load club role."
+        );
+      }
+    } finally {
+      if (!cancelled) {
+        setClubRoleLoading(false);
+      }
+    }
+  }
+
+  loadClubRole();
+
+  return () => {
+    cancelled = true;
+  };
+}, [
+  session?.user?.id,
+]);
 
   const memberSearchUrl = useMemo(() => {
     const params = new URLSearchParams({
@@ -479,6 +737,7 @@ const [calendarDate, setCalendarDate] =
 
       const params =
         new URLSearchParams({
+          club_id: CLUB_ID,
           booking_date: calendarDate,
           location_id: LOCATION_ID,
         });
@@ -548,64 +807,7 @@ const [calendarDate, setCalendarDate] =
   calendarDate,
   session?.access_token,
 ]);
-useEffect(() => {
-  if (
-    section !== "approvals" ||
-    !session?.access_token
-  ) {
-    return;
-  }
 
-  let cancelled = false;
-
-  async function loadRoleRequests() {
-    try {
-      setRoleRequestsLoading(true);
-      setRoleRequestsError(null);
-
-      const { data, error } =
-        await supabase
-          .from("club_role_requests")
-          .select("*")
-          .eq("club_id", CLUB_ID)
-          .eq("status", "pending")
-          .order("created_at", {
-            ascending: true,
-          });
-
-      if (error) {
-        throw error;
-      }
-
-      if (!cancelled) {
-        setRoleRequests(
-          (data as RoleRequest[]) || []
-        );
-      }
-    } catch (error) {
-      if (!cancelled) {
-        setRoleRequestsError(
-          error instanceof Error
-            ? error.message
-            : "Unable to load approval requests."
-        );
-      }
-    } finally {
-      if (!cancelled) {
-        setRoleRequestsLoading(false);
-      }
-    }
-  }
-
-  loadRoleRequests();
-
-  return () => {
-    cancelled = true;
-  };
-}, [
-  section,
-  session?.access_token,
-]);
 useEffect(() => {
   if (
     section !== "approvals" ||
@@ -794,6 +996,119 @@ async function handleUpdatePassword(
   }, 1500);
 }
 
+async function handleMemberSignup(
+  event: React.FormEvent<HTMLFormElement>
+) {
+  event.preventDefault();
+
+  setSignupLoading(true);
+  setSignupMessage(null);
+
+  try {
+    if (signupPassword.length < 8) {
+      throw new Error(
+        "Password must be at least 8 characters."
+      );
+    }
+
+    if (
+      signupPassword !==
+      signupPasswordConfirm
+    ) {
+      throw new Error(
+        "Passwords do not match."
+      );
+    }
+    
+    window.localStorage.setItem(
+      "deuceiq_member_signup_pending",
+      "true"
+    );
+
+    window.localStorage.setItem(
+      "deuceiq_member_signup_profile",
+      JSON.stringify({
+        firstName: signupFirstName.trim(),
+        lastName: signupLastName.trim(),
+        email: email.trim(),
+        phone: signupPhone.trim(),
+      })
+    );
+
+    const { data, error } =
+      await supabase.auth.signUp({
+        email: email.trim(),
+        password: signupPassword,
+        options: {
+          data: {
+            first_name:
+              signupFirstName.trim(),
+            last_name:
+              signupLastName.trim(),
+            phone:
+              signupPhone.trim() || null,
+            signup_intent: "member",
+            signup_club_id: CLUB_ID,
+          },
+        },
+      });
+
+    if (error) {
+      throw error;
+    }
+
+   if (!data.user) {
+    throw new Error(
+      "Member account could not be created."
+    );
+  }
+
+  if (!data.session) {
+    setSignupMessage(
+      "Account created. Check your email to confirm your account, then sign in to finish joining the club."
+    );
+
+    return;
+  }
+
+  const applicantName = [
+    signupFirstName.trim(),
+    signupLastName.trim(),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const { error: requestError } =
+    await supabase.rpc(
+      "request_member_access",
+      {
+        target_club_id: CLUB_ID,
+        applicant_name:
+          applicantName,
+        applicant_email:
+          email.trim(),
+        applicant_note: null,
+      }
+    );
+
+  if (requestError) {
+    throw requestError;
+  }
+
+  setSignupMessage(
+    "Account created. Your member request has been sent to the club for approval."
+  );
+  } catch (error) {
+    setSignupMessage(
+      error instanceof Error
+        ? error.message
+        : "Unable to create member account."
+    );
+  } finally {
+    setSignupLoading(false);
+  }
+}
+
   async function handleLogin(
     event: React.FormEvent<HTMLFormElement>
   ) {
@@ -954,6 +1269,9 @@ async function handleAcceptInvitation() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
+    
+    setClubRole(null);
+    setClubRoleError(null);
 
     setMembers([]);
     setMemberSearch("");
@@ -1030,7 +1348,7 @@ async function handleAcceptInvitation() {
               {inviteMessage}
             </div>
           )}
-
+          
           <button
             type="submit"
             className="primary-button login-button"
@@ -1216,9 +1534,11 @@ async function handleAcceptInvitation() {
                   <form
             className="login-card"
             onSubmit={
-              resetMode
-                ? handlePasswordReset
-                : handleLogin
+              signupMode
+                ? handleMemberSignup
+                : resetMode
+                  ? handlePasswordReset
+                  : handleLogin
             }
           >
             <div className="login-logo">
@@ -1226,14 +1546,56 @@ async function handleAcceptInvitation() {
             </div>
 
             <div className="login-heading">
-              <h1>DeuceIQ</h1>
+              <h1>
+                {signupMode
+                  ? "Create member account"
+                  : "DeuceIQ"}
+              </h1>
 
               <p>
-                {resetMode
-                  ? "Reset your password."
-                  : "Tennis intelligence for club management."}
+                {signupMode
+                  ? "Join your club as a member."
+                  : resetMode
+                    ? "Reset your password."
+                    : "Tennis intelligence for club management."}
               </p>
             </div>
+
+            {signupMode && (
+              <>
+                <label className="form-field">
+                  <span>First name</span>
+
+                  <input
+                    type="text"
+                    value={signupFirstName}
+                    onChange={(event) =>
+                      setSignupFirstName(
+                        event.target.value
+                      )
+                    }
+                    autoComplete="given-name"
+                    required
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Last name</span>
+
+                  <input
+                    type="text"
+                    value={signupLastName}
+                    onChange={(event) =>
+                      setSignupLastName(
+                        event.target.value
+                      )
+                    }
+                    autoComplete="family-name"
+                    required
+                  />
+                </label>
+              </>
+            )}
 
             <label className="form-field">
               <span>Email</span>
@@ -1250,7 +1612,60 @@ async function handleAcceptInvitation() {
               />
             </label>
 
-            {!resetMode && (
+            {signupMode && (
+              <label className="form-field">
+                <span>Phone number (optional)</span>
+
+                <input
+                  type="tel"
+                  value={signupPhone}
+                  onChange={(event) =>
+                    setSignupPhone(
+                      event.target.value
+                    )
+                  }
+                  autoComplete="tel"
+                />
+              </label>
+            )}
+
+            {signupMode && (
+              <>
+                <label className="form-field">
+                  <span>Password</span>
+
+                  <input
+                    type="password"
+                    value={signupPassword}
+                    onChange={(event) =>
+                      setSignupPassword(
+                        event.target.value
+                      )
+                    }
+                    autoComplete="new-password"
+                    required
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Confirm password</span>
+
+                  <input
+                    type="password"
+                    value={signupPasswordConfirm}
+                    onChange={(event) =>
+                      setSignupPasswordConfirm(
+                        event.target.value
+                      )
+                    }
+                    autoComplete="new-password"
+                    required
+                  />
+                </label>
+              </>
+            )}
+
+            {!resetMode && !signupMode && (
               <label className="form-field">
                 <span>Password</span>
 
@@ -1267,7 +1682,7 @@ async function handleAcceptInvitation() {
               </label>
             )}
 
-            {!resetMode && (
+            {!resetMode && !signupMode && (
               <div className="login-help-row">
                 <button
                   type="button"
@@ -1279,6 +1694,16 @@ async function handleAcceptInvitation() {
                   }}
                 >
                   Forgot password?
+                </button>
+                
+                <button
+                  type="button"
+                  className="login-back-button"
+                  onClick={() => {
+                    // member signup mode comes next
+                  }}
+                >
+                  Create member account
                 </button>
 
                 <button
@@ -1315,42 +1740,77 @@ async function handleAcceptInvitation() {
                 {resetMessage}
               </div>
             )}
-
+            {signupMessage && (
+              <div className="login-help-message">
+                {signupMessage}
+              </div>
+            )}
             <button
               type="submit"
               className="primary-button login-button"
               disabled={
-                resetMode
-                  ? resetLoading
-                  : loginLoading
+                signupMode
+                  ? signupLoading
+                  : resetMode
+                    ? resetLoading
+                    : loginLoading
               }
             >
-              {resetMode
-                ? resetLoading
-                  ? "Sending..."
-                  : "Send reset email"
-                : loginLoading
-                  ? "Signing in..."
-                  : "Sign in"}
+              {signupMode
+                ? signupLoading
+                  ? "Creating account..."
+                  : "Create member account"
+                : resetMode
+                  ? resetLoading
+                    ? "Sending..."
+                    : "Send reset email"
+                  : loginLoading
+                    ? "Signing in..."
+                    : "Sign in"}
             </button>
 
-            {resetMode && (
-              <button
-                type="button"
-                className="login-back-button"
-                onClick={() => {
-                  setResetMode(false);
-                  setResetMessage(null);
-                }}
-              >
-                Back to sign in
-              </button>
-            )}
+            {!resetMode && (
+                <button
+                  type="button"
+                  className="login-back-button"
+                  onClick={() => {
+                    setSignupMode(
+                      (current) => !current
+                    );
+
+                    setLoginError(null);
+                    setResetMessage(null);
+                    setSignupMessage(null);
+                  }}
+                >
+                  {signupMode
+                    ? "Back to sign in"
+                    : "Create member account"}
+                </button>
+              )}
+              
+              {resetMode && (
+                <button
+                  type="button"
+                  className="login-back-button"
+                  onClick={() => {
+                    setResetMode(false);
+                    setResetMessage(null);
+                  }}
+                >
+                  Back to sign in
+                </button>
+              )}
           </form>
       </div>
     );
   }
-
+  const visibleNavigationItems =
+  navigationItems.filter(
+    (item) =>
+      clubRole !== null &&
+      item.roles.includes(clubRole)
+  );
   return (
     <div className="app">
       <aside className="sidebar">
@@ -1370,7 +1830,7 @@ async function handleAcceptInvitation() {
         </div>
 
         <nav className="navigation">
-          {navigationItems.map((item) => (
+          {visibleNavigationItems.map((item) => (
             <button
               key={item.id}
               type="button"
@@ -1431,7 +1891,7 @@ async function handleAcceptInvitation() {
 
             <h2>
               {
-                navigationItems.find(
+                visibleNavigationItems.find(
                   (item) =>
                     item.id === section
                 )?.label

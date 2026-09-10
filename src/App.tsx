@@ -30,6 +30,7 @@ type Section =
   | "pros"
   | "approvals"
   | "opportunity"
+  | "inventory"
   | "settings";
 
 type Member = {
@@ -119,6 +120,54 @@ type MemberClinic = {
 
 type MemberClinicsResponse = { count: number; clinics: MemberClinic[] };
 
+type InventoryItem = {
+  id: string;
+  club_id: string;
+  location_id: string | null;
+  name: string;
+  category: string;
+  sku: string | null;
+  unit_label: string;
+  inventory_count: number | string;
+  unit_price: number | string;
+  updated_asset_value: number | string;
+  reorder_level: number | string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+type InventoryResponse = {
+  count: number;
+  inventory: InventoryItem[];
+};
+
+type InventoryMovement = {
+  id: string;
+  club_id: string;
+  inventory_item_id: string;
+  movement_type: string;
+  quantity_change: number | string;
+  resulting_inventory_count: number | string;
+  unit_price: number | string | null;
+  asset_value_after: number | string;
+  notes: string | null;
+  occurred_at: string;
+  created_by: string | null;
+  created_at: string;
+};
+
+type InventoryMovementsResponse = {
+  inventory_item: {
+    id: string;
+    club_id: string;
+    name: string;
+    active: boolean;
+  };
+  count: number;
+  movements: InventoryMovement[];
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE || "https://api.deuceiq.com";
 const navigationItems: {
   id: Section;
@@ -134,6 +183,7 @@ const navigationItems: {
   { id: "pros", label: "Pros", icon: "♜", roles: ["owner", "director", "manager", "front_desk", "pro", "member"] },
   { id: "approvals", label: "Invitations", icon: "✉", roles: ["owner", "director", "manager", "front_desk"] },
   { id: "opportunity", label: "Opportunity Center", icon: "✦", roles: ["owner", "director", "manager"] },
+  { id: "inventory", label: "Inventory", icon: "▤", roles: ["owner", "director", "manager"] },
   { id: "settings", label: "Settings", icon: "⚙", roles: ["owner", "director", "manager"] },
 ];
 
@@ -228,6 +278,23 @@ function App() {
   const [clinicDecisionMessage, setClinicDecisionMessage] = useState<string | null>(null);
   const [clinicRegistering, setClinicRegistering] = useState(false);
 
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventoryError, setInventoryError] = useState<string | null>(null);
+  const [inventoryIncludeInactive, setInventoryIncludeInactive] = useState(false);
+  const [inventoryCreateOpen, setInventoryCreateOpen] = useState(false);
+  const [inventoryCreateSaving, setInventoryCreateSaving] = useState(false);
+  const [inventoryCreateMessage, setInventoryCreateMessage] = useState<string | null>(null);
+
+  const [inventoryMovementItem, setInventoryMovementItem] = useState<InventoryItem | null>(null);
+  const [inventoryMovementSaving, setInventoryMovementSaving] = useState(false);
+  const [inventoryMovementMessage, setInventoryMovementMessage] = useState<string | null>(null);
+
+  const [inventoryInfoItem, setInventoryInfoItem] = useState<InventoryItem | null>(null);
+  const [inventoryInfoMovements, setInventoryInfoMovements] = useState<InventoryMovement[]>([]);
+  const [inventoryInfoLoading, setInventoryInfoLoading] = useState(false);
+  const [inventoryInfoError, setInventoryInfoError] = useState<string | null>(null);
+
   const [calendarDate, setCalendarDate] = useState(() => getTodayForTimeZone());
 
   const currentMembership = useMemo(() => {
@@ -265,6 +332,10 @@ function App() {
   const canInviteUsers =
     clubRole !== null &&
     ["owner", "director", "manager", "front_desk"].includes(clubRole);
+
+  const canManageInventory =
+    clubRole !== null &&
+    ["owner", "director", "manager"].includes(clubRole);
 
   const invitableRoles = useMemo(() => {
     if (clubRole === "owner") {
@@ -815,6 +886,109 @@ function App() {
     currentLocationId,
   ]);
 
+  async function loadInventory(signal?: AbortSignal) {
+    if (
+      !canManageInventory ||
+      !session?.access_token ||
+      !currentClubId
+    ) {
+      return;
+    }
+
+    try {
+      setInventoryLoading(true);
+      setInventoryError(null);
+
+      const params = new URLSearchParams({
+        club_id: currentClubId,
+        include_inactive: String(inventoryIncludeInactive),
+      });
+
+      if (currentLocationId) {
+        params.set("location_id", currentLocationId);
+      }
+
+      const response = await fetch(
+        `${API_BASE}/inventory?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          signal,
+        }
+      );
+
+      if (!response.ok) {
+        let detail = "";
+
+        try {
+          const body = await response.json();
+          detail =
+            typeof body?.detail === "string"
+              ? body.detail
+              : "";
+        } catch {
+          // Keep fallback message below.
+        }
+
+        throw new Error(
+          detail ||
+            `Unable to load inventory. HTTP ${response.status}`
+        );
+      }
+
+      const body: InventoryResponse = await response.json();
+
+      setInventoryItems(
+        Array.isArray(body?.inventory)
+          ? body.inventory
+          : []
+      );
+    } catch (error) {
+      if (
+        error instanceof DOMException &&
+        error.name === "AbortError"
+      ) {
+        return;
+      }
+
+      setInventoryError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load inventory."
+      );
+    } finally {
+      setInventoryLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (
+      section !== "inventory" ||
+      !canManageInventory ||
+      !session?.access_token ||
+      !currentClubId
+    ) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    loadInventory(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, [
+    section,
+    canManageInventory,
+    currentClubId,
+    currentLocationId,
+    inventoryIncludeInactive,
+    session?.access_token,
+  ]);
+
+
   async function loadMemberClinics(signal?: AbortSignal) {
     if (
       clubRole !== "member" ||
@@ -1100,6 +1274,286 @@ function App() {
       setClinicRegistering(false);
     }
   }
+
+  async function handleOpenInventoryInfo(
+    item: InventoryItem
+  ) {
+    if (
+      !session?.access_token ||
+      !currentClubId ||
+      !canManageInventory
+    ) {
+      return;
+    }
+
+    setInventoryInfoItem(item);
+    setInventoryInfoMovements([]);
+    setInventoryInfoError(null);
+
+    try {
+      setInventoryInfoLoading(true);
+
+      const params = new URLSearchParams({
+        club_id: currentClubId,
+      });
+
+      const response = await fetch(
+        `${API_BASE}/inventory/${item.id}/movements?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      let body: InventoryMovementsResponse | { detail?: string } = {
+        inventory_item: {
+          id: item.id,
+          club_id: item.club_id,
+          name: item.name,
+          active: item.active,
+        },
+        count: 0,
+        movements: [],
+      };
+
+      try {
+        body = await response.json();
+      } catch {
+        // Keep fallback error below.
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          typeof (body as { detail?: string })?.detail === "string"
+            ? (body as { detail?: string }).detail
+            : `Unable to load inventory history. HTTP ${response.status}`
+        );
+      }
+
+      const movementBody = body as InventoryMovementsResponse;
+
+      setInventoryInfoMovements(
+        Array.isArray(movementBody?.movements)
+          ? movementBody.movements
+          : []
+      );
+    } catch (error) {
+      setInventoryInfoError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load inventory history."
+      );
+    } finally {
+      setInventoryInfoLoading(false);
+    }
+  }
+
+
+  async function handleCreateInventoryMovement(
+    item: InventoryItem,
+    values: {
+      movementType: string;
+      quantity: string;
+      unitPrice: string;
+      notes: string;
+    }
+  ) {
+    if (
+      !session?.access_token ||
+      !currentClubId ||
+      !canManageInventory
+    ) {
+      return;
+    }
+
+    try {
+      setInventoryMovementSaving(true);
+      setInventoryMovementMessage(null);
+      setInventoryError(null);
+
+      const rawQuantity = Number(values.quantity);
+
+      if (!Number.isFinite(rawQuantity) || rawQuantity <= 0) {
+        setInventoryMovementMessage(
+          "Enter a quantity greater than zero."
+        );
+        return;
+      }
+
+      const negativeMovementTypes = new Set([
+        "used",
+        "sold",
+        "damaged",
+      ]);
+
+      const quantityChange =
+        negativeMovementTypes.has(values.movementType)
+          ? -rawQuantity
+          : rawQuantity;
+
+      const params = new URLSearchParams({
+        club_id: currentClubId,
+      });
+
+      const response = await fetch(
+        `${API_BASE}/inventory/${item.id}/movements?${params.toString()}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            movement_type: values.movementType,
+            quantity_change: quantityChange,
+            unit_price:
+              values.unitPrice.trim()
+                ? Number(values.unitPrice)
+                : null,
+            occurred_at: null,
+            notes:
+              values.notes.trim() || null,
+          }),
+        }
+      );
+
+      let body: {
+        detail?: string;
+        movement?: {
+          resulting_inventory_count?: number | string;
+        };
+      } = {};
+
+      try {
+        body = await response.json();
+      } catch {
+        // Keep fallback message below.
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          typeof body?.detail === "string"
+            ? body.detail
+            : `Unable to record movement. HTTP ${response.status}`
+        );
+      }
+
+      const resultingCount =
+        body?.movement?.resulting_inventory_count;
+
+      setInventoryMovementMessage(
+        resultingCount !== undefined
+          ? `Movement recorded. Current quantity: ${resultingCount} ${item.unit_label}.`
+          : "Movement recorded successfully."
+      );
+
+      await loadInventory();
+    } catch (error) {
+      setInventoryMovementMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to record inventory movement."
+      );
+    } finally {
+      setInventoryMovementSaving(false);
+    }
+  }
+
+
+  async function handleCreateInventoryItem(
+    values: {
+      name: string;
+      category: string;
+      sku: string;
+      unitLabel: string;
+      initialQuantity: string;
+      unitPrice: string;
+      reorderLevel: string;
+      notes: string;
+    }
+  ) {
+    if (
+      !session?.access_token ||
+      !currentClubId ||
+      !canManageInventory
+    ) {
+      return;
+    }
+
+    try {
+      setInventoryCreateSaving(true);
+      setInventoryCreateMessage(null);
+      setInventoryError(null);
+
+      const response = await fetch(
+        `${API_BASE}/inventory`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            club_id: currentClubId,
+            location_id: currentLocationId,
+            name: values.name.trim(),
+            category:
+              values.category.trim() || "other",
+            sku:
+              values.sku.trim() || null,
+            unit_label:
+              values.unitLabel.trim() || "unit",
+            initial_quantity:
+              Number(values.initialQuantity || "0"),
+            unit_price:
+              Number(values.unitPrice || "0"),
+            reorder_level:
+              values.reorderLevel.trim()
+                ? Number(values.reorderLevel)
+                : null,
+            received_at: null,
+            notes:
+              values.notes.trim() || null,
+          }),
+        }
+      );
+
+      let body: {
+        detail?: string;
+        name?: string;
+      } = {};
+
+      try {
+        body = await response.json();
+      } catch {
+        // Keep fallback message below.
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          typeof body?.detail === "string"
+            ? body.detail
+            : `Unable to create inventory item. HTTP ${response.status}`
+        );
+      }
+
+      setInventoryCreateMessage(
+        `${body?.name || values.name.trim()} was added to inventory.`
+      );
+
+      await loadInventory();
+    } catch (error) {
+      setInventoryCreateMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to create inventory item."
+      );
+    } finally {
+      setInventoryCreateSaving(false);
+    }
+  }
+
 
   async function refreshInvitations() {
     if (!currentClubId) return;
@@ -1465,6 +1919,16 @@ function App() {
     setInvitationsError(null);
     setInviteActionMessage(null);
     setAvailableClinics([]);
+    setInventoryItems([]);
+    setInventoryError(null);
+    setInventoryIncludeInactive(false);
+    setInventoryCreateOpen(false);
+    setInventoryCreateMessage(null);
+    setInventoryMovementItem(null);
+    setInventoryMovementMessage(null);
+    setInventoryInfoItem(null);
+    setInventoryInfoMovements([]);
+    setInventoryInfoError(null);
     setSection("overview");
   }
 
@@ -2289,10 +2753,84 @@ function App() {
           />
         )}
 
+        {section === "inventory" && canManageInventory && (
+          <InventoryPage
+            items={inventoryItems}
+            locations={locations}
+            loading={inventoryLoading}
+            error={inventoryError}
+            includeInactive={inventoryIncludeInactive}
+            setIncludeInactive={setInventoryIncludeInactive}
+            onCreateItem={() => {
+              setInventoryCreateMessage(null);
+              setInventoryCreateOpen(true);
+            }}
+            onRecordMovement={(item) => {
+              setInventoryMovementMessage(null);
+              setInventoryMovementItem(item);
+            }}
+            onMoreInfo={handleOpenInventoryInfo}
+          />
+        )}
+
         {section === "settings" && (
           <PlaceholderPage
             title="Settings"
             description="Manage locations, courts, club rules, pricing and staff configuration."
+          />
+        )}
+
+        {section === "inventory" &&
+          canManageInventory &&
+          inventoryInfoItem && (
+          <InventoryInfoModal
+            item={inventoryInfoItem}
+            movements={inventoryInfoMovements}
+            loading={inventoryInfoLoading}
+            error={inventoryInfoError}
+            onClose={() => {
+              if (inventoryInfoLoading) return;
+              setInventoryInfoItem(null);
+              setInventoryInfoMovements([]);
+              setInventoryInfoError(null);
+            }}
+          />
+        )}
+
+        {section === "inventory" &&
+          canManageInventory &&
+          inventoryMovementItem && (
+          <InventoryMovementModal
+            item={inventoryMovementItem}
+            saving={inventoryMovementSaving}
+            message={inventoryMovementMessage}
+            onClose={() => {
+              if (inventoryMovementSaving) return;
+              setInventoryMovementItem(null);
+              setInventoryMovementMessage(null);
+            }}
+            onSave={(values) =>
+              handleCreateInventoryMovement(
+                inventoryMovementItem,
+                values
+              )
+            }
+          />
+        )}
+
+        {section === "inventory" &&
+          canManageInventory &&
+          inventoryCreateOpen && (
+          <InventoryCreateModal
+            locationName={currentLocation?.name ?? null}
+            saving={inventoryCreateSaving}
+            message={inventoryCreateMessage}
+            onClose={() => {
+              if (inventoryCreateSaving) return;
+              setInventoryCreateOpen(false);
+              setInventoryCreateMessage(null);
+            }}
+            onCreate={handleCreateInventoryItem}
           />
         )}
 
@@ -3553,6 +4091,1360 @@ function ClinicDetailModal({
     </div>
   );
 }
+
+
+
+
+
+
+function InventoryLineChart({
+  title,
+  points,
+  unit,
+  money = false,
+}: {
+  title: string;
+  points: {
+    date: string;
+    value: number;
+  }[];
+  unit: string;
+  money?: boolean;
+}) {
+  const width = 680;
+  const height = 220;
+  const paddingLeft = 58;
+  const paddingRight = 18;
+  const paddingTop = 24;
+  const paddingBottom = 42;
+
+  const validPoints = points.filter(
+    (point) =>
+      Number.isFinite(point.value) &&
+      !Number.isNaN(
+        new Date(point.date).getTime()
+      )
+  );
+
+  if (validPoints.length === 0) {
+    return (
+      <div className="empty-state">
+        No graph data is available yet.
+      </div>
+    );
+  }
+
+  const values = validPoints.map(
+    (point) => point.value
+  );
+
+  let minValue = Math.min(...values);
+  let maxValue = Math.max(...values);
+
+  if (minValue === maxValue) {
+    const padding =
+      Math.abs(minValue) > 0
+        ? Math.abs(minValue) * 0.1
+        : 1;
+
+    minValue -= padding;
+    maxValue += padding;
+  }
+
+  const chartWidth =
+    width - paddingLeft - paddingRight;
+
+  const chartHeight =
+    height - paddingTop - paddingBottom;
+
+  const denominator =
+    validPoints.length > 1
+      ? validPoints.length - 1
+      : 1;
+
+  const plotted = validPoints.map(
+    (point, index) => {
+      const x =
+        paddingLeft +
+        (index / denominator) * chartWidth;
+
+      const normalized =
+        (point.value - minValue) /
+        (maxValue - minValue);
+
+      const y =
+        paddingTop +
+        (1 - normalized) * chartHeight;
+
+      return {
+        ...point,
+        x,
+        y,
+      };
+    }
+  );
+
+  const polylinePoints =
+    plotted
+      .map(
+        (point) =>
+          `${point.x},${point.y}`
+      )
+      .join(" ");
+
+  function formatValue(value: number) {
+    if (money) {
+      return new Intl.NumberFormat(
+        "en-US",
+        {
+          style: "currency",
+          currency: "USD",
+          maximumFractionDigits: 2,
+        }
+      ).format(value);
+    }
+
+    return `${value} ${unit}`;
+  }
+
+  function formatDate(value: string) {
+    return new Date(value).toLocaleDateString(
+      "en-US",
+      {
+        month: "short",
+        day: "numeric",
+      }
+    );
+  }
+
+  const firstPoint = plotted[0];
+  const lastPoint =
+    plotted[plotted.length - 1];
+
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(128, 128, 128, 0.24)",
+        borderRadius: "12px",
+        padding: "16px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: "12px",
+          marginBottom: "10px",
+        }}
+      >
+        <strong>{title}</strong>
+
+        <span>
+          Current:{" "}
+          {formatValue(
+            lastPoint.value
+          )}
+        </span>
+      </div>
+
+      <div
+        style={{
+          width: "100%",
+          overflowX: "auto",
+        }}
+      >
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          role="img"
+          aria-label={title}
+          style={{
+            display: "block",
+            width: "100%",
+            minWidth: "520px",
+            height: "auto",
+          }}
+        >
+          <line
+            x1={paddingLeft}
+            y1={paddingTop}
+            x2={paddingLeft}
+            y2={height - paddingBottom}
+            stroke="currentColor"
+            opacity="0.25"
+          />
+
+          <line
+            x1={paddingLeft}
+            y1={height - paddingBottom}
+            x2={width - paddingRight}
+            y2={height - paddingBottom}
+            stroke="currentColor"
+            opacity="0.25"
+          />
+
+          <text
+            x="4"
+            y={paddingTop + 4}
+            fontSize="12"
+            fill="currentColor"
+            opacity="0.75"
+          >
+            {formatValue(maxValue)}
+          </text>
+
+          <text
+            x="4"
+            y={height - paddingBottom + 4}
+            fontSize="12"
+            fill="currentColor"
+            opacity="0.75"
+          >
+            {formatValue(minValue)}
+          </text>
+
+          {validPoints.length > 1 && (
+            <polyline
+              points={polylinePoints}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          )}
+
+          {plotted.map(
+            (point, index) => (
+              <g
+                key={`${point.date}-${index}`}
+              >
+                <circle
+                  cx={point.x}
+                  cy={point.y}
+                  r="4.5"
+                  fill="currentColor"
+                >
+                  <title>
+                    {`${new Date(
+                      point.date
+                    ).toLocaleString()} • ${formatValue(
+                      point.value
+                    )}`}
+                  </title>
+                </circle>
+              </g>
+            )
+          )}
+
+          <text
+            x={paddingLeft}
+            y={height - 12}
+            fontSize="12"
+            fill="currentColor"
+            opacity="0.75"
+            textAnchor="start"
+          >
+            {formatDate(
+              firstPoint.date
+            )}
+          </text>
+
+          <text
+            x={width - paddingRight}
+            y={height - 12}
+            fontSize="12"
+            fill="currentColor"
+            opacity="0.75"
+            textAnchor="end"
+          >
+            {formatDate(
+              lastPoint.date
+            )}
+          </text>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+
+function InventoryInfoModal({
+  item,
+  movements,
+  loading,
+  error,
+  onClose,
+}: {
+  item: InventoryItem;
+  movements: InventoryMovement[];
+  loading: boolean;
+  error: string | null;
+  onClose: () => void;
+}) {
+  function asNumber(value: number | string | null) {
+    if (value === null) {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function formatMoney(value: number | string | null) {
+    const numericValue = asNumber(value) ?? 0;
+
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(numericValue);
+  }
+
+  function movementLabel(value: string) {
+    return value
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  }
+
+  return (
+    <div
+      role="presentation"
+      onMouseDown={(event) => {
+        if (
+          event.currentTarget === event.target &&
+          !loading
+        ) {
+          onClose();
+        }
+      }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        background: "rgba(8, 14, 24, 0.58)",
+        display: "grid",
+        placeItems: "center",
+        padding: "24px",
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="inventory-info-title"
+        className="members-card"
+        style={{
+          width: "min(760px, 100%)",
+          maxHeight: "88vh",
+          overflowY: "auto",
+          boxShadow:
+            "0 24px 70px rgba(0, 0, 0, 0.28)",
+        }}
+      >
+        <div className="card-heading">
+          <div>
+            <p className="card-kicker">
+              INVENTORY DETAILS
+            </p>
+
+            <h3 id="inventory-info-title">
+              {item.name}
+            </h3>
+
+            <p className="card-description">
+              Current inventory status and complete
+              movement history.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Close
+          </button>
+        </div>
+
+        <div
+          className="metric-grid"
+          style={{ marginTop: "18px" }}
+        >
+          <MetricCard
+            label="Quantity"
+            value={`${item.inventory_count} ${item.unit_label}`}
+            detail={item.active ? "Active item" : "Inactive item"}
+          />
+
+          <MetricCard
+            label="Unit Price"
+            value={formatMoney(item.unit_price)}
+            detail="Current unit value"
+          />
+
+          <MetricCard
+            label="Asset Value"
+            value={formatMoney(item.updated_asset_value)}
+            detail="Current inventory value"
+          />
+
+          <MetricCard
+            label="Reorder Level"
+            value={
+              item.reorder_level === null
+                ? "Not set"
+                : String(item.reorder_level)
+            }
+            detail="Low-stock threshold"
+          />
+        </div>
+
+        <div
+          className="schedule-card"
+          style={{ marginTop: "18px" }}
+        >
+          <div className="card-heading schedule-heading">
+            <div>
+              <p className="card-kicker">
+                HISTORY
+              </p>
+
+              <h3>Inventory Movements</h3>
+            </div>
+
+            <span className="member-count">
+              {movements.length} movements
+            </span>
+          </div>
+
+          {loading && (
+            <div className="member-message">
+              Loading movement history...
+            </div>
+          )}
+
+          {error && (
+            <div className="member-message error">
+              {error}
+            </div>
+          )}
+
+          {!loading &&
+            !error &&
+            movements.length === 0 && (
+              <div className="empty-state">
+                No movements have been recorded
+                for this item yet.
+              </div>
+            )}
+
+          {!loading &&
+            !error &&
+            movements.length > 0 && (
+              <div className="member-list">
+                {movements.map((movement) => {
+                  const change =
+                    asNumber(movement.quantity_change) ?? 0;
+
+                  return (
+                    <div
+                      key={movement.id}
+                      className="member-row"
+                    >
+                      <div className="member-main">
+                        <strong>
+                          {movementLabel(
+                            movement.movement_type
+                          )}
+                        </strong>
+
+                        <span>
+                          {new Date(
+                            movement.occurred_at
+                          ).toLocaleString()}
+                        </span>
+
+                        {movement.notes && (
+                          <span>
+                            {movement.notes}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="member-meta">
+                        <span>
+                          {change > 0 ? "+" : ""}
+                          {change} {item.unit_label}
+                        </span>
+
+                        <span>
+                          Result:{" "}
+                          {movement.resulting_inventory_count}
+                        </span>
+
+                        <span>
+                          Value:{" "}
+                          {formatMoney(
+                            movement.asset_value_after
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+        </div>
+
+        <div
+          className="schedule-card"
+          style={{ marginTop: "18px" }}
+        >
+          <div className="card-heading schedule-heading">
+            <div>
+              <p className="card-kicker">
+                TRENDS
+              </p>
+
+              <h3>Supply and Value</h3>
+            </div>
+          </div>
+
+          {!loading &&
+            !error &&
+            movements.length > 0 && (
+              <div
+                style={{
+                  display: "grid",
+                  gap: "20px",
+                  marginTop: "16px",
+                }}
+              >
+                <InventoryLineChart
+                  title="Supply Over Time"
+                  unit={item.unit_label}
+                  points={movements.map(
+                    (movement) => ({
+                      date: movement.occurred_at,
+                      value: Number(
+                        movement.resulting_inventory_count
+                      ),
+                    })
+                  )}
+                />
+
+                <InventoryLineChart
+                  title="Asset Value Over Time"
+                  unit="USD"
+                  money
+                  points={movements.map(
+                    (movement) => ({
+                      date: movement.occurred_at,
+                      value: Number(
+                        movement.asset_value_after
+                      ),
+                    })
+                  )}
+                />
+              </div>
+            )}
+
+          {!loading &&
+            !error &&
+            movements.length === 0 && (
+              <div className="empty-state">
+                Record inventory movements to begin
+                building supply and asset-value graphs.
+              </div>
+            )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+
+function InventoryMovementModal({
+  item,
+  saving,
+  message,
+  onClose,
+  onSave,
+}: {
+  item: InventoryItem;
+  saving: boolean;
+  message: string | null;
+  onClose: () => void;
+  onSave: (values: {
+    movementType: string;
+    quantity: string;
+    unitPrice: string;
+    notes: string;
+  }) => void;
+}) {
+  const [movementType, setMovementType] =
+    useState("received");
+  const [quantity, setQuantity] =
+    useState("");
+  const [unitPrice, setUnitPrice] =
+    useState("");
+  const [notes, setNotes] =
+    useState("");
+
+  const quantityNumber = Number(quantity);
+
+  const valid =
+    quantity.trim().length > 0 &&
+    Number.isFinite(quantityNumber) &&
+    quantityNumber > 0 &&
+    (
+      unitPrice.trim() === "" ||
+      (
+        Number.isFinite(Number(unitPrice)) &&
+        Number(unitPrice) >= 0
+      )
+    );
+
+  const currentCount = Number(item.inventory_count);
+
+  return (
+    <div
+      role="presentation"
+      onMouseDown={(event) => {
+        if (
+          event.currentTarget === event.target &&
+          !saving
+        ) {
+          onClose();
+        }
+      }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        background: "rgba(8, 14, 24, 0.58)",
+        display: "grid",
+        placeItems: "center",
+        padding: "24px",
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="inventory-movement-title"
+        className="members-card"
+        style={{
+          width: "min(560px, 100%)",
+          maxHeight: "88vh",
+          overflowY: "auto",
+          boxShadow:
+            "0 24px 70px rgba(0, 0, 0, 0.28)",
+        }}
+      >
+        <div className="card-heading">
+          <div>
+            <p className="card-kicker">
+              INVENTORY MOVEMENT
+            </p>
+
+            <h3 id="inventory-movement-title">
+              {item.name}
+            </h3>
+
+            <p className="card-description">
+              Current quantity:{" "}
+              {Number.isFinite(currentCount)
+                ? currentCount
+                : item.inventory_count}{" "}
+              {item.unit_label}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Close
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gap: "14px",
+            marginTop: "18px",
+          }}
+        >
+          <label className="form-field">
+            <span>Movement type</span>
+
+            <select
+              value={movementType}
+              onChange={(event) =>
+                setMovementType(event.target.value)
+              }
+              disabled={saving}
+            >
+              <option value="received">
+                Received
+              </option>
+              <option value="used">
+                Used
+              </option>
+              <option value="sold">
+                Sold
+              </option>
+              <option value="damaged">
+                Damaged
+              </option>
+              <option value="returned">
+                Returned
+              </option>
+              <option value="adjustment">
+                Adjustment
+              </option>
+            </select>
+          </label>
+
+          <label className="form-field">
+            <span>Quantity</span>
+
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={quantity}
+              onChange={(event) =>
+                setQuantity(event.target.value)
+              }
+              placeholder="2"
+              disabled={saving}
+              required
+            />
+          </label>
+
+          <label className="form-field">
+            <span>
+              Unit price (optional)
+            </span>
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={unitPrice}
+              onChange={(event) =>
+                setUnitPrice(event.target.value)
+              }
+              placeholder={String(item.unit_price)}
+              disabled={saving}
+            />
+          </label>
+
+          <label className="form-field">
+            <span>Notes (optional)</span>
+
+            <textarea
+              value={notes}
+              onChange={(event) =>
+                setNotes(event.target.value)
+              }
+              rows={3}
+              placeholder="Reason for this inventory change"
+              disabled={saving}
+            />
+          </label>
+
+          <div className="member-message">
+            Enter the number of units only.
+            DeuceIQ automatically treats Used,
+            Sold and Damaged as reductions.
+            Received and Returned increase stock.
+          </div>
+
+          {message && (
+            <div className="member-message">
+              {message}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+            }}
+          >
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onClose}
+              disabled={saving}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              className="primary-button"
+              disabled={saving || !valid}
+              onClick={() =>
+                onSave({
+                  movementType,
+                  quantity,
+                  unitPrice,
+                  notes,
+                })
+              }
+            >
+              {saving
+                ? "Recording..."
+                : "Record Movement"}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+
+function InventoryCreateModal({
+  locationName,
+  saving,
+  message,
+  onClose,
+  onCreate,
+}: {
+  locationName: string | null;
+  saving: boolean;
+  message: string | null;
+  onClose: () => void;
+  onCreate: (values: {
+    name: string;
+    category: string;
+    sku: string;
+    unitLabel: string;
+    initialQuantity: string;
+    unitPrice: string;
+    reorderLevel: string;
+    notes: string;
+  }) => void;
+}) {
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState("other");
+  const [sku, setSku] = useState("");
+  const [unitLabel, setUnitLabel] = useState("unit");
+  const [initialQuantity, setInitialQuantity] = useState("0");
+  const [unitPrice, setUnitPrice] = useState("0");
+  const [reorderLevel, setReorderLevel] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const valid =
+    name.trim().length > 0 &&
+    category.trim().length > 0 &&
+    unitLabel.trim().length > 0 &&
+    Number(initialQuantity) >= 0 &&
+    Number(unitPrice) >= 0 &&
+    (
+      reorderLevel.trim() === "" ||
+      Number(reorderLevel) >= 0
+    );
+
+  return (
+    <div
+      role="presentation"
+      onMouseDown={(event) => {
+        if (
+          event.currentTarget === event.target &&
+          !saving
+        ) {
+          onClose();
+        }
+      }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        background: "rgba(8, 14, 24, 0.58)",
+        display: "grid",
+        placeItems: "center",
+        padding: "24px",
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="inventory-create-title"
+        className="members-card"
+        style={{
+          width: "min(620px, 100%)",
+          maxHeight: "88vh",
+          overflowY: "auto",
+          boxShadow:
+            "0 24px 70px rgba(0, 0, 0, 0.28)",
+        }}
+      >
+        <div className="card-heading">
+          <div>
+            <p className="card-kicker">
+              INVENTORY
+            </p>
+
+            <h3 id="inventory-create-title">
+              Create Item
+            </h3>
+
+            <p className="card-description">
+              Add a product or supply item
+              {locationName
+                ? ` for ${locationName}.`
+                : "."}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Close
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gap: "14px",
+            marginTop: "18px",
+          }}
+        >
+          <label className="form-field">
+            <span>Item name</span>
+            <input
+              type="text"
+              value={name}
+              onChange={(event) =>
+                setName(event.target.value)
+              }
+              placeholder="Wilson US Open Tennis Balls"
+              disabled={saving}
+              required
+            />
+          </label>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+              gap: "12px",
+            }}
+          >
+            <label className="form-field">
+              <span>Category</span>
+              <input
+                type="text"
+                value={category}
+                onChange={(event) =>
+                  setCategory(event.target.value)
+                }
+                placeholder="balls"
+                disabled={saving}
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>SKU (optional)</span>
+              <input
+                type="text"
+                value={sku}
+                onChange={(event) =>
+                  setSku(event.target.value)
+                }
+                placeholder="WIL-USO-001"
+                disabled={saving}
+              />
+            </label>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+              gap: "12px",
+            }}
+          >
+            <label className="form-field">
+              <span>Unit label</span>
+              <input
+                type="text"
+                value={unitLabel}
+                onChange={(event) =>
+                  setUnitLabel(event.target.value)
+                }
+                placeholder="can"
+                disabled={saving}
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Initial quantity</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={initialQuantity}
+                onChange={(event) =>
+                  setInitialQuantity(event.target.value)
+                }
+                disabled={saving}
+                required
+              />
+            </label>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(2, minmax(0, 1fr))",
+              gap: "12px",
+            }}
+          >
+            <label className="form-field">
+              <span>Unit price</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={unitPrice}
+                onChange={(event) =>
+                  setUnitPrice(event.target.value)
+                }
+                disabled={saving}
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Reorder level (optional)</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={reorderLevel}
+                onChange={(event) =>
+                  setReorderLevel(event.target.value)
+                }
+                disabled={saving}
+              />
+            </label>
+          </div>
+
+          <label className="form-field">
+            <span>Notes (optional)</span>
+            <textarea
+              value={notes}
+              onChange={(event) =>
+                setNotes(event.target.value)
+              }
+              placeholder="Initial shipment, supplier notes, etc."
+              disabled={saving}
+              rows={3}
+            />
+          </label>
+
+          {message && (
+            <div className="member-message">
+              {message}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+            }}
+          >
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onClose}
+              disabled={saving}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              className="primary-button"
+              disabled={saving || !valid}
+              onClick={() =>
+                onCreate({
+                  name,
+                  category,
+                  sku,
+                  unitLabel,
+                  initialQuantity,
+                  unitPrice,
+                  reorderLevel,
+                  notes,
+                })
+              }
+            >
+              {saving
+                ? "Creating..."
+                : "Create Item"}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+
+function InventoryPage({
+  items,
+  locations,
+  loading,
+  error,
+  includeInactive,
+  setIncludeInactive,
+  onCreateItem,
+  onRecordMovement,
+  onMoreInfo,
+}: {
+  items: InventoryItem[];
+  locations: Location[];
+  loading: boolean;
+  error: string | null;
+  includeInactive: boolean;
+  setIncludeInactive: (value: boolean) => void;
+  onCreateItem: () => void;
+  onRecordMovement: (item: InventoryItem) => void;
+  onMoreInfo: (item: InventoryItem) => void;
+}) {
+  function getLocationName(locationId: string | null) {
+    if (!locationId) {
+      return "All locations";
+    }
+
+    for (const location of locations) {
+      if (location.id === locationId) {
+        return location.name;
+      }
+    }
+
+    return "Unknown location";
+  }
+
+  function asNumber(value: number | string | null) {
+    if (value === null) {
+      return null;
+    }
+
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function formatMoney(value: number | string) {
+    const numericValue = asNumber(value) ?? 0;
+
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(numericValue);
+  }
+
+  return (
+    <section className="members-card">
+      <div className="card-heading">
+        <div>
+          <p className="card-kicker">
+            CLUB OPERATIONS
+          </p>
+
+          <h3>Inventory</h3>
+
+          <p className="card-description">
+            Track club supplies, stock levels,
+            unit costs and current asset value.
+          </p>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+          <span className="member-count">
+            {items.length} shown
+          </span>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={onCreateItem}
+          >
+            + Create Item
+          </button>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={includeInactive}
+              onChange={(event) =>
+                setIncludeInactive(event.target.checked)
+              }
+            />
+
+            <span>Show inactive</span>
+          </label>
+        </div>
+      </div>
+
+      {loading && (
+        <div className="member-message">
+          Loading inventory...
+        </div>
+      )}
+
+      {error && (
+        <div className="member-message error">
+          {error}
+        </div>
+      )}
+
+      {!loading &&
+        !error &&
+        items.length === 0 && (
+          <div className="empty-state">
+            No inventory items are configured
+            for this location yet.
+          </div>
+        )}
+
+      {!loading &&
+        !error &&
+        items.length > 0 && (
+          <div className="member-list">
+            {items.map((item) => {
+              const inventoryCount =
+                asNumber(item.inventory_count) ?? 0;
+
+              const reorderLevel =
+                asNumber(item.reorder_level);
+
+              const lowStock =
+                reorderLevel !== null &&
+                inventoryCount <= reorderLevel;
+
+              return (
+                <div
+                  key={item.id}
+                  className="member-row"
+                  style={{
+                    alignItems: "center",
+                    opacity: item.active ? 1 : 0.65,
+                  }}
+                >
+                  <div className="member-main">
+                    <strong>{item.name}</strong>
+
+                    <span>
+                      {item.category}
+                      {item.sku
+                        ? ` • SKU ${item.sku}`
+                        : ""}
+                    </span>
+
+                    <span>
+                      {getLocationName(item.location_id)}
+                    </span>
+                  </div>
+
+                  <div className="member-meta">
+                    <span>
+                      {inventoryCount} {item.unit_label}
+                    </span>
+
+                    <span>
+                      {formatMoney(item.unit_price)} each
+                    </span>
+
+                    <span>
+                      {formatMoney(item.updated_asset_value)} value
+                    </span>
+
+                    {reorderLevel !== null && (
+                      <span>
+                        Reorder at {reorderLevel}
+                      </span>
+                    )}
+
+                    <span>
+                      {item.active
+                        ? lowStock
+                          ? "Low stock"
+                          : "Active"
+                        : "Inactive"}
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="primary-button"
+                      disabled={!item.active}
+                      onClick={() =>
+                        onRecordMovement(item)
+                      }
+                    >
+                      Record Movement
+                    </button>
+
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() =>
+                        onMoreInfo(item)
+                      }
+                    >
+                      More Info
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+    </section>
+  );
+}
+
 
 function MetricCard({
   label,

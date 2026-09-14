@@ -58,6 +58,7 @@ type Booking = {
   revenue_total?: number | null;
   pro_cost_total?: number | null;
   notes?: string | null;
+
   court?: {
     id: string;
     name: string;
@@ -65,19 +66,65 @@ type Booking = {
     location_id?: string;
     court_number?: number;
   } | null;
-  pro?: { id: string; first_name?: string; last_name?: string } | null;
+
+  pro?: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+  } | null;
+
   lesson_type?: {
     id: string;
     name?: string;
     category?: string;
     default_duration_minutes?: number;
   } | null;
+
+  booking_participants?: {
+    id?: string;
+    created_at?: string;
+    participant_role?: string | null;
+    member_id?: string | null;
+    member?: {
+      id: string;
+      first_name?: string | null;
+      last_name?: string | null;
+      membership_type?: string | null;
+      skill_level?: string | null;
+    } | null;
+  }[];
+
+  primary_participant?: {
+    member_id?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+    participant_role?: string | null;
+    guest?: boolean;
+  } | null;
+
   is_recurring?: boolean;
   booking_series_name?: string | null;
   outside_normal_pro_schedule?: boolean;
   schedule_warning?: string | null;
   outside_location_operating_hours?: boolean;
   operating_hours_warning?: string | null;
+};
+
+type ClinicRosterParticipant = {
+  enrollment_id: string;
+  participant_type: "member" | "guest";
+  display_name: string;
+  status: string;
+  waitlist_position?: number | null;
+};
+
+type ClinicRosterResponse = {
+  booking_id: string;
+  capacity: number;
+  enrolled_count: number;
+  spots_remaining: number;
+  waitlist_count: number;
+  participants: ClinicRosterParticipant[];
 };
 
 type ClubInvitation = {
@@ -2659,6 +2706,9 @@ function App() {
               setCalendarDate
             }
             timeZone={selectedTimeZone}
+            accessToken={
+              session.access_token
+            }
           />
         )}
 
@@ -3140,6 +3190,7 @@ function CalendarPage({
   calendarDate,
   setCalendarDate,
   timeZone,
+  accessToken,
 }: {
   bookings: Booking[];
   courts: Court[];
@@ -3150,7 +3201,29 @@ function CalendarPage({
     date: string
   ) => void;
   timeZone: string;
+  accessToken: string;
 }) {
+  const [
+  hoveredClinicId,
+  setHoveredClinicId,
+] = useState<string | null>(null);
+
+const [
+  clinicRosters,
+  setClinicRosters,
+] = useState<
+  Record<
+    string,
+    ClinicRosterResponse
+  >
+>({});
+
+const [
+  clinicRosterLoading,
+  setClinicRosterLoading,
+] = useState<
+  Record<string, boolean>
+>({});
   const courtNames =
     courts.map(
       (court) => court.name
@@ -3179,7 +3252,60 @@ function CalendarPage({
       );
     }
   }
+  async function loadClinicRoster(
+  bookingId: string
+) {
+  if (
+    clinicRosters[bookingId] ||
+    clinicRosterLoading[bookingId]
+  ) {
+    return;
+  }
 
+  try {
+    setClinicRosterLoading(
+      (current) => ({
+        ...current,
+        [bookingId]: true,
+      })
+    );
+
+    const response = await fetch(
+      `${API_BASE}/bookings/${bookingId}/clinic-roster`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Unable to load clinic roster. HTTP ${response.status}`
+      );
+    }
+
+    const data: ClinicRosterResponse =
+      await response.json();
+
+    setClinicRosters(
+      (current) => ({
+        ...current,
+        [bookingId]: data,
+      })
+    );
+  } catch {
+    // Keep calendar usable even if roster lookup fails.
+  } finally {
+    setClinicRosterLoading(
+      (current) => ({
+        ...current,
+        [bookingId]: false,
+      })
+    );
+  }
+}
   function changeDate(
     days: number
   ) {
@@ -3295,6 +3421,24 @@ function CalendarPage({
     return [
       booking.pro?.first_name,
       booking.pro?.last_name,
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  function getPrimaryParticipantName(
+    booking: Booking
+  ) {
+    const participant =
+      booking.primary_participant;
+
+    if (!participant) {
+      return "";
+    }
+
+    return [
+      participant.first_name,
+      participant.last_name,
     ]
       .filter(Boolean)
       .join(" ");
@@ -3454,6 +3598,19 @@ function CalendarPage({
                             booking.starts_at
                           );
 
+                        const durationMinutes =
+                          (
+                            new Date(booking.ends_at).getTime() -
+                            new Date(booking.starts_at).getTime()
+                          ) / 60000;
+
+                        const slotSpan = Math.max(
+                          1,
+                          Math.ceil(
+                            durationMinutes / 30
+                          )
+                        );
+
                         if (
                           start !==
                           slot
@@ -3470,6 +3627,11 @@ function CalendarPage({
                           );
                         }
 
+                        const participantName =
+                          getPrimaryParticipantName(
+                            booking
+                          );
+
                         return (
                           <div
                             key={
@@ -3485,6 +3647,33 @@ function CalendarPage({
                                   booking
                                 )
                               }
+                              style={{
+                                height: `${slotSpan * 42 - 6}px`,
+                              }}
+                              onMouseEnter={() => {
+                                if (
+                                  booking.lesson_type?.category ===
+                                  "clinic"
+                                ) {
+                                  setHoveredClinicId(
+                                    booking.id
+                                  );
+
+                                  void loadClinicRoster(
+                                    booking.id
+                                  );
+                                }
+                              }}
+                              onMouseLeave={() => {
+                                if (
+                                  booking.lesson_type?.category ===
+                                  "clinic"
+                                ) {
+                                  setHoveredClinicId(
+                                    null
+                                  );
+                                }
+                              }}
                             >
                               <strong>
                                 {booking
@@ -3492,6 +3681,14 @@ function CalendarPage({
                                   ?.name ||
                                   "Booking"}
                               </strong>
+
+                              {booking.lesson_type?.category !==
+                                "clinic" &&
+                                participantName && (
+                                  <span className="booking-member">
+                                    {participantName}
+                                  </span>
+                                )}
 
                               <span>
                                 {getProName(
@@ -3535,6 +3732,67 @@ function CalendarPage({
                                   Recurring
                                 </em>
                               )}
+                              {booking.lesson_type?.category ===
+                                "clinic" &&
+                                hoveredClinicId === booking.id && (
+                                  <div className="clinic-roster-popover">
+                                    <strong>
+                                      Registered Players
+                                    </strong>
+
+                                    {clinicRosterLoading[
+                                      booking.id
+                                    ] && (
+                                      <span>
+                                        Loading roster...
+                                      </span>
+                                    )}
+
+                                    {!clinicRosterLoading[
+                                      booking.id
+                                    ] &&
+                                      clinicRosters[
+                                        booking.id
+                                      ]?.participants
+                                        ?.filter(
+                                          (participant) =>
+                                            participant.status ===
+                                              "enrolled" ||
+                                            participant.status ===
+                                              "attended"
+                                        )
+                                        .map(
+                                          (participant) => (
+                                            <span
+                                              key={
+                                                participant.enrollment_id
+                                              }
+                                            >
+                                              {
+                                                participant.display_name
+                                              }
+
+                                              {participant.participant_type ===
+                                                "guest"
+                                                ? " (Guest)"
+                                                : ""}
+                                            </span>
+                                          )
+                                        )}
+
+                                    {!clinicRosterLoading[
+                                      booking.id
+                                    ] &&
+                                      clinicRosters[
+                                        booking.id
+                                      ]?.enrolled_count ===
+                                        0 && (
+                                        <span>
+                                          No registrations yet
+                                        </span>
+                                      )}
+                                  </div>
+                                )}
                             </div>
                           </div>
                         );

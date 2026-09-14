@@ -12,8 +12,8 @@
     "Segoe UI",
     sans-serif;
 
-  color: #f8f6fb;
-  background: #120f1d;
+  color: #f4f7fb;
+  background: #08111f;
 }
 
 body {
@@ -23,14 +23,14 @@ body {
   background:
     radial-gradient(
       circle at 78% 8%,
-      rgba(151, 55, 104, 0.18),
+      rgba(42, 82, 122, 0.22),
       transparent 30%
     ),
     linear-gradient(
       135deg,
-      #100d18 0%,
-      #181120 45%,
-      #110e1b 100%
+      #07101d 0%,
+      #0b1728 45%,
+      #091321 100%
     );
 }
 
@@ -49,19 +49,28 @@ button {
 }
 
 .sidebar {
-  width: 210px;
+  width: 170px;
   min-height: 100vh;
-  padding: 14px 12px 14px 0px;
-  margin-left: -55px;
+
+  padding:
+    12px
+    6px
+    12px
+    2px;
+
+  margin-left: -70px;
+
   display: flex;
   flex-direction: column;
+
   background:
     linear-gradient(
       180deg,
-      #21142c 0%,
-      #1a1225 55%,
-      #130f1d 100%
+      #0d1b2d 0%,
+      #0a1727 55%,
+      #08121f 100%
     );
+
   border-right:
     1px solid rgba(255, 255, 255, 0.07);
 }
@@ -70,7 +79,7 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 6px 24px 2px;
+  padding: 4px 2px 20px 0;
 }
 
 .brand-logo,
@@ -83,8 +92,8 @@ button {
   background:
     linear-gradient(
       135deg,
-      #b33d63,
-      #713d82
+      #b23a48,
+      #274c77
     );
   color: #fff;
   font-weight: 900;
@@ -92,7 +101,7 @@ button {
   letter-spacing: 0.5px;
   box-shadow:
     0 10px 28px
-    rgba(126, 47, 101, 0.28);
+    rgba(178, 58, 72, 0.24);
 }
 
 .brand-copy h1 {
@@ -103,13 +112,13 @@ button {
 
 .brand-copy p {
   margin: 4px 0 0;
-  color: #a99bb6;
+  color: #8ea0b5;
   font-size: 12px;
 }
 
 .sidebar-label {
-  padding: 0 6px 10px 2px;
-  color: #756980;
+  padding: 0 0 8px 0;
+  color: #60758e;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.3px;
@@ -126,11 +135,11 @@ button {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 8px 10px 4px;
+  gap: 8px;
+  padding: 9px 5px 8px 2px;
   border-radius: 10px;
   background: transparent;
-  color: #b9afc3;
+  color: #a9b8c9;
   text-align: left;
   transition:
     background 0.15s ease,
@@ -147,17 +156,17 @@ button {
   background:
     linear-gradient(
       90deg,
-      rgba(179, 61, 99, 0.24),
-      rgba(113, 61, 130, 0.2)
+      rgba(178, 58, 72, 0.20),
+      rgba(39, 76, 119, 0.24)
     );
   color: #fff;
   box-shadow:
-    inset 3px 0 0 #b33d63;
+    inset 3px 0 0 #b23a48;
 }
 
 .nav-icon {
   width: 22px;
-  color: #c56b8d;
+  color: #d45b67;
   font-size: 17px;
   text-align: center;
 }
@@ -183,8 +192,8 @@ button {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #302038;
-  color: #d68aac;
+  background: #13253b;
+  color: #e58b93;
   font-weight: 800;
 }
 
@@ -196,13 +205,13 @@ button {
 }
 
 .user-copy span {
-  color: #766a81;
+  color: #70849b;
   font-size: 10px;
 }
 
 .user-copy strong {
   overflow: hidden;
-  color: #d9d1df;
+  color: #d8e0ea;
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -215,7 +224,7 @@ button {
     1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   background: transparent;
-  color: #9f92aa;
+  color: #8799ad;
 }
 
 .logout-button:hover {
@@ -227,7 +236,7 @@ button {
 .main-content {
   flex: 1;
   min-width: 0;
-  padding: 30px 34px 50px;
+  padding: 28px 10px 60px 15px;
 }
 
 .topbar {
@@ -241,7 +250,7 @@ button {
 .eyebrow,
 .card-kicker {
   margin: 0 0 5px;
-  color: #a25d81;
+  color: #d65a63;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 1.5px;
@@ -265,14 +274,14 @@ button {
   background:
     linear-gradient(
       135deg,
-      #b33d63,
-      #88406d
+      #b23a48,
+      #8e2f3d
     );
   color: white;
   font-weight: 700;
   box-shadow:
     0 8px 22px
-    rgba(155, 52, 100, 0.2);
+    rgba(178, 58, 72, 0.18);
 }
 
 .primary-button:hover {
@@ -284,12 +293,12 @@ button {
     1px solid rgba(255, 255, 255, 0.1);
   border-radius: 9px;
   padding: 9px 14px;
-  background: #241a2d;
-  color: #c7bccd;
+  background: #102037;
+  color: #c0ccd8;
 }
 
 .secondary-button:hover {
-  background: #2b1e36;
+  background: #152943;
   color: white;
 }
 
@@ -332,13 +341,13 @@ button {
   background:
     radial-gradient(
       circle at 82% 18%,
-      rgba(183, 74, 119, 0.2),
+      rgba(39, 76, 119, 0.22),
       transparent 35%
     ),
     linear-gradient(
       145deg,
-      #2f1f39,
-      #201727
+      #132943,
+      #0d1d31
     );
 }
 
@@ -356,7 +365,7 @@ button {
 
 .card-description {
   margin: 6px 0 0;
-  color: #8f819b;
+  color: #7f93aa;
   font-size: 12px;
 }
 
@@ -365,7 +374,7 @@ button {
   border-radius: 999px;
   background:
     rgba(97, 184, 136, 0.13);
-  color: #8bd2aa;
+  color: #8fd0b0;
   font-size: 11px;
   font-weight: 700;
 }
@@ -394,7 +403,7 @@ button {
 }
 
 .weather-description span {
-  color: #a99bb4;
+  color: #8fa1b6;
   font-size: 12px;
 }
 
@@ -415,7 +424,7 @@ button {
 .weather-details span,
 .metric-card span {
   display: block;
-  color: #897c94;
+  color: #73869d;
   font-size: 11px;
 }
 
@@ -430,7 +439,7 @@ button {
   padding-top: 12px;
   border-top:
     1px solid rgba(255, 255, 255, 0.06);
-  color: #756980;
+  color: #60758e;
   font-size: 10px;
 }
 
@@ -456,20 +465,20 @@ button {
   border:
     1px solid rgba(255, 255, 255, 0.07);
   border-radius: 11px;
-  background: #211725;
-  color: #cbbfd0;
+  background: #0f2036;
+  color: #c3ceda;
   text-align: left;
 }
 
 .quick-actions button:hover {
   border-color:
-    rgba(195, 93, 137, 0.35);
-  background: #291a2e;
+    rgba(214, 74, 84, 0.38);
+  background: #142840;
   color: white;
 }
 
 .quick-actions button span {
-  color: #c05a82;
+  color: #d95a65;
   font-size: 20px;
 }
 
@@ -492,7 +501,7 @@ button {
 }
 
 .metric-card small {
-  color: #6f6479;
+  color: #63778e;
   font-size: 10px;
 }
 
@@ -520,7 +529,7 @@ button {
   flex-direction: column;
   justify-content: space-between;
   padding: 34px 8px 7px 0;
-  color: #6f6378;
+  color: #61768d;
   font-size: 10px;
 }
 
@@ -539,7 +548,7 @@ button {
 }
 
 .court-column strong {
-  color: #a99bb4;
+  color: #8fa1b6;
   font-size: 11px;
 }
 
@@ -557,10 +566,10 @@ button {
   align-items: center;
   padding: 8px;
   border-color:
-    rgba(184, 73, 115, 0.28);
+    rgba(214, 74, 84, 0.34);
   background:
-    rgba(155, 56, 97, 0.16);
-  color: #d898b2;
+    rgba(178, 58, 72, 0.15);
+  color: #f09aa2;
   font-size: 10px;
 }
 
@@ -569,10 +578,10 @@ button {
   align-items: center;
   padding: 8px;
   border-color:
-    rgba(116, 72, 152, 0.35);
+    rgba(61, 103, 145, 0.38);
   background:
-    rgba(94, 60, 132, 0.2);
-  color: #baa1d2;
+    rgba(39, 76, 119, 0.22);
+  color: #9eb8d1;
   font-size: 10px;
 }
 
@@ -587,7 +596,7 @@ button {
 }
 
 .calendar-controls span {
-  color: #b4a8be;
+  color: #aebdcd;
   font-size: 12px;
   font-weight: 700;
 }
@@ -596,7 +605,7 @@ button {
   min-height: 520px;
   display: grid;
   place-items: center;
-  color: #6e6278;
+  color: #64788f;
   font-size: 13px;
 }
 
@@ -614,7 +623,7 @@ button {
 
 .placeholder-card > p:not(.card-kicker) {
   max-width: 540px;
-  color: #8e819a;
+  color: #7d90a6;
 }
 
 .placeholder-orbit {
@@ -624,14 +633,14 @@ button {
   width: 180px;
   height: 180px;
   border:
-    1px solid rgba(183, 77, 121, 0.1);
+    1px solid rgba(214, 74, 84, 0.12);
   border-radius: 50%;
 }
 
 .placeholder-orbit span {
   position: absolute;
   border-radius: 50%;
-  background: #a24d79;
+  background: #c44754;
 }
 
 .placeholder-orbit span:nth-child(1) {
@@ -656,7 +665,7 @@ button {
 }
 
 .member-count {
-  color: #776a82;
+  color: #6a8098;
   font-size: 11px;
 }
 
@@ -669,11 +678,11 @@ button {
   border:
     1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  background: #17111e;
+  background: #0b1728;
 }
 
 .member-search span {
-  color: #8f7898;
+  color: #7d91a8;
 }
 
 .member-search input {
@@ -687,7 +696,7 @@ button {
 }
 
 .member-search input::placeholder {
-  color: #62576b;
+  color: #596d84;
 }
 
 .member-list {
@@ -710,15 +719,15 @@ button {
   border-radius: 10px;
   background:
     rgba(255, 255, 255, 0.018);
-  color: #f6f2f7;
+  color: #f1f5f9;
   text-align: left;
 }
 
 .member-row:hover {
   border-color:
-    rgba(181, 78, 120, 0.25);
+    rgba(214, 74, 84, 0.28);
   background:
-    rgba(158, 63, 108, 0.06);
+    rgba(178, 58, 72, 0.07);
 }
 
 .member-avatar {
@@ -727,8 +736,8 @@ button {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #302038;
-  color: #d08bab;
+  background: #13253b;
+  color: #e18790;
   font-size: 11px;
   font-weight: 800;
 }
@@ -746,7 +755,7 @@ button {
 
 .member-main span {
   overflow: hidden;
-  color: #776b82;
+  color: #687e96;
   font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -760,21 +769,21 @@ button {
 .member-meta span {
   padding: 4px 7px;
   border-radius: 999px;
-  background: #241a2d;
-  color: #86778f;
+  background: #102037;
+  color: #758aa1;
   font-size: 9px;
 }
 
 .member-message,
 .empty-state {
   padding: 32px 22px;
-  color: #716477;
+  color: #64798f;
   text-align: center;
 }
 
 .member-message.error,
 .login-error {
-  color: #e07892;
+  color: #ef7f88;
 }
 
 .login-shell {
@@ -785,10 +794,10 @@ button {
   background:
     radial-gradient(
       circle at 50% 20%,
-      rgba(168, 60, 108, 0.16),
+      rgba(42, 82, 122, 0.20),
       transparent 35%
     ),
-    #110e18;
+    #07101d;
 }
 
 .login-card {
@@ -798,7 +807,7 @@ button {
   border:
     1px solid rgba(255, 255, 255, 0.07);
   border-radius: 16px;
-  background: #1d1525;
+  background: #0d1b2d;
   box-shadow:
     0 25px 80px
     rgba(0, 0, 0, 0.28);
@@ -819,7 +828,7 @@ button {
 
 .login-heading p {
   margin: 0;
-  color: #85788f;
+  color: #74889f;
   font-size: 12px;
 }
 
@@ -831,7 +840,7 @@ button {
 }
 
 .form-field span {
-  color: #a295aa;
+  color: #93a5b8;
   font-size: 11px;
   font-weight: 700;
 }
@@ -843,13 +852,13 @@ button {
     1px solid rgba(255, 255, 255, 0.09);
   border-radius: 9px;
   outline: none;
-  background: #14101a;
+  background: #081321;
   color: white;
 }
 
 .form-field input:focus {
   border-color:
-    rgba(190, 82, 128, 0.45);
+    rgba(214, 74, 84, 0.48);
 }
 
 .login-button {
@@ -878,7 +887,7 @@ button {
   }
 
   .sidebar {
-    width: 210px;
+    width: 185px;
   }
 }
 
@@ -951,19 +960,19 @@ button {
     1px solid rgba(255, 255, 255, 0.1);
   border-radius: 9px;
   outline: none;
-  background: #1d1525;
-  color: #d9cfe0;
+  background: #0d1b2d;
+  color: #d8e1ea;
 }
 
 .calendar-message,
 .calendar-empty {
   padding: 60px 30px;
   text-align: center;
-  color: #81738c;
+  color: #70859c;
 }
 
 .calendar-message.error {
-  color: #df718f;
+  color: #ef737e;
 }
 
 .calendar-empty-icon {
@@ -973,7 +982,7 @@ button {
 
 .calendar-empty h3 {
   margin: 0 0 6px;
-  color: #cbbfd1;
+  color: #c4cfdb;
 }
 
 .calendar-empty p {
@@ -1006,9 +1015,9 @@ button {
 
 .live-booking-row:hover {
   border-color:
-    rgba(187, 74, 120, 0.28);
+    rgba(214, 74, 84, 0.30);
   background:
-    rgba(162, 62, 105, 0.06);
+    rgba(178, 58, 72, 0.07);
 }
 
 .booking-time {
@@ -1018,17 +1027,17 @@ button {
 }
 
 .booking-time strong {
-  color: #e1d7e5;
+  color: #dbe4ed;
   font-size: 12px;
 }
 
 .booking-time span {
-  color: #786b82;
+  color: #687d94;
   font-size: 10px;
 }
 
 .booking-court {
-  color: #c687a2;
+  color: #dd7b84;
   font-size: 11px;
   font-weight: 700;
 }
@@ -1044,12 +1053,12 @@ button {
 }
 
 .booking-details span {
-  color: #7e7188;
+  color: #6e839a;
   font-size: 10px;
 }
 
 .booking-player-count {
-  color: #91849b;
+  color: #8396ab;
   font-size: 10px;
 }
 
@@ -1057,8 +1066,8 @@ button {
   padding: 5px 8px;
   border-radius: 999px;
   background:
-    rgba(130, 69, 145, 0.13);
-  color: #bd9aca;
+    rgba(39, 76, 119, 0.16);
+  color: #a9bfd5;
   font-size: 9px;
   text-align: center;
   text-transform: capitalize;
@@ -1078,7 +1087,7 @@ button {
 
 .court-sheet-grid {
   display: grid;
-  min-width: 1500px;
+  min-width: 900px;
 }
 
 .court-sheet-corner,
@@ -1103,9 +1112,9 @@ button {
 
   min-height: 42px;
 
-  background: #1d1525;
+  background: #0d1b2d;
 
-  color: #776a82;
+  color: #6a8098;
 
   font-size: 10px;
   font-weight: 800;
@@ -1125,7 +1134,7 @@ button {
 
   background: #211728;
 
-  color: #d4c8d9;
+  color: #d2dce6;
 
   font-size: 11px;
   font-weight: 800;
@@ -1136,24 +1145,25 @@ button {
   left: 0;
   z-index: 2;
 
-  min-height: 66px;
+  min-height: 42px;
 
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
 
-  padding: 9px 9px 0 4px;
+  padding: 0px 7px 0 3px;
 
-  background: #19121f;
+  background: #091626;
 
-  color: #766a7f;
+  color: #667c94;
 
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .court-cell {
-  min-height: 66px;
-  padding: 4px;
+  position: relative;
+  min-height: 42px;
+  padding: 3px;
 
   background:
     rgba(255, 255, 255, 0.008);
@@ -1166,7 +1176,7 @@ button {
 
 .open-cell span {
   opacity: 0;
-  color: #554b5d;
+  color: #4f647c;
   font-size: 9px;
   transition:
     opacity 0.15s ease;
@@ -1182,15 +1192,19 @@ button {
 }
 
 .calendar-booking {
-  width: 100%;
-  min-height: 56px;
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 12px);
+  min-height: 34px;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 2px;
 
-  padding: 7px 8px;
+  padding: 5px 6px;
 
   border-radius: 7px;
 
@@ -1198,12 +1212,13 @@ button {
 }
 
 .calendar-booking strong {
-  overflow: hidden;
-
+  display: block;
   font-size: 10px;
-
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  padding-bottom: 2px;
   white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: visible;
 }
 
 .calendar-booking span {
@@ -1233,32 +1248,78 @@ button {
 
 .private-booking {
   border:
-    1px solid rgba(191, 75, 119, 0.35);
+    1px solid rgba(214, 74, 84, 0.38);
 
   background:
-    rgba(166, 56, 101, 0.18);
+    rgba(88, 31, 45, 0.96);
 
-  color: #e2a2bb;
+  color: #f09da5;
 }
 
 .semi-booking {
   border:
-    1px solid rgba(200, 102, 132, 0.35);
+    1px solid rgba(223, 104, 112, 0.38);
 
   background:
-    rgba(173, 86, 115, 0.15);
+    rgba(180, 74, 83, 0.16);
 
-  color: #e2acbd;
+  color: #f2a9b0;
+}
+
+.clinic-booking {
+  position: absolute;
+  overflow: visible;
+  z-index: 20;
+}
+
+.clinic-roster-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+
+  min-width: 190px;
+  max-width: 260px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  padding: 10px 12px;
+
+  border: 1px solid rgba(214, 74, 84, 0.65);
+  border-radius: 8px;
+
+  background: rgba(12, 24, 43, 0.98);
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.35);
+
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+
+  pointer-events: none;
+}
+
+.clinic-roster-popover strong {
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+
+.clinic-roster-popover span {
+  font-size: 10px;
 }
 
 .clinic-booking {
   border:
-    1px solid rgba(118, 78, 161, 0.38);
+    1px solid rgba(61, 103, 145, 0.42);
 
   background:
-    rgba(96, 62, 139, 0.22);
+    rgba(31, 48, 78, 0.96);
 
-  color: #c6addb;
+  color: #b8cbe0;
 }
 
 .rental-booking {
@@ -1268,22 +1329,22 @@ button {
   background:
     rgba(62, 113, 123, 0.18);
 
-  color: #9cc9ce;
+  color: #9dcbd0;
 }
 
 .recurring-booking {
   border:
-    1px solid rgba(163, 105, 188, 0.38);
+    1px solid rgba(78, 116, 155, 0.40);
 
   background:
-    rgba(128, 77, 153, 0.2);
+    rgba(39, 76, 119, 0.20);
 
-  color: #d0addf;
+  color: #b8c9da;
 }
 
 .booking-continuation {
   background:
-    rgba(162, 65, 111, 0.06);
+    rgba(255, 255, 255, 0.008);
 }
 
 .calendar-controls input {
@@ -1296,9 +1357,9 @@ button {
 
   outline: none;
 
-  background: #1d1525;
+  background: #0d1b2d;
 
-  color: #d9cfe0;
+  color: #d8e1ea;
 }
 .approval-list {
   display: flex;
@@ -1328,8 +1389,8 @@ button {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #302038;
-  color: #d08bab;
+  background: #13253b;
+  color: #e18790;
   font-size: 12px;
   font-weight: 800;
 }
@@ -1345,7 +1406,7 @@ button {
 }
 
 .approval-person span {
-  color: #776b82;
+  color: #687e96;
   font-size: 10px;
 }
 
@@ -1368,14 +1429,14 @@ button {
 .approval-note span {
   display: block;
   margin-bottom: 4px;
-  color: #776a82;
+  color: #6a8098;
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
 
 .approval-details strong {
-  color: #d6cadc;
+  color: #d3dde7;
   font-size: 11px;
   text-transform: capitalize;
 }
@@ -1385,12 +1446,12 @@ button {
   padding: 12px;
   border-radius: 9px;
   background:
-    rgba(157, 72, 113, 0.06);
+    rgba(178, 58, 72, 0.07);
 }
 
 .approval-note p {
   margin: 0;
-  color: #aa9cb3;
+  color: #99a9ba;
   font-size: 11px;
 }
 
@@ -1404,18 +1465,18 @@ button {
 .approval-empty {
   padding: 70px 24px;
   text-align: center;
-  color: #776a82;
+  color: #6a8098;
 }
 
 .approval-empty-icon {
   margin-bottom: 12px;
   font-size: 28px;
-  color: #a65c81;
+  color: #d05a64;
 }
 
 .approval-empty h3 {
   margin: 0 0 6px;
-  color: #c9bdcf;
+  color: #c6d1dc;
 }
 
 .approval-empty p {
@@ -1433,14 +1494,14 @@ button {
 .login-back-button {
   border: 0;
   background: transparent;
-  color: #c47b9d;
+  color: #e1757e;
   font-size: 11px;
   padding: 0;
 }
 
 .login-link:hover,
 .login-back-button:hover {
-  color: #e0a4bd;
+  color: #f0a3aa;
 }
 
 .login-help-message {
@@ -1448,8 +1509,8 @@ button {
   padding: 10px 12px;
   border-radius: 8px;
   background:
-    rgba(160, 72, 112, 0.08);
-  color: #b8a9c1;
+    rgba(39, 76, 119, 0.12);
+  color: #aebdcc;
   font-size: 11px;
   line-height: 1.5;
 }

@@ -1,0 +1,38 @@
+.calendar-board { color: #edf8f1; background: #10261c; border: 1px solid #355343; border-radius: 16px; padding: 20px; text-align: left; }
+.calendar-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+.calendar-toolbar h3 { margin: 0 auto 0 0; }
+.calendar-board button, .clinic-hover-pair button, .calendar-edit button { color: #fff; background: #245e3f; border: 1px solid #729783; border-radius: 7px; padding: 8px 12px; }
+.calendar-board input, .calendar-edit input, .calendar-edit select, .calendar-edit textarea { background: #0b1c14; color: #edf8f1; border: 1px solid #729783; padding: 8px; border-radius: 6px; color-scheme: dark; font: inherit; }
+.calendar-board p { color: #c2d7ca; font-size: 13px; margin: 8px 0; }
+.calendar-message { padding: 12px; border: 1px solid #86ae96; border-radius: 8px; }
+.calendar-board-scroll { overflow: auto; margin-top: 16px; max-height: 76vh; }
+.calendar-board-columns { display: grid; min-width: max-content; }
+.calendar-column-heading { height: 44px; padding: 12px; background: #193725; border-bottom: 1px solid #486351; text-align: center; }
+.calendar-time-label { height: 48px; padding: 6px; font-size: 12px; color: #c2d7ca; }
+.calendar-lane { position: relative; border-left: 1px solid #355343; }
+.calendar-drop-slot { height: 48px; border-bottom: 1px solid #294636; }
+.calendar-drop-slot:hover { background: #1b3827; }
+.calendar-event { position: absolute; left: 4px; right: 4px; padding: 5px 8px; display: flex; flex-direction: column; gap: 2px; border: 1px solid #a2b490; border-radius: 7px; background: #34442d; color: #f5faef; overflow: hidden; cursor: pointer; font-size: 11px; }
+.calendar-event.is-clinic { background: #20513c; border-color: #81cba2; }
+.calendar-event[draggable="true"] { cursor: grab; }
+.calendar-event[draggable="true"]:active { cursor: grabbing; }
+.calendar-event strong, .calendar-event span { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.calendar-event small { font-size: 10px; }
+.calendar-event:focus-visible, .calendar-board button:focus-visible, .clinic-hover-pair button:focus-visible, .calendar-edit :focus-visible { outline: 3px solid #a1ecc1; outline-offset: 2px; }
+.clinic-hover-pair { position: fixed; z-index: 1000; display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; width: min(640px, calc(100vw - 24px)); color: #f2faf5; text-align: left; }
+.clinic-hover-pair section { position: relative; background: #10291c; border: 1px solid #81ad91; border-radius: 12px; box-shadow: 0 8px 30px #0008; padding: 16px; max-height: min(310px, 65vh); overflow-y: auto; overflow-wrap: anywhere; }
+.clinic-hover-pair h4 { margin: 0 28px 12px 0; font-size: 15px; }
+.clinic-hover-pair p { font-size: 12px; margin: 10px 0; line-height: 1.5; }
+.clinic-hover-pair .hover-close { position: absolute; top: 6px; right: 6px; padding: 2px 7px; }
+.calendar-edit { width: min(540px, calc(100vw - 24px)); max-height: 90dvh; background: #10291c; color: #edf8f1; border: 1px solid #81ad91; border-radius: 14px; padding: 24px; }
+.calendar-edit::backdrop { background: #020a06bd; }
+.calendar-edit h3 { margin-top: 0; }
+.calendar-edit p { font-size: 13px; }
+.calendar-edit fieldset { display: grid; gap: 12px; border: none; padding: 16px 0; }
+.calendar-edit label { display: grid; gap: 5px; font-size: 14px; }
+.calendar-edit footer { display: flex; justify-content: flex-end; gap: 12px; }
+.calendar-edit button:disabled, .calendar-board button:disabled { opacity: .5; cursor: not-allowed; }
+@media (max-width: 520px) { .clinic-hover-pair { grid-template-columns: 1fr; } .clinic-hover-pair section { max-height: 28vh; } }
+
+.calendar-selection { position:absolute; left:3px; right:3px; background:#b7dfaccc; border:2px solid #fff; outline:1px solid #193321; color:#122318; z-index:2; pointer-events:none; padding:6px; font-size:12px; }
+.calendar-drop-slot { touch-action:none; }

@@ -1,0 +1,22 @@
+.member-availability-callout { width:100%; display:flex; flex-direction:column; gap:12px; text-align:left; padding:24px; border:2px solid #95ceaa; border-radius:16px; background:linear-gradient(120deg,#205638,#103b27); color:#f2fff6; cursor:pointer; }
+.member-availability-callout > span { font-size:12px; letter-spacing:1px; font-weight:700; }
+.member-availability-callout > strong { font-size:25px; }
+.member-availability-callout p { font-size:14px; max-width:650px; }
+.member-availability-callout:disabled {opacity:.5;cursor:not-allowed;}
+.member-availability-dialog {width:min(850px,calc(100vw - 24px));max-height:90dvh;overflow:auto;background:#10291c;color:#edf8f1;border:1px solid #81ad91;border-radius:16px;padding:24px;text-align:left;}
+.member-availability-dialog::backdrop {background:#020a06bd;}
+.member-availability-dialog header {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.member-availability-dialog p,.weather-setup p,.member-weather p {font-size:13px;line-height:1.5;margin:12px 0;}
+.member-availability-dialog fieldset,.weather-setup fieldset {display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;border:0;padding:16px 0;}
+.member-availability-dialog label,.weather-setup label {display:grid;gap:5px;font-size:14px;}
+.member-availability-dialog input,.member-availability-dialog select,.weather-setup input {background:#0b1c14;color:#edf8f1;border:1px solid #729783;padding:9px;border-radius:6px;font:inherit;min-width:0;color-scheme:dark;}
+.member-availability-dialog button,.weather-setup button {background:#245e3f;color:white;border:1px solid #729783;border-radius:7px;padding:9px 12px;}
+.member-availability-dialog button:disabled {opacity:.5;cursor:not-allowed;}
+.member-slot-list {display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;max-height:320px;overflow-y:auto;margin:16px 0;}
+.member-slot-list button {display:flex;flex-direction:column;gap:6px;text-align:left;}
+.member-slot-list button[aria-pressed="true"] {outline:2px solid #b7f1ca;background:#35794d;}
+.member-weather .weather-temperature {display:block;font-size:52px;margin:20px 0;}
+.member-weather a {color:#b4efc9;}
+.weather-setup {padding:16px;margin:16px 0;background:#163525;border:1px solid #729783;border-radius:12px;}
+.weather-setup summary {cursor:pointer;}
+.member-availability-callout:focus-visible,.member-availability-dialog :focus-visible,.weather-setup :focus-visible {outline:3px solid #a1ecc1;outline-offset:3px;}

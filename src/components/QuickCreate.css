@@ -1,0 +1,17 @@
+.quick-create { color: #f5faf8; background: #143123; border: 1px solid #3d6853; border-radius: 18px; width: min(560px, calc(100vw - 32px)); max-height: 90dvh; padding: 24px; }
+.quick-create::backdrop { background: rgb(3 10 20 / 75%); }
+.quick-create header, .quick-create footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.quick-create h2 { margin: 0; }
+.quick-create fieldset { display: grid; gap: 14px; border: 0; padding: 18px 0; margin: 0; min-width: 0; }
+.quick-create label { display: grid; gap: 6px; font-size: .95rem; }
+.quick-create input, .quick-create select, .quick-create textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; color: #f5faf8; background: #0b2116; border: 1px solid #4b7963; border-radius: 8px; font: inherit; color-scheme: dark; }
+.quick-create p { color: #bcdbcc; font-size: .9rem; line-height: 1.5; margin-bottom: 0; }
+.quick-create .quick-create-error { color: #ffbdbd; }
+.quick-create button { padding: 10px 16px; border-radius: 8px; border: 1px solid #4b7963; background: #264b39; color: white; }
+.quick-create button:disabled { opacity: .55; cursor: not-allowed; }
+.quick-create :focus-visible { outline: 3px solid #b2f6d5; outline-offset: 2px; }
+.quick-action-result { margin: 12px 0; padding: 14px; background: #173c36; border: 1px solid #4d9a82; border-radius: 10px; color: #e2fff4; }
+
+.quick-create .primary-button { background: #24774b; color: #fff; border-color: #70ce98; }
+.quick-create .primary-button:hover { background: #195c3a; }
+.quick-create h2 { color: #f4fbf7; }

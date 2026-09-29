@@ -12,8 +12,8 @@
     "Segoe UI",
     sans-serif;
 
-  color: #f4f7fb;
-  background: #08111f;
+  color: #f5faf8;
+  background: #0a1d14;
 }
 
 body {
@@ -23,14 +23,14 @@ body {
   background:
     radial-gradient(
       circle at 78% 8%,
-      rgba(42, 82, 122, 0.22),
+      rgba(50, 114, 83, 0.22),
       transparent 30%
     ),
     linear-gradient(
       135deg,
-      #07101d 0%,
-      #0b1728 45%,
-      #091321 100%
+      #091b12 0%,
+      #0e251a 45%,
+      #0b1f15 100%
     );
 }
 
@@ -66,9 +66,9 @@ button {
   background:
     linear-gradient(
       180deg,
-      #0d1b2d 0%,
-      #0a1727 55%,
-      #08121f 100%
+      #102a1d 0%,
+      #0d2419 55%,
+      #0a1d14 100%
     );
 
   border-right:
@@ -93,9 +93,9 @@ button {
     linear-gradient(
       135deg,
       #b23a48,
-      #274c77
+      #2f6f50
     );
-  color: #fff;
+  color: #ffffff;
   font-weight: 900;
   font-size: 13px;
   letter-spacing: 0.5px;
@@ -112,13 +112,13 @@ button {
 
 .brand-copy p {
   margin: 4px 0 0;
-  color: #8ea0b5;
+  color: #92b1a2;
   font-size: 12px;
 }
 
 .sidebar-label {
   padding: 0 0 8px 0;
-  color: #60758e;
+  color: #658978;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.3px;
@@ -139,7 +139,7 @@ button {
   padding: 9px 5px 8px 2px;
   border-radius: 10px;
   background: transparent;
-  color: #a9b8c9;
+  color: #acc6b9;
   text-align: left;
   transition:
     background 0.15s ease,
@@ -149,7 +149,7 @@ button {
 .nav-item:hover {
   background:
     rgba(255, 255, 255, 0.05);
-  color: #fff;
+  color: #ffffff;
 }
 
 .nav-item.active {
@@ -157,9 +157,9 @@ button {
     linear-gradient(
       90deg,
       rgba(178, 58, 72, 0.20),
-      rgba(39, 76, 119, 0.24)
+      rgba(47, 111, 80, 0.24)
     );
-  color: #fff;
+  color: #ffffff;
   box-shadow:
     inset 3px 0 0 #b23a48;
 }
@@ -192,7 +192,7 @@ button {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: #13253b;
+  background: #173728;
   color: #e58b93;
   font-weight: 800;
 }
@@ -205,13 +205,13 @@ button {
 }
 
 .user-copy span {
-  color: #70849b;
+  color: #749786;
   font-size: 10px;
 }
 
 .user-copy strong {
   overflow: hidden;
-  color: #d8e0ea;
+  color: #dae8e1;
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -224,7 +224,7 @@ button {
     1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   background: transparent;
-  color: #8799ad;
+  color: #8ba99b;
 }
 
 .logout-button:hover {
@@ -293,12 +293,12 @@ button {
     1px solid rgba(255, 255, 255, 0.1);
   border-radius: 9px;
   padding: 9px 14px;
-  background: #102037;
-  color: #c0ccd8;
+  background: #143324;
+  color: #c2d6cc;
 }
 
 .secondary-button:hover {
-  background: #152943;
+  background: #1a3e2d;
   color: white;
 }
 
@@ -328,8 +328,8 @@ button {
   background:
     linear-gradient(
       145deg,
-      rgba(43, 29, 51, 0.96),
-      rgba(27, 20, 36, 0.96)
+      rgba(31, 49, 40, 0.96),
+      rgba(22, 34, 28, 0.96)
     );
   box-shadow:
     0 18px 50px
@@ -341,13 +341,13 @@ button {
   background:
     radial-gradient(
       circle at 82% 18%,
-      rgba(39, 76, 119, 0.22),
+      rgba(47, 111, 80, 0.22),
       transparent 35%
     ),
     linear-gradient(
       145deg,
-      #132943,
-      #0d1d31
+      #183e2c,
+      #112d1f
     );
 }
 
@@ -365,7 +365,7 @@ button {
 
 .card-description {
   margin: 6px 0 0;
-  color: #7f93aa;
+  color: #83a695;
   font-size: 12px;
 }
 
@@ -403,7 +403,7 @@ button {
 }
 
 .weather-description span {
-  color: #8fa1b6;
+  color: #93b2a3;
   font-size: 12px;
 }
 
@@ -424,7 +424,7 @@ button {
 .weather-details span,
 .metric-card span {
   display: block;
-  color: #73869d;
+  color: #779989;
   font-size: 11px;
 }
 
@@ -439,7 +439,7 @@ button {
   padding-top: 12px;
   border-top:
     1px solid rgba(255, 255, 255, 0.06);
-  color: #60758e;
+  color: #658978;
   font-size: 10px;
 }
 
@@ -465,15 +465,15 @@ button {
   border:
     1px solid rgba(255, 255, 255, 0.07);
   border-radius: 11px;
-  background: #0f2036;
-  color: #c3ceda;
+  background: #133223;
+  color: #c5d8cf;
   text-align: left;
 }
 
 .quick-actions button:hover {
   border-color:
     rgba(214, 74, 84, 0.38);
-  background: #142840;
+  background: #183c2b;
   color: white;
 }
 
@@ -501,7 +501,7 @@ button {
 }
 
 .metric-card small {
-  color: #63778e;
+  color: #678a79;
   font-size: 10px;
 }
 
@@ -529,7 +529,7 @@ button {
   flex-direction: column;
   justify-content: space-between;
   padding: 34px 8px 7px 0;
-  color: #61768d;
+  color: #658978;
   font-size: 10px;
 }
 
@@ -548,7 +548,7 @@ button {
 }
 
 .court-column strong {
-  color: #8fa1b6;
+  color: #93b2a3;
   font-size: 11px;
 }
 
@@ -578,10 +578,10 @@ button {
   align-items: center;
   padding: 8px;
   border-color:
-    rgba(61, 103, 145, 0.38);
+    rgba(69, 137, 104, 0.38);
   background:
-    rgba(39, 76, 119, 0.22);
-  color: #9eb8d1;
+    rgba(47, 111, 80, 0.22);
+  color: #a3ccb8;
   font-size: 10px;
 }
 
@@ -596,7 +596,7 @@ button {
 }
 
 .calendar-controls span {
-  color: #aebdcd;
+  color: #b1cabe;
   font-size: 12px;
   font-weight: 700;
 }
@@ -605,7 +605,7 @@ button {
   min-height: 520px;
   display: grid;
   place-items: center;
-  color: #64788f;
+  color: #688b7a;
   font-size: 13px;
 }
 
@@ -623,7 +623,7 @@ button {
 
 .placeholder-card > p:not(.card-kicker) {
   max-width: 540px;
-  color: #7d90a6;
+  color: #81a292;
 }
 
 .placeholder-orbit {
@@ -665,7 +665,7 @@ button {
 }
 
 .member-count {
-  color: #6a8098;
+  color: #6f9382;
   font-size: 11px;
 }
 
@@ -678,11 +678,11 @@ button {
   border:
     1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  background: #0b1728;
+  background: #0e251a;
 }
 
 .member-search span {
-  color: #7d91a8;
+  color: #81a493;
 }
 
 .member-search input {
@@ -696,7 +696,7 @@ button {
 }
 
 .member-search input::placeholder {
-  color: #596d84;
+  color: #5d806f;
 }
 
 .member-list {
@@ -719,7 +719,7 @@ button {
   border-radius: 10px;
   background:
     rgba(255, 255, 255, 0.018);
-  color: #f1f5f9;
+  color: #f2f8f5;
   text-align: left;
 }
 
@@ -736,7 +736,7 @@ button {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #13253b;
+  background: #173728;
   color: #e18790;
   font-size: 11px;
   font-weight: 800;
@@ -755,7 +755,7 @@ button {
 
 .member-main span {
   overflow: hidden;
-  color: #687e96;
+  color: #6d9180;
   font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -769,15 +769,15 @@ button {
 .member-meta span {
   padding: 4px 7px;
   border-radius: 999px;
-  background: #102037;
-  color: #758aa1;
+  background: #143324;
+  color: #799d8c;
   font-size: 9px;
 }
 
 .member-message,
 .empty-state {
   padding: 32px 22px;
-  color: #64798f;
+  color: #688b7a;
   text-align: center;
 }
 
@@ -794,10 +794,10 @@ button {
   background:
     radial-gradient(
       circle at 50% 20%,
-      rgba(42, 82, 122, 0.20),
+      rgba(50, 114, 83, 0.20),
       transparent 35%
     ),
-    #07101d;
+    #091b12;
 }
 
 .login-card {
@@ -807,7 +807,7 @@ button {
   border:
     1px solid rgba(255, 255, 255, 0.07);
   border-radius: 16px;
-  background: #0d1b2d;
+  background: #102a1d;
   box-shadow:
     0 25px 80px
     rgba(0, 0, 0, 0.28);
@@ -828,7 +828,7 @@ button {
 
 .login-heading p {
   margin: 0;
-  color: #74889f;
+  color: #789b8a;
   font-size: 12px;
 }
 
@@ -840,7 +840,7 @@ button {
 }
 
 .form-field span {
-  color: #93a5b8;
+  color: #97b4a6;
   font-size: 11px;
   font-weight: 700;
 }
@@ -852,7 +852,7 @@ button {
     1px solid rgba(255, 255, 255, 0.09);
   border-radius: 9px;
   outline: none;
-  background: #081321;
+  background: #0b1e15;
   color: white;
 }
 
@@ -960,15 +960,15 @@ button {
     1px solid rgba(255, 255, 255, 0.1);
   border-radius: 9px;
   outline: none;
-  background: #0d1b2d;
-  color: #d8e1ea;
+  background: #102a1d;
+  color: #dae8e1;
 }
 
 .calendar-message,
 .calendar-empty {
   padding: 60px 30px;
   text-align: center;
-  color: #70859c;
+  color: #749887;
 }
 
 .calendar-message.error {
@@ -982,7 +982,7 @@ button {
 
 .calendar-empty h3 {
   margin: 0 0 6px;
-  color: #c4cfdb;
+  color: #c6d9d0;
 }
 
 .calendar-empty p {
@@ -1027,12 +1027,12 @@ button {
 }
 
 .booking-time strong {
-  color: #dbe4ed;
+  color: #ddebe4;
   font-size: 12px;
 }
 
 .booking-time span {
-  color: #687d94;
+  color: #6c907f;
   font-size: 10px;
 }
 
@@ -1053,12 +1053,12 @@ button {
 }
 
 .booking-details span {
-  color: #6e839a;
+  color: #729685;
   font-size: 10px;
 }
 
 .booking-player-count {
-  color: #8396ab;
+  color: #87a798;
   font-size: 10px;
 }
 
@@ -1066,8 +1066,8 @@ button {
   padding: 5px 8px;
   border-radius: 999px;
   background:
-    rgba(39, 76, 119, 0.16);
-  color: #a9bfd5;
+    rgba(47, 111, 80, 0.16);
+  color: #add1c0;
   font-size: 9px;
   text-align: center;
   text-transform: capitalize;
@@ -1112,9 +1112,9 @@ button {
 
   min-height: 42px;
 
-  background: #0d1b2d;
+  background: #102a1d;
 
-  color: #6a8098;
+  color: #6f9382;
 
   font-size: 10px;
   font-weight: 800;
@@ -1132,9 +1132,9 @@ button {
   display: grid;
   place-items: center;
 
-  background: #211728;
+  background: #192620;
 
-  color: #d2dce6;
+  color: #d4e4dc;
 
   font-size: 11px;
   font-weight: 800;
@@ -1153,9 +1153,9 @@ button {
 
   padding: 0px 7px 0 3px;
 
-  background: #091626;
+  background: #0c2318;
 
-  color: #667c94;
+  color: #6b8f7e;
 
   font-size: 11px;
 }
@@ -1176,7 +1176,7 @@ button {
 
 .open-cell span {
   opacity: 0;
-  color: #4f647c;
+  color: #547866;
   font-size: 9px;
   transition:
     opacity 0.15s ease;
@@ -1291,7 +1291,7 @@ button {
   border: 1px solid rgba(214, 74, 84, 0.65);
   border-radius: 8px;
 
-  background: rgba(12, 24, 43, 0.98);
+  background: rgba(15, 40, 28, 0.98);
 
   box-shadow:
     0 12px 30px rgba(0, 0, 0, 0.35);
@@ -1314,32 +1314,32 @@ button {
 
 .clinic-booking {
   border:
-    1px solid rgba(61, 103, 145, 0.42);
+    1px solid rgba(69, 137, 104, 0.42);
 
   background:
-    rgba(31, 48, 78, 0.96);
+    rgba(36, 73, 55, 0.96);
 
-  color: #b8cbe0;
+  color: #bcdccd;
 }
 
 .rental-booking {
   border:
-    1px solid rgba(80, 139, 148, 0.35);
+    1px solid rgba(87, 141, 115, 0.35);
 
   background:
-    rgba(62, 113, 123, 0.18);
+    rgba(68, 117, 93, 0.18);
 
-  color: #9dcbd0;
+  color: #a2cbb7;
 }
 
 .recurring-booking {
   border:
-    1px solid rgba(78, 116, 155, 0.40);
+    1px solid rgba(86, 147, 118, 0.40);
 
   background:
-    rgba(39, 76, 119, 0.20);
+    rgba(47, 111, 80, 0.20);
 
-  color: #b8c9da;
+  color: #bbd7c9;
 }
 
 .booking-continuation {
@@ -1357,9 +1357,9 @@ button {
 
   outline: none;
 
-  background: #0d1b2d;
+  background: #102a1d;
 
-  color: #d8e1ea;
+  color: #dae8e1;
 }
 .approval-list {
   display: flex;
@@ -1389,7 +1389,7 @@ button {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: #13253b;
+  background: #173728;
   color: #e18790;
   font-size: 12px;
   font-weight: 800;
@@ -1406,7 +1406,7 @@ button {
 }
 
 .approval-person span {
-  color: #687e96;
+  color: #6d9180;
   font-size: 10px;
 }
 
@@ -1429,14 +1429,14 @@ button {
 .approval-note span {
   display: block;
   margin-bottom: 4px;
-  color: #6a8098;
+  color: #6f9382;
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
 
 .approval-details strong {
-  color: #d3dde7;
+  color: #d5e5dd;
   font-size: 11px;
   text-transform: capitalize;
 }
@@ -1451,7 +1451,7 @@ button {
 
 .approval-note p {
   margin: 0;
-  color: #99a9ba;
+  color: #9cb7aa;
   font-size: 11px;
 }
 
@@ -1465,7 +1465,7 @@ button {
 .approval-empty {
   padding: 70px 24px;
   text-align: center;
-  color: #6a8098;
+  color: #6f9382;
 }
 
 .approval-empty-icon {
@@ -1476,7 +1476,7 @@ button {
 
 .approval-empty h3 {
   margin: 0 0 6px;
-  color: #c6d1dc;
+  color: #c8dad1;
 }
 
 .approval-empty p {
@@ -1509,8 +1509,8 @@ button {
   padding: 10px 12px;
   border-radius: 8px;
   background:
-    rgba(39, 76, 119, 0.12);
-  color: #aebdcc;
+    rgba(47, 111, 80, 0.12);
+  color: #b1c9bd;
   font-size: 11px;
   line-height: 1.5;
 }
@@ -1518,4 +1518,73 @@ button {
 .login-back-button {
   width: 100%;
   margin-top: 12px;
+}
+/* Green brand accents; error and booking-status colors remain distinct. */
+.brand-logo, .login-logo {
+  background: linear-gradient(135deg, #24774b, #145c3d);
+  box-shadow: 0 10px 28px rgb(36 119 75 / 24%);
+}
+.primary-button {
+  background: linear-gradient(135deg, #24774b, #195c3a);
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgb(36 119 75 / 18%);
+}
+.primary-button:hover { background: #195c3a; }
+.nav-item.active {
+  background: rgb(36 119 75 / 24%);
+  box-shadow: inset 3px 0 0 #70ce98;
+}
+.nav-item.active .nav-icon { color: #9ee6bb; }
+.quick-actions button:hover { border-color: #70ce98; }
+.eyebrow, .card-kicker, .quick-actions button span { color: #9ee6bb; }
+
+
+/* Light sage theme: black accents, white outlines, dark readable text. */
+html:root { color-scheme: light; --text: #243e30; --text-h: #101713; --bg: #b6d8ad; --border: #fff; }
+html body { color: #172c20; background: linear-gradient(135deg, #cde6bd, #a9cfa5 65%, #bcddb8); }
+html #root { border-color: #fff; }
+html .sidebar { background: #111a15; border-right: 1px solid #fff; }
+html .sidebar :is(.brand-copy h1, .user-copy strong) { color: #fff; }
+html .sidebar :is(.brand-copy p, .sidebar-label, .user-copy span, .nav-icon) { color: #bad7bf; }
+html .sidebar .nav-item { color: #edf8e9; border: 1px solid transparent; }
+html .sidebar .nav-item:hover { background: #263b2c; border-color: #fff; }
+html .sidebar .nav-item.active { color: #101713; background: #badfae; border-color: #fff; box-shadow: inset 3px 0 0 #fff; }
+html .sidebar .nav-item.active .nav-icon { color: #101713; }
+html :is(.weather-card, .quick-actions-card, .schedule-card, .metric-card, .placeholder-card, .members-card, .full-calendar, .calendar-board, .approval-card, .login-card, .weather-setup) {
+  color: #172c20; background: #c7e2bd; border: 1px solid #fff; box-shadow: 0 8px 24px #19361b12;
+}
+html :is(dialog, .quick-create, .clinic-hover-pair section, .clinic-roster-popover) { color: #172c20; background: #d5ebca; border: 1px solid #fff; color-scheme: light; }
+html :is(.main-content, .login-card, dialog, .quick-create, .clinic-hover-pair) :is(h1,h2,h3,h4,strong,label) { color: #101713; }
+html :is(.main-content, .login-card, dialog, .quick-create, .clinic-hover-pair) :is(p,small,.card-description,.empty-state,.member-meta span,.member-main span,.booking-details span,.metric-card span,.metric-card small) { color: #304b37; }
+html :is(.eyebrow,.card-kicker,.quick-actions button span,.calendar-time-label) { color: #2c4934; }
+html button:not(.nav-item) { border: 1px solid #fff; }
+html :is(.secondary-button,.quick-actions button,.calendar-board button,.clinic-hover-pair button,.calendar-edit button,.roster-dialog button,.member-availability-dialog button,.weather-setup button) { background: #a5cd96; color: #101713; border: 1px solid #fff; }
+html :is(.primary-button,.login-button,.quick-create .primary-button,.brand-logo,.login-logo) { color: #fff; background: #131d16; border: 1px solid #fff; box-shadow: none; }
+html :is(.primary-button,.login-button,.quick-create .primary-button):hover { background: #2e4933; }
+html :is(.secondary-button,.quick-actions button,.member-slot-list button):hover:not(:disabled) { background: #b9dfa8; }
+html :is(input,select,textarea) { color: #15231a; background: #eff7e9; border: 1px solid #fff; color-scheme: light; }
+html :is(input,textarea)::placeholder { color: #526451; opacity: 1; }
+html .member-availability-callout { background: #abd397; color: #101713; border: 2px solid #fff; }
+html .member-availability-callout :is(span,strong,p) { color: #152b1c; }
+html .member-slot-list button[aria-pressed="true"] { background: #1b2c20; color: #fff; outline: 2px solid #fff; }
+html .member-slot-list button[aria-pressed="true"] strong { color: #fff; }
+html .calendar-column-heading { color: #fff; background: #18291d; border-color: #fff; }
+html .calendar-lane { background: #e1efd9; border-color: #91ad88; }
+html .calendar-drop-slot { border-color: #b0c7a6; }
+html .calendar-drop-slot:hover { background: #c4dfb7; }
+html .calendar-event { color: #14231a; background: #b8d8a5; border-color: #fff; }
+html .calendar-event.is-clinic { background: #8bc49c; border-color: #fff; }
+html .calendar-event :is(strong,span,small) { color: #14231a; }
+html :is(.member-row,.live-booking-row,.roster-row) { border-color: #fff; }
+html :is(.member-row,.live-booking-row):hover { background: #b7d7a9; }
+html .member-weather a { color: #20452d; }
+html :is(.member-message.error,.login-error,.calendar-message.error,[role="alert"]) { color: #8d1927; }
+html :is(button,input,select,textarea,a):focus-visible { outline: 3px solid #14251a; outline-offset: 3px; }
+html .sidebar :is(button,a):focus-visible { outline-color: #fff; }
+
+/* Readable text on dark member badges. */
+html .main-content .member-meta span {
+  color: #ffffff;
+  background: #1b3325;
+  border: 1px solid #ffffff;
 }

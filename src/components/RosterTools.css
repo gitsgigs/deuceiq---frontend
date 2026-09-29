@@ -1,0 +1,30 @@
+.roster-dialog { width: min(720px, calc(100vw - 24px)); max-height: 88dvh; overflow-y: auto; border: 1px solid #81ad91; border-radius: 14px; padding: 24px; color: #edf8f1; background: #10291c; text-align: left; }
+.roster-dialog::backdrop { background: #020a06bb; }
+.roster-dialog header, .roster-row, .roster-dialog footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.roster-dialog h3 { margin: 0; }
+.roster-dialog p { margin: 12px 0; font-size: 13px; line-height: 1.5; }
+.roster-dialog button { background: #245e3f; color: #fff; border: 1px solid #729783; border-radius: 6px; padding: 7px 10px; }
+.roster-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+.roster-dialog fieldset { border: none; padding: 0; display: grid; gap: 12px; }
+.roster-dialog label { display: grid; gap: 5px; font-size: 14px; }
+.roster-dialog input, .roster-dialog select { width: 100%; padding: 9px; color: #edf8f1; background: #0b1c14; border: 1px solid #729783; border-radius: 6px; font: inherit; color-scheme: dark; }
+.full-roster-list { margin: 16px 0; }
+.roster-row { border-bottom: 1px solid #355343; padding: 10px 0; font-size: 14px; }
+.roster-row small { color: #c2d7ca; }
+.roster-confirm { border: 1px solid #d7ba75; padding: 12px; border-radius: 8px; }
+.roster-confirm button { margin-right: 8px; }
+.player-details-dialog { width: min(480px, calc(100vw - 24px)); }
+.player-details-dialog dl div { display: grid; grid-template-columns: 130px 1fr; gap: 12px; padding: 8px 0; }
+.player-details-dialog dt { color: #bcd6c6; font-size: 13px; }
+.player-details-dialog dd { margin: 0; overflow-wrap: anywhere; font-size: 14px; }
+.calendar-board .player-info-button, .clinic-hover-pair .player-info-button, .roster-dialog .player-info-button { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; min-height: 24px; padding: 1px 5px; margin-left: 6px; font-size: 15px; color: #f4fff8; background: #245e3f; border: 1px solid #96bba4; border-radius: 5px; cursor: pointer; vertical-align: middle; }
+.calendar-event { overflow-y: auto; }
+.calendar-event .booking-player-list { flex-shrink: 0; }
+.calendar-event > strong, .calendar-event > span, .calendar-event > small { flex-shrink: 0; }
+.calendar-board .calendar-roster-button { padding: 2px 5px; font-size: 10px; align-self: flex-start; flex-shrink: 0; }
+.calendar-event .booking-player-line { display: flex; align-items: center; min-height: 25px; }
+.booking-player-line span { flex: 1; }
+.clinic-hover-pair .roster-preview-row { display: flex; align-items: center; gap: 3px; margin-bottom: 8px; }
+.roster-preview-row > div { flex: 1; }
+.clinic-hover-pair .roster-preview-actions { position: sticky; bottom: -16px; padding: 10px 0; background: #10291c; display: flex; flex-wrap: wrap; gap: 8px; }
+.roster-dialog :focus-visible, .player-info-button:focus-visible { outline: 3px solid #a1ecc1; outline-offset: 2px; }

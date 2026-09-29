@@ -1,0 +1,21 @@
+.club-pages article { padding: 20px 0; border-bottom: 1px solid white; }
+.club-pages p { margin: 10px 0; overflow-wrap: anywhere; }
+.club-pages button { padding: 9px 14px; border-radius: 8px; background: #172b1e; color: white; border: 1px solid white; }
+.club-pages button:disabled { opacity: .55; cursor: not-allowed; }
+.club-editor { padding: 16px; border: 1px solid white; border-radius: 12px; margin-top: 16px; }
+.club-editor fieldset { border: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 14px; }
+.club-editor label { display: grid; gap: 6px; }
+.club-editor input { width: 100%; padding: 9px; border-radius: 6px; }
+
+.compact-settings { padding: 18px; }
+.compact-settings > article, .compact-settings > details { padding: 14px; margin: 10px 0; border: 1px solid white; border-radius: 10px; }
+.compact-settings h4 { margin: 6px 0; }
+.compact-settings p { margin: 6px 0; font-size: 13px; }
+.compact-settings button { padding: 7px 10px; font-size: 13px; }
+.compact-settings .weather-setup { margin: 10px 0 0; padding: 10px; }
+.compact-settings .court-summary ul { margin: 6px 0; padding-left: 20px; font-size: 13px; }
+.compact-settings summary { cursor: pointer; font-weight: 700; }
+.general-pricing fieldset { display: grid; grid-template-columns: repeat(auto-fit,minmax(125px,1fr)); gap: 10px; border: 0; padding: 10px 0; }
+.general-pricing label { display: grid; gap: 5px; font-size: 13px; }
+.general-pricing input { min-width: 0; width: 100%; padding: 7px; border-radius: 6px; }
+.rate-card { margin-top: 10px; padding: 10px; border: 1px solid white; border-radius: 8px; }

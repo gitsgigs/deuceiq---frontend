@@ -20,3 +20,23 @@
 .weather-setup {padding:16px;margin:16px 0;background:#163525;border:1px solid #729783;border-radius:12px;}
 .weather-setup summary {cursor:pointer;}
 .member-availability-callout:focus-visible,.member-availability-dialog :focus-visible,.weather-setup :focus-visible {outline:3px solid #a1ecc1;outline-offset:3px;}
+
+.member-availability-dialog .member-court-status { background:#d8edcc; color:#183121; border:1px solid #fff; border-radius:12px; padding:12px 16px; margin:12px 0; text-align:left; }
+.member-availability-dialog .member-court-status p { margin:5px 0 0; font-size:.9rem; }
+
+/* Compact read-only availability calendar; only open cells can be selected. */
+.member-availability-dialog .availability-calendar { margin:14px 0; }
+.member-availability-dialog .availability-calendar-scroll { max-height:360px; overflow:auto; border:1px solid #fff; border-radius:12px; background:#e1eed7; }
+.member-availability-dialog .availability-calendar table { width:100%; border-collapse:separate; border-spacing:0; table-layout:auto; font-size:13px; color:#17271b; margin:0; }
+.availability-grid-caption { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+.member-availability-dialog .availability-calendar th,.member-availability-dialog .availability-calendar td { border-right:1px solid #fff; border-bottom:1px solid #fff; padding:5px; text-align:center; min-width:118px; }
+.member-availability-dialog .availability-calendar thead th { position:sticky; top:0; z-index:2; background:#c0dbae; font-weight:700; height:32px; }
+.member-availability-dialog .availability-calendar tbody th { position:sticky; left:0; z-index:1; min-width:78px; white-space:nowrap; background:#e1eed7; font-weight:600; }
+.member-availability-dialog .availability-calendar thead th:first-child { left:0; z-index:3; min-width:78px; }
+.member-availability-dialog .availability-calendar td button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; width:100%; min-height:42px; margin:0; padding:5px 7px; border:1px solid #fff; border-radius:7px; background:#b6dca3; color:#152b1b; font-size:12px; line-height:1.25; box-shadow:none; }
+.member-availability-dialog .availability-calendar td button small { font-size:10px; color:inherit; }
+.member-availability-dialog .availability-calendar td button:hover { background:#a1ce8c; }
+.member-availability-dialog .availability-calendar td button[aria-pressed="true"] { background:#285037; color:#fff; outline:2px solid #173c25; outline-offset:-2px; }
+.member-availability-dialog .availability-no-slot { color:#53684b; font-size:15px; }
+.member-availability-dialog .availability-scroll-hint { font-size:11px; }
+@media(max-width:600px) { .member-availability-dialog .availability-calendar-scroll { max-height:300px; } .member-availability-dialog .availability-calendar th,.member-availability-dialog .availability-calendar td { min-width:102px; } }

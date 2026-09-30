@@ -1,3 +1,4 @@
+import { AvailabilityGrid } from "./AvailabilityGrid";
 import { PricePreview, PricingChoice } from "./PricePreview";
 import type { PricingMode } from "./PricePreview";
 import { useEffect, useRef, useState } from "react";
@@ -16,7 +17,7 @@ type Slot = { court_id: string; court_name: string; starts_at: string; ends_at: 
 
 type Lesson = { id: string; name: string; category: string };
 
-type Availability = { location_id: string; checked_at: string; slots: Slot[]; lesson_types: Lesson[] };
+type Availability = { location_id: string; checked_at: string; slots: Slot[]; lesson_types: Lesson[]; court_status?: {total:number;unavailable:string[]} };
 
 type Pro = { id: string; first_name: string; last_name: string };
 
@@ -86,7 +87,7 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
 
     const controller = new AbortController();
 
-    setSelected(null); setData(null); setError(null); setLoading(true);
+    setSelected(null); setCourtFilter(""); setData(null); setError(null); setLoading(true);
 
     async function load() {
 
@@ -98,7 +99,7 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
 
         const result = await getAvailability(await token(props.userId), controller.signal);
 
-        if (!cancelled) { setData(result); setError(null); setSelected(current => current && result.slots.some(s => sameSlot(s, current)) ? current : null); }
+        if (!cancelled) { setData(result); setError(null); setCourtFilter(current => result.slots.some(s => s.court_id === current && Date.parse(s.starts_at) > Date.now()) ? current : ""); setSelected(current => current && result.slots.some(s => sameSlot(s, current)) ? current : null); }
 
       } catch (e) { if (!cancelled) { setError(e instanceof Error ? e.message : "Availability unavailable."); setData(null); setSelected(null); } }
 
@@ -161,6 +162,7 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
       const auth = await token(props.userId);
 
       const fresh = await getAvailability(auth);
+      if (alive.current) setData(fresh);
 
       if (!fresh.slots.some(s => sameSlot(s, selected))) { setData(fresh); setSelected(null); throw new Error("That slot is no longer available. Choose another time."); }
 
@@ -196,9 +198,18 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
 
   }
 
-  const courts = [...new Map((data?.slots ?? []).map(s => [s.court_id, s.court_name])).entries()];
+  const status = data?.court_status;
+  const statusValid = Boolean(status && Number.isInteger(status.total) && status.total >= 0 && Array.isArray(status.unavailable) && status.unavailable.every(v=>typeof v==="string") && status.unavailable.length<=status.total);
+  const unavailableNames = statusValid ? new Intl.ListFormat("en", {style:"long",type:"conjunction"}).format(status!.unavailable) : "";
+  const statusMessage = !statusValid ? "Court status could not be confirmed. Refresh to try again."
+    : status!.total === 0 ? "No courts are configured at this location yet."
+    : status!.unavailable.length === 0 ? "All courts are active."
+    : `${unavailableNames} ${status!.unavailable.length===1?"isn't":"aren't"} available at the moment.`;
 
-  const slots = (data?.slots ?? []).filter(s => (!courtFilter || s.court_id === courtFilter) && Date.parse(s.starts_at) > Date.now());
+  const openSlots = (data?.slots ?? []).filter(s => Date.parse(s.starts_at) > Date.now());
+  const courts = [...new Map(openSlots.map(s => [s.court_id, s.court_name])).entries()];
+  const effectiveCourtFilter = courts.some(([id]) => id === courtFilter) ? courtFilter : "";
+  const slots = openSlots.filter(s => !effectiveCourtFilter || s.court_id === effectiveCourtFilter);
 
   return <dialog ref={dialog} className="member-availability-dialog" onCancel={e => { e.preventDefault(); if (!pending.current) props.onClose(); }}>
 
@@ -206,13 +217,15 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
 
     <p>Times in {props.timeZone}. Availability refreshes every 30 seconds while visible and is checked again when you request. A slot is not held until staff approves.</p>
 
+    {data && <aside className="member-court-status" role="status"><strong>{statusMessage}</strong><p>Open times below also account for existing bookings.</p></aside>}
+
     <fieldset disabled={saving || uncertain}><label>Date<input type="date" required min={localDay(props.timeZone)} value={date} onChange={e => { if (e.target.value) setDate(e.target.value); }} /></label>
 
       <label>Duration<select value={duration} onChange={e => setDuration(e.target.value)}>{[30,45,60,90,120].map(n => <option key={n} value={n}>{n} minutes</option>)}</select></label>
 
       <label>Request type<select value={typeId} onChange={e => { setTypeId(e.target.value); }}><option value="">Select rental or lesson</option>{data?.lesson_types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
 
-      <label>Court<select value={courtFilter} onChange={e => setCourtFilter(e.target.value)}><option value="">All courts</option>{courts.map(([id,name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+      <label>Available courts<select disabled={loading || courts.length === 0} value={effectiveCourtFilter} onChange={e => { setCourtFilter(e.target.value); setSelected(null); }}><option value="">{courts.length ? "All available courts" : "No courts available"}</option>{courts.map(([id,name]) => <option key={id} value={id}>{name}</option>)}</select></label>
 
     </fieldset><button disabled={saving} onClick={() => setRefresh(v => v + 1)}>Refresh availability</button>
 
@@ -220,7 +233,7 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
 
     {!loading && data && slots.length === 0 && <p>No open slots for this date, duration and court.</p>}
 
-    <div className="member-slot-list">{slots.map(s => <button disabled={saving || uncertain} aria-pressed={!!selected && sameSlot(s,selected)} key={`${s.court_id}:${s.starts_at}`} onClick={() => setSelected(s)}><strong>{s.court_name}</strong><span>{format(s.starts_at)} – {format(s.ends_at)}</span></button>)}</div>
+    <AvailabilityGrid slots={slots} selected={selected} disabled={saving || uncertain} duration={duration} format={format} onSelect={setSelected}/>
 
     {selected && !lesson && <p role="status"><strong>{selected.court_name} · {format(selected.starts_at)} – {format(selected.ends_at)}</strong> selected. Choose a request type above to continue.</p>}
     {data && data.lesson_types.length === 0 && <p role="status">No rental or lesson types are available for requests. Please contact the front desk.</p>}

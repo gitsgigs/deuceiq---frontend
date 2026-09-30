@@ -1,9 +1,10 @@
+import { CourtManager } from "./CourtManager";
 import { GeneralPricing } from "./GeneralPricing";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { WeatherSetup } from "./MemberHome";
 import "./ClubPages.css";
-type Context = { apiBase: string; userId: string; clubId: string; role: string };
+type Context = { apiBase: string; userId: string; clubId: string; role: string; onChanged?: () => void };
 type Row = Record<string, unknown> & { id: string };
 const managers = ["owner", "director", "manager"];
 async function sessionToken(userId: string) {
@@ -60,8 +61,13 @@ export function SettingsPage(p: Context) {
     setLoading(true); setError(null); setRows([]); setAllowed(null); setCourts([]); setClubName(""); setEditing(null); setUncertain(false);
     async function load() { try {
       const locations = await api(p, `/locations?club_id=${encodeURIComponent(p.clubId)}`, "GET", undefined, c.signal);
-      const courtData = await api(p, `/courts?club_id=${encodeURIComponent(p.clubId)}`, "GET", undefined, c.signal);
-      if (!Array.isArray(courtData.courts)) throw new Error("Court totals could not be loaded.");
+      const courtData: {courts: Row[]} = {courts: []};
+      for (let offset=0;;offset+=100) {
+        const page = await api(p, `/courts?club_id=${encodeURIComponent(p.clubId)}&limit=100&offset=${offset}`, "GET", undefined, c.signal);
+        if (!Array.isArray(page.courts) || typeof page.has_more !== "boolean") throw new Error("Install the court management backend update to load court totals.");
+        courtData.courts.push(...page.courts);
+        if (!page.has_more) break;
+      }
       await sessionToken(p.userId);
       const club = await supabase.from("clubs").select("name,allow_unassigned_pro_bookings").eq("id", p.clubId).single();
       if (club.error || typeof club.data?.allow_unassigned_pro_bookings !== "boolean" || !Array.isArray(locations.locations)) throw new Error("Club settings could not be loaded.");
@@ -73,6 +79,7 @@ export function SettingsPage(p: Context) {
   return <section className="members-card club-pages compact-settings"><h3>Settings</h3><button disabled={loading || busy || !!editing} onClick={() => setRefresh(v => v + 1)}>Refresh settings</button>{loading && <p role="status">Loading settings...</p>}{error && <p role="alert">{error}</p>}
     {!loading && !error && <details className="general-settings" open><summary>General Settings</summary><h4>{clubName}</h4>
       <CourtSummary courts={courts} />
+      <CourtManager {...p} locations={rows.map(row=>({id:row.id,name:string(row.name)}))} onChanged={()=>{setRefresh(v=>v+1);p.onChanged?.();}} />
       {courts.some(c => !c.location_id) && <p>{courts.filter(c => !c.location_id).length} courts not assigned to a location.</p>}
       <GeneralPricing {...p} clubName={clubName} />
     </details>}

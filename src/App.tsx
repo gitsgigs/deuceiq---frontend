@@ -1,3 +1,5 @@
+import { StaffBookings } from "./components/StaffBookings";
+import { NotificationsPage, NotificationIndicator } from "./components/NotificationsPage";
 import { HistoryPage } from "./components/HistoryPage";
 import { PricePreview } from "./components/PricePreview";
 import { MemberTierEditor } from "./components/MemberTierEditor";
@@ -70,6 +72,8 @@ type Section =
   | "bookings"
 
   | "history"
+
+  | "notifications"
 
   | "clinics"
 
@@ -444,6 +448,8 @@ const navigationItems: {
   { id: "calendar", label: "Calendar", icon: "\u25a6", roles: ["owner", "director", "manager", "front_desk", "pro"] },
 
   { id: "bookings", label: "Bookings", icon: "\u25eb", roles: ["owner", "director", "manager", "front_desk", "member"] },
+
+  { id: "notifications", label: "Notifications", icon: "!", roles: ["owner", "director", "manager", "front_desk", "pro", "member", "guest"] },
 
   { id: "history", label: "History", icon: "\u21ba", roles: ["owner", "director", "manager", "front_desk"] },
 
@@ -1495,6 +1501,8 @@ function App() {
     currentLocationId,
 
     session?.access_token,
+
+    dataRevision,
 
   ]);
 
@@ -5069,7 +5077,7 @@ function App() {
 
 
 
-                <span>
+                <span className="nav-label">
 
                   {item.id ===
 
@@ -5090,6 +5098,7 @@ function App() {
                       ? "Available Clinics"
 
                       : item.label}
+                  {item.id === "notifications" && currentClubId && <NotificationIndicator key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
 
                 </span>
 
@@ -5513,13 +5522,10 @@ function App() {
 
           ) : (
 
-            <PlaceholderPage
-
-              title="Bookings"
-
-              description="Create, edit and manage lessons, rentals and recurring bookings."
-
-            />
+            <StaffBookings key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId ?? ""} role={clubRole ?? ""} locations={locations} initialLocation={currentLocationId ?? ""}
+              onCreate={() => {setCreateMessage(null);setCreateAction("booking");}}
+              onCalendar={(location,date) => {setCurrentLocationId(location);setCalendarDate(date);setSection("calendar");}}
+              onChanged={() => setDataRevision(v => v+1)} />
 
           ))}
 
@@ -5583,6 +5589,8 @@ function App() {
           ))}
 
 
+
+        {section === "notifications" && currentClubId && <NotificationsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
 
         {section === "history" && currentClubId && ["owner","director","manager","front_desk"].includes(clubRole ?? "") && <HistoryPage key={`${session.user.id}:${currentClubId}`} clubId={currentClubId} userId={session.user.id} role={clubRole ?? ""} locations={locations}/>}
 
@@ -5717,7 +5725,7 @@ function App() {
 
 
 
-        {section === "settings" && <SettingsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId ?? ""} role={clubRole ?? ""} />}
+        {section === "settings" && <SettingsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId ?? ""} role={clubRole ?? ""} onChanged={() => setDataRevision(v=>v+1)} />}
 
         {section === "inventory" &&
 

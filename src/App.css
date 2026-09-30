@@ -1588,3 +1588,15 @@ html .main-content .member-meta span {
   background: #1b3325;
   border: 1px solid #ffffff;
 }
+
+/* Filled recovery buttons; preserve existing dimensions. */
+html .login-help-row .login-link {
+  border-radius: 9px;
+  background: #a83d49;
+  color: #ffffff;
+  border-color: transparent;
+}
+html .login-help-row .login-link:hover {
+  background: #8e303c;
+  color: #ffffff;
+}

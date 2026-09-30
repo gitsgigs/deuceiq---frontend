@@ -1,3 +1,5 @@
+import { PricePreview, PricingChoice } from "./PricePreview";
+import type { PricingMode } from "./PricePreview";
 import { useEffect, useRef, useState } from "react";
 
 import { supabase } from "../lib/supabase";
@@ -55,6 +57,8 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
   const [saving, setSaving] = useState(false), [uncertain, setUncertain] = useState(false), [message, setMessage] = useState<string | null>(null);
 
   const [courtFilter, setCourtFilter] = useState("");
+  const [priceReady,setPriceReady]=useState(false);
+  const [pricingMode,setPricingMode]=useState<PricingMode>("split");
 
   const lesson = data?.lesson_types.find(t => t.id === typeId);
 
@@ -172,7 +176,7 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
 
       }
 
-      const payload = { club_id: props.clubId, location_id: props.locationId, court_id: selected.court_id, lesson_type_id: lesson.id,
+      const payload = { pricing_mode: pricingMode, club_id: props.clubId, location_id: props.locationId, court_id: selected.court_id, lesson_type_id: lesson.id,
 
         starts_at: selected.starts_at, ends_at: selected.ends_at, pro_id: lesson.category === "rental" ? null : proId,
 
@@ -226,7 +230,9 @@ export function MemberAvailability(props: Context & { onClose: () => void }) {
 
       {lesson.category === "semi_private" && <><p>Second participant (guest)</p><label>First name<input required value={first} onChange={e => setFirst(e.target.value)} /></label><label>Last name<input required value={last} onChange={e => setLast(e.target.value)} /></label><label>Email (optional)<input type="email" value={email} onChange={e => setEmail(e.target.value)} /></label></>}
 
-      <button disabled={proLoading || (lesson.category !== "rental" && !proId)}>Request this court</button>
+      {(lesson.category==="rental"||lesson.category==="semi_private")&&<PricingChoice value={pricingMode} onChange={setPricingMode}/>}
+      <PricePreview clubId={props.clubId} userId={props.userId} lessonId={lesson.id} startsAt={selected.starts_at} endsAt={selected.ends_at} guestCount={lesson.category==="semi_private"?1:0} mode={pricingMode} onReady={setPriceReady}/>
+      <button disabled={!priceReady || proLoading || (lesson.category !== "rental" && !proId)}>Request this court</button>
 
     </fieldset></form>}
 

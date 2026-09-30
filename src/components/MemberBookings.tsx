@@ -1,3 +1,4 @@
+import { BookingPrice } from "./PricePreview";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createRequest } from "../lib/createActions";
@@ -45,6 +46,7 @@ export function MemberBookingsPage(props: { apiBase: string; userId: string; clu
       <p>{row.location_name || "Location not specified"} · {row.court_name || "Court not assigned"}</p>
       {row.pro_name && <p>Pro: {row.pro_name}</p>}
       <p>Booking: {row.status?.replaceAll("_", " ") || "Unknown"}{row.registration_status && ` · Registration: ${row.registration_status.replaceAll("_", " ")}`}{row.waitlist_position != null && ` · Waitlist position: ${row.waitlist_position}`}</p>
+      <BookingPrice bookingId={row.booking_id} userId={props.userId}/>
     </article>)}
   </section>;
 }

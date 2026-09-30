@@ -1,3 +1,4 @@
+import { PricePreview } from "./PricePreview";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createRequest, CreateApiError } from "../lib/createActions";
@@ -162,6 +163,7 @@ export function FullRoster(props: RosterProps) {
       {mode === "member" ? <><label>Find member<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Enter at least two letters" /></label>{searching && <p>Searching…</p>}{searchError && <p role="alert">{searchError}</p>}
         <label>Select member<select required value={memberId} onChange={e => setMemberId(e.target.value)}><option value="">Select a member</option>{members.filter(m => m.active !== false).map(m => <option key={m.id} value={m.id}>{displayPlayerName(m)}{m.email ? ` (${m.email})` : ""}</option>)}</select></label><p>Search results show up to 50 members. Refine the name if needed.</p></>
         : <><label>First name<input required value={first} onChange={e => setFirst(e.target.value)} /></label><label>Last name<input required value={last} onChange={e => setLast(e.target.value)} /></label><label>Email (optional)<input type="email" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Phone (optional)<input type="tel" value={phone} onChange={e => setPhone(e.target.value)} /></label></>}
+      {(mode==="guest"||memberId)&&<PricePreview clubId={props.clubId} userId={props.userId} bookingId={props.bookingId} memberIds={mode==="member"?[memberId]:[]} guestCount={mode==="guest"?1:0}/>}
       <button disabled={searching && mode === "member"}>Add player</button><p>When the clinic is full, the backend applies its waitlist rules.</p>
     </fieldset></form>}
     <footer><button disabled={busy} onClick={props.onClose}>Close roster</button></footer>

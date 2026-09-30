@@ -1,3 +1,5 @@
+import { PricePreview, PricingChoice } from "./PricePreview";
+import type { PricingMode } from "./PricePreview";
 import { PlayerPicker } from "./PlayerPicker";
 import type { PickedPlayer } from "./PlayerPicker";
 import { useEffect, useRef, useState } from "react";
@@ -45,7 +47,9 @@ export default function QuickCreate(props: Props) {
   const [pickedPlayers,setPickedPlayers] = useState<PickedPlayer[]>([]);
   const [extraPros,setExtraPros] = useState<{id:string;start:string;end:string}[]>([]);
   const category = types.find(t=>t.id===typeId)?.category;
-  const [players, setPlayers] = useState("1");
+  const [priceReady,setPriceReady] = useState(false);
+  const [pricingMode, setPricingMode] = useState<PricingMode>("split");
+  const [memberTier, setMemberTier] = useState("member");
   const [capacity, setCapacity] = useState("6");
   const [first, setFirst] = useState("");
   const [last, setLast] = useState("");
@@ -133,19 +137,20 @@ export default function QuickCreate(props: Props) {
       if (props.kind === "member") {
         if (!first.trim() || !last.trim()) throw new Error("First and last name are required.");
         payload = { club_id: props.clubId, first_name: first.trim(), last_name: last.trim(),
-          email: email.trim() || null, phone: phone.trim() || null, notes: notes.trim() || null, active: true };
+          email: email.trim() || null, phone: phone.trim() || null, notes: notes.trim() || null, active: true, membership_type: memberTier };
       } else {
         if (!props.locationId || !courtId || !typeId) throw new Error("Select a location, court and lesson type.");
         if (!props.courts.some(c => c.id === courtId && c.location_id === props.locationId && c.active !== false)) throw new Error("Select a court at this location.");
         const startsAt = locationTimeToIso(start, props.timeZone);
         const endsAt = locationTimeToIso(end, props.timeZone);
         if (endsAt <= startsAt) throw new Error("End time must be after start time.");
-        const count = isClinic ? 0 : pickedPlayers.length || Number(players);
+        const count = isClinic ? 0 : pickedPlayers.length;
         const max = isClinic ? Number(capacity) : null;
-        if (!Number.isInteger(count) || count < (isClinic ? 0 : 1)) throw new Error("Enter a valid player count.");
+        if (!Number.isInteger(count) || count < (isClinic ? 0 : 1)) throw new Error("Select the players before creating this booking.");
         if (max !== null && (!Number.isInteger(max) || max < 1 || max > 6)) throw new Error("A single-court clinic can have 1–6 registration spots.");
         payload = { club_id: props.clubId, location_id: props.locationId, court_id: courtId,
           lesson_type_id: typeId, pro_id: proId || null, starts_at: startsAt, ends_at: endsAt,
+          member_ids: pickedPlayers.map(p=>p.id), pricing_mode: isClinic ? "split" : pricingMode,
           player_count: count, clinic_registration_capacity: max, status: "confirmed", source: "staff", notes: notes.trim() || null };
       }
       if (isClinic && recurring && (pickedPlayers.length || extraPros.length)) throw new Error("Create the recurring clinics first, then assign players and additional pros to each dated session.");
@@ -186,16 +191,13 @@ export default function QuickCreate(props: Props) {
         props.kind === "member" ? "/members" : "/bookings", { payload });
       const record = props.kind === "member" ? result : (result as Record<string, unknown>).booking;
       if (!record || typeof record !== "object" || !("id" in record) || typeof record.id !== "string") throw new CreateApiError("The save response was incomplete. Check the list before trying again.", true);
-      let assigned=0;
+      const assigned=pickedPlayers.length;
       try {
         if (isClinic && extraPros.length && proId) {
           await createRequest(props.apiBase,data.session.access_token,`/bookings/${record.id}/clinic-pro-assignments`,{payload:{pro_id:proId,court_id:courtId,starts_at:payload.starts_at,ends_at:payload.ends_at}});
         }
         for (const pro of extraPros) {
           await createRequest(props.apiBase,data.session.access_token,`/bookings/${record.id}/clinic-pro-assignments`,{payload:{pro_id:pro.id,court_id:courtId,starts_at:locationTimeToIso(pro.start,props.timeZone),ends_at:locationTimeToIso(pro.end,props.timeZone)}});
-        }
-        for (const member of pickedPlayers) {
-          await createRequest(props.apiBase,data.session.access_token,isClinic?`/bookings/${record.id}/clinic-enrollments`:`/bookings/${record.id}/participants`,{payload:isClinic?{member_id:member.id}:{member_id:member.id,participant_role:assigned===0?"organizer":"player"}});assigned++;
         }
       } catch(e) {
         throw new CreateApiError(`Booking ${record.id} was created; ${assigned} player assignments confirmed. Some assignments were not completed or could not be confirmed. Close this form and check the booking/roster before adding the remaining players or pros. ${e instanceof Error?e.message:""}`,true);
@@ -210,6 +212,9 @@ export default function QuickCreate(props: Props) {
     } finally { pending.current = false; if (alive.current) setSaving(false); }
   }
 
+  let quoteStart="", quoteEnd="";
+  try { quoteStart=locationTimeToIso(start,props.timeZone); quoteEnd=locationTimeToIso(end,props.timeZone); } catch { /* Incomplete date input. */ }
+
   return <dialog className="quick-create" ref={dialog} aria-labelledby="quick-create-title" onCancel={e => { e.preventDefault(); if (!pending.current) props.onClose(); }}>
     <form onSubmit={submit}>
       <header><h2 id="quick-create-title">{title}</h2><button type="button" aria-label="Close form" disabled={saving} onClick={props.onClose}>×</button></header>
@@ -223,9 +228,10 @@ export default function QuickCreate(props: Props) {
           <label>Last name<input required value={last} onChange={e => setLast(e.target.value)} /></label>
           <label>Email (optional)<input type="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
           <label>Phone (optional)<input type="tel" value={phone} onChange={e => setPhone(e.target.value)} /></label>
+          <label>Pricing tier<select value={memberTier} onChange={e=>setMemberTier(e.target.value)}>{["member","non_member","junior","senior"].map(t=><option key={t} value={t}>{t.replace("_"," ")}</option>)}</select></label>
           <p>This creates a member profile. It does not send an invitation or create a login.</p>
         </> : <>
-          <label>Lesson type<select autoFocus required value={typeId} onChange={e => {setTypeId(e.target.value);setPickedPlayers([]);setExtraPros([]);}}>
+          <label>Lesson type<select autoFocus required value={typeId} onChange={e => {setTypeId(e.target.value);setPricingMode("split");setPickedPlayers([]);setExtraPros([]);}}>
             <option value="">Select a lesson type</option>{types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select></label>
           {!loading && ready && !types.length && <p>No active {props.kind === "clinic" ? "clinic" : ""} lesson types are available.</p>}
@@ -254,13 +260,15 @@ export default function QuickCreate(props: Props) {
           {!(isClinic && recurring) && <PlayerPicker apiBase={props.apiBase} clubId={props.clubId} userId={props.userId} selected={pickedPlayers} onChange={setPickedPlayers} max={category==="private"?1:category==="semi_private"?2:isClinic?Number(capacity):100} />}
           {isClinic && !recurring && <div><h4>Additional clinic pros</h4>{extraPros.map((p,i)=><div key={i}><label>Pro<select required value={p.id} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,id:e.target.value}:x))}><option value="">Select a pro</option>{pros.filter(x=>x.id!==proId&&!extraPros.some((y,j)=>j!==i&&y.id===x.id)).map(x=><option key={x.id} value={x.id}>{x.first_name} {x.last_name}</option>)}</select></label><label>Starts<input required type="datetime-local" value={p.start} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,start:e.target.value}:x))}/></label><label>Ends<input required type="datetime-local" value={p.end} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,end:e.target.value}:x))}/></label><button type="button" onClick={()=>setExtraPros(v=>v.filter((_,j)=>j!==i))}>Remove pro</button></div>)}<button type="button" onClick={()=>setExtraPros(v=>[...v,{id:"",start,end}])}>Add pro</button></div>}
           {isClinic ? <label>Registration capacity<input type="number" min="1" max="6" step="1" required value={capacity} onChange={e => setCapacity(e.target.value)} /></label>
-            : <label>Player count<input type="number" min="1" step="1" required value={players} onChange={e => setPlayers(e.target.value)} /></label>}
-          <p>{isClinic ? "Creates a single-court clinic. Selected players will be registered after creation." : "Selected players will be linked after the booking is created."}</p>
+            : <p>Selected players: {pickedPlayers.length}</p>}
+          {(category==="rental"||category==="semi_private") && <PricingChoice value={pricingMode} onChange={setPricingMode}/>}
+          <PricePreview clubId={props.clubId} userId={props.userId} lessonId={typeId} startsAt={quoteStart} endsAt={quoteEnd} memberIds={pickedPlayers.map(p=>p.id)} mode={isClinic?"split":pricingMode} onReady={setPriceReady}/>
+          <p>The booking and selected players are saved together after their rates are checked.</p>
         </>}
         <label>Notes (optional)<textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} /></label>
       </fieldset>
       <footer><button type="button" disabled={saving} onClick={props.onClose}>Cancel</button>
-        <button className="primary-button" type="submit" disabled={saving || loading || !ready || uncertain || newTypeOpen || !canCreate(props.role)}>{saving ? "Saving…" : title}</button></footer>
+        <button className="primary-button" type="submit" disabled={saving || loading || !ready || uncertain || newTypeOpen || !canCreate(props.role) || (props.kind!=="member"&&!priceReady)}>{saving ? "Saving…" : title}</button></footer>
     </form>
   </dialog>;
 }

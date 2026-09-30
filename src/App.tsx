@@ -1,3 +1,6 @@
+import { HistoryPage } from "./components/HistoryPage";
+import { PricePreview } from "./components/PricePreview";
+import { MemberTierEditor } from "./components/MemberTierEditor";
 import { ClinicSchedule } from "./components/ClinicSchedule";
 import { StaffClinics } from "./components/StaffClinics";
 import { SettingsPage, ProsPage } from "./components/ClubPages";
@@ -65,6 +68,8 @@ type Section =
   | "calendar"
 
   | "bookings"
+
+  | "history"
 
   | "clinics"
 
@@ -439,6 +444,8 @@ const navigationItems: {
   { id: "calendar", label: "Calendar", icon: "\u25a6", roles: ["owner", "director", "manager", "front_desk", "pro"] },
 
   { id: "bookings", label: "Bookings", icon: "\u25eb", roles: ["owner", "director", "manager", "front_desk", "member"] },
+
+  { id: "history", label: "History", icon: "\u21ba", roles: ["owner", "director", "manager", "front_desk"] },
 
   { id: "clinics", label: "Clinics", icon: "\u25ce", roles: ["owner", "director", "manager", "front_desk", "member"] },
 
@@ -2414,6 +2421,9 @@ function App() {
       // --------------------------------------------------------
 
 
+
+      const quote = await supabase.rpc("quote_clinic_signup",{p_booking_id:clinic.booking_id,p_guest_count:friend?1:0,p_friend_email:friend?.email.trim()||null});
+      if(quote.error) throw new Error(quote.error.code==="PZ001"?quote.error.message:"Pricing could not be verified. Please contact the club.");
 
       const memberResponse = await fetch(
 
@@ -5574,9 +5584,12 @@ function App() {
 
 
 
+        {section === "history" && currentClubId && ["owner","director","manager","front_desk"].includes(clubRole ?? "") && <HistoryPage key={`${session.user.id}:${currentClubId}`} clubId={currentClubId} userId={session.user.id} role={clubRole ?? ""} locations={locations}/>}
+
         {section === "members" && (
 
           <MembersPage
+            userId={session.user.id} role={clubRole ?? ""}
 
             members={members}
 
@@ -5817,6 +5830,7 @@ function App() {
         {clubRole === "member" && selectedClinic && (
 
           <ClinicDetailModal
+            userId={session.user.id} clubId={currentClubId ?? ""}
 
             clinic={selectedClinic}
 
@@ -6646,6 +6660,7 @@ function MemberClinicsPage({
 
 
 function ClinicDetailModal({
+  userId, clubId,
 
   clinic,
 
@@ -6659,6 +6674,7 @@ function ClinicDetailModal({
 
 }: {
 
+  userId: string; clubId: string;
   clinic: MemberClinic;
 
   message: string | null;
@@ -6820,6 +6836,8 @@ function ClinicDetailModal({
               {clinic.name}
 
             </h3>
+        <PricePreview userId={userId} clubId={clubId} bookingId={clinic.booking_id} guestCount={addFriend?1:0} friendEmail={addFriend?friendEmail:undefined}/>
+
 
 
 
@@ -10176,6 +10194,7 @@ function PlaceholderPage({
 
 
 function MembersPage({
+  userId, role,
 
   members,
 
@@ -10189,6 +10208,7 @@ function MembersPage({
 
 }: {
 
+  userId: string; role: string;
   members: Member[];
 
   memberSearch: string;
@@ -10329,9 +10349,7 @@ function MembersPage({
 
               (member) => (
 
-                <button
-
-                  type="button"
+                <div
 
                   className="member-row"
 
@@ -10407,7 +10425,8 @@ function MembersPage({
 
                   </div>
 
-                </button>
+                  {["owner","director","manager","front_desk"].includes(role)&&<MemberTierEditor key={member.id+":"+member.membership_type} memberId={member.id} initial={member.membership_type} userId={userId} apiBase={API_BASE}/>}
+                </div>
 
               )
 

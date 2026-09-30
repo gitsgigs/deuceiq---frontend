@@ -35,13 +35,13 @@ export class CreateApiError extends Error {
 
 export async function createRequest(
   apiBase: string, token: string, path: string,
-  options: { payload?: unknown; signal?: AbortSignal } = {},
+  options: { payload?: unknown; signal?: AbortSignal; method?: "PATCH" } = {},
 ): Promise<Record<string, unknown> | unknown[]> {
   let response: Response;
   const writing = options.payload !== undefined;
   try {
     response = await fetch(`${apiBase.replace(/\/$/, "")}${path}`, {
-      method: writing ? "POST" : "GET",
+      method: options.method ?? (writing ? "POST" : "GET"),
       headers: { Authorization: `Bearer ${token}`, ...(writing ? { "Content-Type": "application/json" } : {}) },
       body: writing ? JSON.stringify(options.payload) : undefined,
       signal: options.signal,

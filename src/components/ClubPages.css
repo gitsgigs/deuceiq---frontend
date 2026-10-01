@@ -19,3 +19,23 @@
 .general-pricing label { display: grid; gap: 5px; font-size: 13px; }
 .general-pricing input { min-width: 0; width: 100%; padding: 7px; border-radius: 6px; }
 .rate-card { margin-top: 10px; padding: 10px; border: 1px solid white; border-radius: 8px; }
+
+/* Compact settings, including nested court, pricing and payment sections. */
+html .compact-settings {font-size:13px;line-height:1.45;padding:16px;text-align:left;}
+html .compact-settings h3 {font-size:20px;margin:0 0 8px;}
+html .compact-settings :is(h4,h5) {font-size:15px;line-height:1.35;margin:5px 0;}
+html .compact-settings :is(p,label,li,summary,strong) {font-size:13px;line-height:1.45;}
+html .compact-settings p {margin:4px 0;}
+html .compact-settings > :is(article,details) {padding:12px;margin:8px 0;border-radius:10px;}
+html .compact-settings .management-page {padding:10px 0;margin:8px 0;}
+html .compact-settings .management-page article {padding:10px 12px;margin:6px 0;border-radius:8px;}
+html .compact-settings :is(button,.stripe-connection-actions button) {width:auto;min-height:34px;font-size:13px;line-height:1.4;padding:6px 10px;border-radius:8px;}
+html .compact-settings :is(input:not([type=checkbox]),select,textarea) {box-sizing:border-box;min-width:0;max-width:100%;font-size:13px;line-height:1.4;padding:6px 8px;}
+html .compact-settings .management-status {font-size:11px;padding:3px 7px;}
+html .compact-settings :is(.management-controls,.stripe-connection-actions) {gap:8px;margin:8px 0;}
+html .compact-settings :is(.club-editor,.management-editor,.rate-card) {padding:10px;margin-top:8px;}
+html .compact-settings fieldset {gap:8px;padding-top:6px;padding-bottom:6px;}
+html .compact-settings .stripe-fee-consent {margin:8px 0;gap:8px;}
+html .compact-settings .weather-setup {padding:8px;margin-top:8px;}
+html .compact-settings .court-summary ul {margin:4px 0;}
+@media(pointer:coarse){html .compact-settings :is(button,.stripe-connection-actions button){min-height:40px;}}

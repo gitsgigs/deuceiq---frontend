@@ -1,0 +1,14 @@
+.request-conversation{margin-top:10px;}
+.request-chat{max-width:620px;padding:14px;margin-top:8px;border:1px solid #819579;border-radius:12px;background:#ffffff35;}
+.request-chat h5{font-size:16px;margin:0 0 8px;}
+.request-chat p{font-size:13px;line-height:1.5;}
+.request-chat-history{max-height:300px;overflow:auto;}
+.request-message{border-radius:8px;padding:10px;margin:8px 0;background:#ffffff70;}
+.request-message.mine{background:#c0d3b4;}
+.request-message time{display:block;font-size:11px;margin-top:4px;}
+.request-message p{white-space:pre-wrap;overflow-wrap:anywhere;}
+.request-chat textarea{display:block;box-sizing:border-box;width:100%;font:inherit;margin:6px 0 10px;padding:8px;}
+.my-request-conversations article{padding:14px 0;border-bottom:1px solid #819579;}
+.my-request-conversations{margin:20px 0;}
+
+.request-unread-dot{display:inline-block;width:9px;height:9px;margin-left:9px;border-radius:50%;background:#20d35b;box-shadow:0 0 0 2px #153824;vertical-align:middle;}

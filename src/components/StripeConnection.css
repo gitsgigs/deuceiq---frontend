@@ -1,0 +1,10 @@
+.stripe-connection {text-align:left;max-width:900px;}
+.stripe-connection-heading {display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.stripe-connection-heading h4 {margin:0;}
+.stripe-connection-heading span {padding:4px 10px;border:1px solid currentColor;border-radius:999px;font-size:13px;}
+.stripe-connection .stripe-fee-consent {display:flex;align-items:flex-start;gap:10px;margin:16px 0;}
+.stripe-connection .stripe-fee-consent input {width:18px;height:18px;min-width:18px;margin:3px 0 0;}
+.stripe-connection-actions {display:flex;gap:10px;flex-wrap:wrap;}
+.stripe-connection .stripe-connection-actions button {width:auto;min-height:38px;margin:0;padding:8px 16px;border:1px solid #fff;border-radius:12px;background:#945454;color:#fff;font-size:14px;line-height:20px;}
+.stripe-connection .stripe-connection-actions button:disabled {opacity:.55;cursor:not-allowed;}
+.stripe-connection-note {font-size:14px;}

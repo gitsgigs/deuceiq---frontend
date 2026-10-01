@@ -1,9 +1,11 @@
+import {MemberClinicCalendar as MemberClinicsPage} from "./components/MemberClinicCalendar";
+import { OwnerChecklist } from "./components/OwnerChecklist";
 import { PlatformAdminLink } from "./components/ClubOnboarding";
 import { StaffBookings } from "./components/StaffBookings";
 import { NotificationsPage, NotificationIndicator } from "./components/NotificationsPage";
 import { HistoryPage } from "./components/HistoryPage";
 import { PricePreview } from "./components/PricePreview";
-import { MemberTierEditor } from "./components/MemberTierEditor";
+import { ProfileDirectory } from "./components/ProfileDirectory";
 import { ClinicSchedule } from "./components/ClinicSchedule";
 import { StaffClinics } from "./components/StaffClinics";
 import { SettingsPage, ProsPage } from "./components/ClubPages";
@@ -5410,6 +5412,7 @@ function App() {
 
         )}
 
+        {section === "overview" && clubRole === "owner" && currentClubId && <OwnerChecklist key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole} onNavigate={destination => setSection(destination)} />}
         {section === "overview" && (
 
           <OverviewPage
@@ -5601,7 +5604,7 @@ function App() {
         {section === "members" && (
 
           <MembersPage
-            userId={session.user.id} role={clubRole ?? ""}
+            clubId={currentClubId ?? ""} userId={session.user.id} role={clubRole ?? ""}
 
             members={members}
 
@@ -5729,6 +5732,7 @@ function App() {
 
 
 
+        {clubRole === "owner" && new URLSearchParams(window.location.search).has("stripe_connect") && <div role="status" className="members-card"><p>Returned from Stripe. Open your club's payment settings to check its connection or continue setup.</p><button onClick={() => {setSection("settings"); const url = new URL(window.location.href); url.searchParams.delete("stripe_connect"); url.searchParams.delete("stripe_club"); window.history.replaceState({}, "", url);}}>Open payment settings</button></div>}
         {section === "settings" && <SettingsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId ?? ""} role={clubRole ?? ""} onChanged={() => setDataRevision(v=>v+1)} />}
 
         {section === "inventory" &&
@@ -6132,6 +6136,7 @@ function OverviewPage({
       {["owner", "director", "manager"].includes(clubRole) && <WeatherSetup key={memberContext.locationId} {...memberContext} />}
 
       <div className="metric-grid">
+        <PlatformAdminLink userId={memberContext.userId} variant="overview" />
 
         {clubRole === "member" ? (
 
@@ -6382,292 +6387,6 @@ function OverviewPage({
 }
 
 
-
-
-
-function MemberClinicsPage({
-
-  clinics,
-
-  loading,
-
-  error,
-
-  onSelectClinic,
-
-}: {
-
-  clinics: MemberClinic[];
-
-  loading: boolean;
-
-  error: string | null;
-
-  onSelectClinic: (clinic: MemberClinic) => void;
-
-}) {
-
-  return (
-
-    <section className="members-card">
-
-      <div className="card-heading">
-
-        <div>
-
-          <p className="card-kicker">
-
-            UPCOMING CLINICS
-
-          </p>
-
-
-
-          <h3>
-
-            Available Clinics
-
-          </h3>
-
-
-
-          <p className="card-description">
-
-            Browse future clinics,
-
-            available spots and waitlist
-
-            status.
-
-          </p>
-
-        </div>
-
-
-
-        <span className="member-count">
-
-          {clinics.length} available
-
-        </span>
-
-      </div>
-
-
-
-      {loading && (
-
-        <div className="member-message">
-
-          Loading clinics...
-
-        </div>
-
-      )}
-
-
-
-      {error && (
-
-        <div className="member-message error">
-
-          {error}
-
-        </div>
-
-      )}
-
-
-
-      {!loading &&
-
-        !error &&
-
-        clinics.length === 0 && (
-
-          <div className="empty-state">
-
-            No upcoming clinics are
-
-            available right now.
-
-          </div>
-
-        )}
-
-
-
-      {!loading &&
-
-        !error &&
-
-        clinics.length > 0 && (
-
-          <div className="member-list">
-
-            {clinics.map(
-
-              (clinic) => (
-
-                <button
-
-                  type="button"
-
-                  className="member-row"
-
-                  key={
-
-                    clinic.booking_id
-
-                  }
-
-                  onClick={() =>
-
-                    onSelectClinic(clinic)
-
-                  }
-
-                  style={{
-
-                    width: "100%",
-
-                    textAlign: "left",
-
-                    cursor: "pointer",
-
-                  }}
-
-                >
-
-                  <div className="member-main">
-
-                    <strong>
-
-                      {clinic.name}
-
-                    </strong>
-
-
-
-                    <span>
-
-                      {new Date(
-
-                        clinic.starts_at
-
-                      ).toLocaleString(
-
-                        "en-US",
-
-                        {
-
-                          weekday:
-
-                            "short",
-
-                          month:
-
-                            "short",
-
-                          day:
-
-                            "numeric",
-
-                          hour:
-
-                            "numeric",
-
-                          minute:
-
-                            "2-digit",
-
-                        }
-
-                      )}
-
-                    </span>
-
-
-
-                    <span>
-
-                      {clinic.location_name ||
-
-                        "Location TBD"}
-
-                      {clinic.pro_name
-
-                        ? ` \u2022 ${clinic.pro_name}`
-
-                        : ""}
-
-                    </span>
-
-                  </div>
-
-
-
-                  <div className="member-meta">
-
-                    <span>
-
-                      {clinic.spots_remaining >
-
-                      0
-
-                        ? `${clinic.spots_remaining} spots open`
-
-                        : "Waitlist"}
-
-                    </span>
-
-
-
-                    <span>
-
-                      {clinic.enrolled_count}/
-
-                      {clinic.capacity} enrolled
-
-                    </span>
-
-
-
-                    {clinic.waitlist_count >
-
-                      0 && (
-
-                      <span>
-
-                        {
-
-                          clinic.waitlist_count
-
-                        }{" "}
-
-                        waitlisted
-
-                      </span>
-
-                    )}
-
-                  </div>
-
-                </button>
-
-              )
-
-            )}
-
-          </div>
-
-        )}
-
-    </section>
-
-  );
-
-}
 
 
 
@@ -10205,256 +9924,13 @@ function PlaceholderPage({
 
 
 
-function MembersPage({
-  userId, role,
-
-  members,
-
-  memberSearch,
-
-  setMemberSearch,
-
-  loading,
-
-  error,
-
-}: {
-
-  userId: string; role: string;
-  members: Member[];
-
-  memberSearch: string;
-
-  setMemberSearch: (
-
-    value: string
-
-  ) => void;
-
-  loading: boolean;
-
-  error: string | null;
-
+function MembersPage({userId, role, clubId}: {
+  userId: string; role: string; clubId: string; members: Member[];
+  memberSearch: string; setMemberSearch: (value: string) => void;
+  loading: boolean; error: string | null;
 }) {
-
-  return (
-
-    <section className="members-card">
-
-      <div className="card-heading">
-
-        <div>
-
-          <p className="card-kicker">
-
-            CLUB DATABASE
-
-          </p>
-
-
-
-          <h3>Members</h3>
-
-
-
-          <p className="card-description">
-
-            Search players by first
-
-            or last name.
-
-          </p>
-
-        </div>
-
-
-
-        <span className="member-count">
-
-          {members.length} shown
-
-        </span>
-
-      </div>
-
-
-
-      <div className="member-search">
-
-        <span>&#8981;</span>
-
-
-
-        <input
-
-          type="text"
-
-          value={memberSearch}
-
-          onChange={(event) =>
-
-            setMemberSearch(
-
-              event.target.value
-
-            )
-
-          }
-
-          placeholder="Search members..."
-
-        />
-
-      </div>
-
-
-
-      {loading && (
-
-        <div className="member-message">
-
-          Loading members...
-
-        </div>
-
-      )}
-
-
-
-      {error && (
-
-        <div className="member-message error">
-
-          {error}
-
-        </div>
-
-      )}
-
-
-
-      {!loading &&
-
-        !error &&
-
-        members.length === 0 && (
-
-          <div className="empty-state">
-
-            No members found.
-
-          </div>
-
-        )}
-
-
-
-      {!loading &&
-
-        !error &&
-
-        members.length > 0 && (
-
-          <div className="member-list">
-
-            {members.map(
-
-              (member) => (
-
-                <div
-
-                  className="member-row"
-
-                  key={member.id}
-
-                >
-
-                  <div className="member-avatar">
-
-                    {member.first_name
-
-                      .charAt(0)
-
-                      .toUpperCase()}
-
-
-
-                    {member.last_name
-
-                      .charAt(0)
-
-                      .toUpperCase()}
-
-                  </div>
-
-
-
-                  <div className="member-main">
-
-                    <strong>
-
-                      {member.first_name}{" "}
-
-                      {member.last_name}
-
-                    </strong>
-
-
-
-                    <span>
-
-                      {member.email ||
-
-                        "No email"}
-
-                    </span>
-
-                  </div>
-
-
-
-                  <div className="member-meta">
-
-                    <span>
-
-                      {member.membership_type ||
-
-                        "No membership type"}
-
-                    </span>
-
-
-
-                    <span>
-
-                      {member.skill_level
-
-                        ? `Level ${member.skill_level}`
-
-                        : "No level"}
-
-                    </span>
-
-                  </div>
-
-                  {["owner","director","manager","front_desk"].includes(role)&&<MemberTierEditor key={member.id+":"+member.membership_type} memberId={member.id} initial={member.membership_type} userId={userId} apiBase={API_BASE}/>}
-                </div>
-
-              )
-
-            )}
-
-          </div>
-
-        )}
-
-    </section>
-
-  );
-
+  return <ProfileDirectory key={`${userId}:${clubId}`} kind="members" apiBase={API_BASE} userId={userId} clubId={clubId} role={role} />;
 }
-
-
 
 function InvitationsPage({
 

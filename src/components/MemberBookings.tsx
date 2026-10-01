@@ -1,3 +1,4 @@
+import {MyRequestConversations} from "./RequestConversation";
 import { BookingPrice } from "./PricePreview";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
@@ -36,6 +37,7 @@ export function MemberBookingsPage(props: { apiBase: string; userId: string; clu
   }
   return <section className="members-card">
     <div className="card-heading"><div><p className="card-kicker">MY ACCOUNT</p><h3>My Bookings</h3><p className="card-description">Your rentals, lessons and clinic registrations across this club's locations.</p></div><button className="secondary-button" onClick={() => setRefresh(v => v + 1)} disabled={loading}>Refresh</button></div>
+    <MyRequestConversations key={`${props.userId}:${props.clubId}`} context={{...props,role:"member"}}/>
     <label><input type="checkbox" checked={history} onChange={e => setHistory(e.target.checked)} /> Include past bookings</label>
     <p className="card-description">Requests awaiting staff approval and cancelled bookings are not included in this list.</p>
     {loading && <p role="status">Loading your bookings…</p>}

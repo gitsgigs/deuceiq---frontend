@@ -21,3 +21,25 @@ html .usage-history .history-status { border: 1px solid #fff; border-radius: 20p
 .usage-history button { border-radius: 9px; border: 1px solid #fff; padding: 9px 16px; background: #294b35; color: #fff; }
 .usage-history button:disabled { opacity: .55; cursor: not-allowed; }
 @media(max-width:1000px) { .history-entry-grid { grid-template-columns: 1fr; gap: 12px; } }
+
+/* Compact history, scoped to this page. */
+html .usage-history {font-size:13px;line-height:1.45;padding:16px;}
+html .usage-history h3 {font-size:20px;margin:0 0 8px;}
+html .usage-history p {font-size:13px;line-height:1.45;margin:5px 0;}
+html .usage-history .history-entry {padding:12px 14px;margin:8px 0;border-radius:10px;}
+html .usage-history .history-entry h4 {font-size:16px;line-height:1.3;margin:0 0 4px;}
+html .usage-history .history-entry h5 {font-size:13px;line-height:1.4;margin:6px 0 4px;}
+html .usage-history .history-entry-grid {grid-template-columns:1fr 1.2fr 1.15fr;gap:14px;}
+html .usage-history .history-entry ul {margin:4px 0;padding-left:18px;}
+html .usage-history .history-entry li {margin:3px 0;}
+html .usage-history .history-entry dl {margin:5px 0;gap:4px 10px;}
+html .usage-history .history-entry summary {padding:4px 0;font-size:13px;}
+html .usage-history .history-entry small {display:block;margin-top:8px;font-size:11px;overflow-wrap:anywhere;}
+html .usage-history .history-status {font-size:11px;line-height:1.4;padding:3px 8px;}
+html .usage-history .history-notice {padding:10px 12px;margin:10px 0;}
+html .usage-history .history-filters {gap:10px;}
+html .usage-history :is(button,input,select) {font-size:13px;line-height:1.4;}
+html .usage-history button {padding:6px 10px;min-height:34px;}
+html .usage-history .history-pages {gap:10px;margin-top:12px;}
+@media(max-width:800px){html .usage-history .history-entry-grid{grid-template-columns:1fr;gap:6px;}}
+@media(pointer:coarse){html .usage-history button{min-height:40px;}}

@@ -10,3 +10,14 @@
 .onboarding-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}.onboarding-message{padding:16px;border:1px solid #365747;border-radius:12px;overflow-wrap:anywhere}
 .onboarding-application,.onboarding-review{background:#eef4e8;border:1px solid #fff;border-radius:16px;padding:20px;margin:16px 0;overflow-wrap:anywhere}.onboarding-review{border:2px solid #365747}
 .onboarding-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#75b952;margin-left:6px}.platform-admin-link{text-decoration:none}
+
+/* Keep the filter controls aligned to the select rather than its label. */
+.onboarding-wide{text-align:left}
+.onboarding-toolbar{align-items:flex-end;gap:12px;margin:24px 0}
+.onboarding-toolbar>label{margin:0;min-width:180px;max-width:260px;flex:0 1 220px}
+.onboarding-toolbar select{height:44px;padding:10px 12px;line-height:22px}
+.onboarding-card .onboarding-refresh{min-height:34px;padding:6px 12px;margin:0 0 5px;font-size:14px;line-height:20px;border-radius:10px;white-space:nowrap}
+.onboarding-unread{display:flex;align-items:center;min-height:44px;font-size:14px;white-space:nowrap}
+.onboarding-pagination{gap:12px;margin-top:24px}
+.onboarding-pagination>button{margin:0}
+@media(max-width:480px){.onboarding-toolbar>label{flex-basis:100%;max-width:none}.onboarding-card .onboarding-refresh{margin-bottom:0}.onboarding-unread{min-height:34px}}

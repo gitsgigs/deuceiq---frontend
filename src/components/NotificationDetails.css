@@ -1,0 +1,33 @@
+.notification-expand summary{cursor:pointer;border-radius:8px;list-style:none;padding:4px;}
+.notification-expand summary::-webkit-details-marker{display:none;}
+.notification-expand summary:focus-visible{outline:2px solid currentColor;outline-offset:4px;}
+.notification-expand summary h4{margin:0 0 6px;}
+.notification-expand summary p{margin:4px 0;}
+.notification-details-hint{display:inline-block;font-size:13px;font-weight:700;margin-top:6px;}
+.notification-details-hint::before{content:'▸ ';}
+.notification-expand[open] .notification-details-hint::before{content:'▾ ';}
+.notification-detail-body{border-top:1px solid #819579;margin-top:12px;padding:12px 4px;}
+.notification-detail-body dl{display:grid;grid-template-columns:minmax(100px,190px) minmax(0,1fr);gap:8px 16px;font-size:14px;line-height:1.5;margin:8px 0;}
+.notification-detail-body dt{font-weight:700;}
+.notification-detail-body dd{margin:0;overflow-wrap:anywhere;}
+.notification-created{font-size:12px;line-height:1.5;}
+@media(max-width:520px){.notification-detail-body dl{grid-template-columns:1fr;gap:3px;}.notification-detail-body dd{margin-bottom:8px;}}
+
+/* Match the compact booking and history cards. */
+html .compact-notifications {font-size:13px;line-height:1.45;padding:16px;}
+html .compact-notifications h3 {font-size:20px;margin:0 0 8px;}
+html .compact-notifications p {font-size:13px;line-height:1.45;margin:4px 0;}
+html .compact-notifications > article {padding:10px 14px;margin:8px 0;border-radius:10px;}
+html .compact-notifications .notification-expand summary {padding:2px 0;}
+html .compact-notifications .notification-expand h4 {font-size:16px;line-height:1.35;margin:0 0 4px;}
+html .compact-notifications .management-status {font-size:11px;line-height:1.4;padding:2px 7px;vertical-align:middle;}
+html .compact-notifications .notification-created {font-size:11px;}
+html .compact-notifications .notification-details-hint {font-size:12px;margin-top:3px;}
+html .compact-notifications .notification-detail-body {margin-top:8px;padding:8px 0;}
+html .compact-notifications .notification-detail-body dl {font-size:13px;line-height:1.45;gap:5px 12px;margin:5px 0;}
+html .compact-notifications button {font-size:13px;line-height:1.4;min-height:34px;padding:6px 10px;border-radius:8px;}
+html .compact-notifications > article > button {margin-top:6px;}
+html .compact-notifications select {font-size:13px;padding:6px 8px;min-height:34px;}
+html .compact-notifications .management-controls {gap:8px;margin:10px 0;}
+html .compact-notifications .management-pages {gap:10px;margin-top:12px;}
+@media(pointer:coarse){html .compact-notifications button{min-height:40px;}}

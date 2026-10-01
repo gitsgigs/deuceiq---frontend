@@ -1,3 +1,5 @@
+import { StripeConnection } from "./StripeConnection";
+import { ProfileDirectory } from "./ProfileDirectory";
 import { CourtManager } from "./CourtManager";
 import { GeneralPricing } from "./GeneralPricing";
 import { useEffect, useRef, useState } from "react";
@@ -33,15 +35,18 @@ function Editor({ row, fields, onSave, onClose }: { row: Row; fields: Field[]; o
   </form>;
 }
 export function ProsPage(p: Context) {
-  const [rows, setRows] = useState<Row[]>([]), [error, setError] = useState<string | null>(null), [loading, setLoading] = useState(true), [refresh, setRefresh] = useState(0), [editing, setEditing] = useState<string | null>(null);
-  useEffect(() => { const c = new AbortController(); setLoading(true); setRows([]); setError(null); setEditing(null);
+  return managers.includes(p.role)
+    ? <ProfileDirectory key={`${p.userId}:${p.clubId}`} {...p} kind="pros" />
+    : <ReadOnlyProsPage {...p} />;
+}
+function ReadOnlyProsPage(p: Context) {
+  const [rows, setRows] = useState<Row[]>([]), [error, setError] = useState<string | null>(null), [loading, setLoading] = useState(true), [refresh, setRefresh] = useState(0);
+  useEffect(() => { const c = new AbortController(); setLoading(true); setRows([]); setError(null);
     api(p, `/pros?club_id=${encodeURIComponent(p.clubId)}`, "GET", undefined, c.signal).then(b => { if (!Array.isArray(b.pros)) throw new Error("Unexpected pro list."); if (!c.signal.aborted) setRows(b.pros); }).catch(e => { if (!c.signal.aborted) setError(e.message); }).finally(() => { if (!c.signal.aborted) setLoading(false); }); return () => c.abort();
   }, [p.apiBase, p.clubId, p.userId, refresh]);
-  return <section className="members-card club-pages"><h3>Pros</h3><p>Active professionals across this club.</p><button disabled={loading || !!editing} onClick={() => setRefresh(v => v + 1)}>Refresh</button>
+  return <section className="members-card club-pages"><h3>Pros</h3><p>Active professionals across this club.</p><button disabled={loading} onClick={() => setRefresh(v => v + 1)}>Refresh</button>
     {loading && <p role="status">Loading pros...</p>}{error && <p role="alert">{error}</p>}{!loading && !error && !rows.length && <p>No active pros found.</p>}
     {rows.map(row => <article key={row.id}><h4>{string(row.first_name)} {string(row.last_name)}</h4>{row.email ? <p>Email: {string(row.email)}</p> : null}{row.phone ? <p>Phone: {string(row.phone)}</p> : null}
-      {managers.includes(p.role) && <button disabled={!!editing} onClick={() => setEditing(row.id)}>Edit profile</button>}
-      {editing === row.id && <Editor row={row} fields={[{ key: "first_name", label: "First name", required: true }, { key: "last_name", label: "Last name", required: true }, { key: "email", label: "Email", type: "email" }, { key: "phone", label: "Phone", type: "tel" }]} onClose={() => setEditing(null)} onSave={async values => { const result = await api(p, `/pros/${row.id}`, "PATCH", Object.fromEntries(Object.entries(values).map(([k,v]) => [k,v.trim()]))); if (!result.pro) throw new Error("Save could not be confirmed."); setEditing(null); setRefresh(v => v + 1); }} />}
     </article>)}
   </section>;
 }
@@ -77,6 +82,7 @@ export function SettingsPage(p: Context) {
   }, [p.apiBase, p.clubId, p.userId, p.role, refresh]);
   if (!managers.includes(p.role)) return <p>You do not have access to club settings.</p>;
   return <section className="members-card club-pages compact-settings"><h3>Settings</h3><button disabled={loading || busy || !!editing} onClick={() => setRefresh(v => v + 1)}>Refresh settings</button>{loading && <p role="status">Loading settings...</p>}{error && <p role="alert">{error}</p>}
+    <StripeConnection key={`${p.userId}:${p.clubId}`} {...p} />
     {!loading && !error && <details className="general-settings" open><summary>General Settings</summary><h4>{clubName}</h4>
       <CourtSummary courts={courts} />
       <CourtManager {...p} locations={rows.map(row=>({id:row.id,name:string(row.name)}))} onChanged={()=>{setRefresh(v=>v+1);p.onChanged?.();}} />

@@ -1,3 +1,4 @@
+import { PlatformAdminLink } from "./components/ClubOnboarding";
 import { StaffBookings } from "./components/StaffBookings";
 import { NotificationsPage, NotificationIndicator } from "./components/NotificationsPage";
 import { HistoryPage } from "./components/HistoryPage";
@@ -4791,6 +4792,8 @@ function App() {
 
 
 
+          {!resetMode && <a className="login-back-button" href="/register-club">Register your club</a>}
+
           {resetMode && (
 
             <button
@@ -5040,6 +5043,7 @@ function App() {
 
 
         <nav className="navigation">
+          <PlatformAdminLink userId={session.user.id} />
 
           {visibleNavigationItems.map(
 

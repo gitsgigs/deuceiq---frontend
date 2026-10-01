@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { ClubOnboarding } from './components/ClubOnboarding'
 
 createRoot(document.getElementById('root')!, {
   onUncaughtError: reportReactError,
@@ -10,6 +11,6 @@ createRoot(document.getElementById('root')!, {
   onRecoverableError: reportReactError,
 }).render(
   <StrictMode>
-    <App />
+    {['/register-club', '/platform-admin', '/owner-setup'].includes(window.location.pathname) ? <ClubOnboarding /> : <App />}
   </StrictMode>,
 )

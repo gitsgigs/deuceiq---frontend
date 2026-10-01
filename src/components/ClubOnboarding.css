@@ -1,0 +1,12 @@
+.onboarding-shell{min-height:100vh;background:#13241b;padding:clamp(16px,4vw,48px);display:flex;justify-content:center;align-items:flex-start;color:#122219}
+.onboarding-card{width:min(100%,560px);background:#d7e8c9;border:1px solid #fff;border-radius:24px;padding:clamp(20px,4vw,40px);box-sizing:border-box}
+.onboarding-wide{width:min(100%,1000px)}
+.onboarding-brand{font-weight:800;letter-spacing:.15em;color:#365747}
+.onboarding-card h1{font-size:2rem;margin:0 0 16px}.onboarding-card h2{font-size:1.25rem}
+.onboarding-card label{display:grid;gap:8px;margin:16px 0;text-align:left}
+.onboarding-card input,.onboarding-card select,.onboarding-card textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #708773;border-radius:12px;background:#102319;color:#fff;font:inherit}
+.onboarding-card button,.onboarding-button{display:inline-block;background:#9e4b50;color:#fff;border:1px solid #fff;border-radius:14px;padding:12px 18px;font:inherit;text-decoration:none;cursor:pointer;margin:4px 4px 4px 0;text-align:center}
+.onboarding-card button:disabled{opacity:.55;cursor:default}.onboarding-card button:focus-visible,.onboarding-button:focus-visible{outline:3px solid #365747;outline-offset:3px}
+.onboarding-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}.onboarding-message{padding:16px;border:1px solid #365747;border-radius:12px;overflow-wrap:anywhere}
+.onboarding-application,.onboarding-review{background:#eef4e8;border:1px solid #fff;border-radius:16px;padding:20px;margin:16px 0;overflow-wrap:anywhere}.onboarding-review{border:2px solid #365747}
+.onboarding-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#75b952;margin-left:6px}.platform-admin-link{text-decoration:none}

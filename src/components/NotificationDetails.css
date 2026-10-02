@@ -45,3 +45,21 @@ html .compact-notifications .notification-column-scroll .notification-expand h4{
 .notification-columns.member-notification-column{display:block;}
 .member-notification-column .notification-column{width:100%;}
 .accepted-notification-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#64bd50;box-shadow:0 0 0 1px #39753d;vertical-align:middle;margin-left:5px;}
+
+/* Give each value the full notification column width beneath its label. */
+html .compact-notifications .notification-detail-body dl {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  text-align: left;
+}
+html .compact-notifications .notification-detail-body dt {
+  min-width: 0;
+  margin: 0;
+}
+html .compact-notifications .notification-detail-body dd {
+  min-width: 0;
+  margin: 0 0 7px;
+}
+html .compact-notifications .notification-detail-body dd:last-child {
+  margin-bottom: 0;
+}

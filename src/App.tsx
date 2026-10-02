@@ -612,6 +612,9 @@ function App() {
 
   const [inviteToken, setInviteToken] = useState<string | null>(null);
 
+  const [invitePhone, setInvitePhone] = useState("");
+  const [inviteFirstName, setInviteFirstName] = useState("");
+  const [inviteLastName, setInviteLastName] = useState("");
   const [invitePassword, setInvitePassword] = useState("");
 
   const [invitePasswordConfirm, setInvitePasswordConfirm] = useState("");
@@ -3832,6 +3835,15 @@ function App() {
 
 
   async function handleAcceptInvitation() {
+    if (!inviteFirstName.trim() || !inviteLastName.trim()) {
+      setInviteMessage("Please enter your first and last name.");
+      return;
+    }
+    const nameUpdate = await supabase.auth.updateUser({data: {
+      first_name: inviteFirstName.trim(), last_name: inviteLastName.trim(), phone: invitePhone.trim()
+    }});
+    if (nameUpdate.error) { setInviteMessage(nameUpdate.error.message); return; }
+
 
     if (!inviteToken) {
 
@@ -4126,6 +4138,10 @@ function App() {
             onSubmit={handleInviteLogin}
 
           >
+<label className="form-field"><span>First name</span><input required maxLength={120} autoComplete="given-name" value={inviteFirstName} onChange={e=>setInviteFirstName(e.target.value)} /></label>
+<label className="form-field"><span>Last name</span><input required maxLength={120} autoComplete="family-name" value={inviteLastName} onChange={e=>setInviteLastName(e.target.value)} /></label>
+<label className="form-field"><span>Cell-phone number (optional)</span><input type="tel" maxLength={60} autoComplete="tel" value={invitePhone} onChange={e=>setInvitePhone(e.target.value)} placeholder="(555) 123-4567" /></label>
+
 
             <div className="login-logo">
 
@@ -4328,6 +4344,10 @@ function App() {
           }
 
         >
+<label className="form-field"><span>First name</span><input required maxLength={120} autoComplete="given-name" value={inviteFirstName} onChange={e=>setInviteFirstName(e.target.value)} /></label>
+<label className="form-field"><span>Last name</span><input required maxLength={120} autoComplete="family-name" value={inviteLastName} onChange={e=>setInviteLastName(e.target.value)} /></label>
+<label className="form-field"><span>Cell-phone number (optional)</span><input type="tel" maxLength={60} autoComplete="tel" value={invitePhone} onChange={e=>setInvitePhone(e.target.value)} placeholder="(555) 123-4567" /></label>
+
 
           <div className="login-logo">
 

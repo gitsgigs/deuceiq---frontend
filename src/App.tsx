@@ -2,7 +2,7 @@ import {ChatMessageIndicator,StaffSummaryIndicator} from "./components/ChatMessa
 import {BookingMessageIndicator} from "./components/BookingMessageIndicator";
 import {MemberChat} from "./components/MemberChat";
 import {StaffConversations} from "./components/ConversationSummary";
-import {MemberClinicCalendar as MemberClinicsPage} from "./components/MemberClinicCalendar";
+
 import { OwnerChecklist } from "./components/OwnerChecklist";
 import { PlatformAdminLink } from "./components/ClubOnboarding";
 import { StaffBookings } from "./components/StaffBookings";
@@ -11,7 +11,7 @@ import { HistoryPage } from "./components/HistoryPage";
 import { PricePreview } from "./components/PricePreview";
 import { ProfileDirectory } from "./components/ProfileDirectory";
 import { ClinicSchedule } from "./components/ClinicSchedule";
-import { StaffClinics } from "./components/StaffClinics";
+
 import { SettingsPage, ProsPage } from "./components/ClubPages";
 import { MemberBookingsPage } from "./components/MemberBookings";
 import { useEffect, useMemo, useState } from "react";
@@ -663,9 +663,9 @@ function App() {
 
   const [availableClinics, setAvailableClinics] = useState<MemberClinic[]>([]);
 
-  const [availableClinicsLoading, setAvailableClinicsLoading] = useState(false);
+  const [, setAvailableClinicsLoading] = useState(false);
 
-  const [availableClinicsError, setAvailableClinicsError] = useState<string | null>(null);
+  const [, setAvailableClinicsError] = useState<string | null>(null);
 
   const [selectedClinic, setSelectedClinic] = useState<MemberClinic | null>(null);
 
@@ -5570,7 +5570,7 @@ function App() {
 
 
         {section === "clinics" && currentClubId && ["owner","director","manager","front_desk","member"].includes(clubRole ?? "") && (
-          <ClinicSchedule key={`${session.user.id}:${currentClubId}:${dataRevision}`} clubId={currentClubId} userId={session.user.id} role={clubRole ?? ""} canCreate={Boolean(currentLocationId)}
+          <ClinicSchedule apiBase={API_BASE} key={`${session.user.id}:${currentClubId}:${dataRevision}`} clubId={currentClubId} userId={session.user.id} role={clubRole ?? ""} canCreate={Boolean(currentLocationId)}
             onCreate={() => { setCreateMessage(null); setCreateAction("clinic"); }}
             onRegister={id => { void (async () => {
               try {
@@ -5585,48 +5585,6 @@ function App() {
               } catch (e) { setCreateMessage(e instanceof Error ? e.message : "Unable to open clinic registration."); }
             })(); }} />
         )}
-
-        {section === "clinics" &&
-
-          (clubRole === "member" ? (
-
-            <MemberClinicsPage
-
-              clinics={
-
-                availableClinics
-
-              }
-
-              loading={
-
-                availableClinicsLoading
-
-              }
-
-              error={
-
-                availableClinicsError
-
-              }
-
-              onSelectClinic={(clinic) => {
-
-                setClinicDecisionMessage(null);
-
-                setSelectedClinic(clinic);
-
-              }}
-
-            />
-
-          ) : (
-
-            <StaffClinics key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId ?? ""} role={clubRole ?? ""} locations={locations} canCreate={Boolean(currentLocationId)} onCreate={() => { setCreateMessage(null); setCreateAction("clinic"); }} />
-
-          ))}
-
-
 
         {section === "notifications" && currentClubId && <NotificationsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
 

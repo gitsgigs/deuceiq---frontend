@@ -37,3 +37,5 @@ html .member-recurring-list .clinic-schedule-search input{box-sizing:border-box;
 .clinic-weekday-filters legend{font-size:12px;font-weight:700;padding:0;}
 html .member-recurring-list .clinic-weekday-filters button{background:#edf5e8;color:#142a1b;border:1px solid #8fa783;}
 html .member-recurring-list .clinic-weekday-filters button[aria-pressed=true]{background:#294b35;color:white;box-shadow:inset 0 0 0 1px white;}
+html .clinic-weekday-filters button[aria-pressed="true"] { outline:3px solid #d32f2f; outline-offset:2px; }
+html .clinic-weekday-filters button[aria-pressed="true"]:focus-visible { outline:3px solid #d32f2f; outline-offset:2px; }

@@ -2116,7 +2116,7 @@ function App() {
 
 
 
-  async function loadMemberClinics(signal?: AbortSignal) {
+  async function loadMemberClinics(signal?: AbortSignal, bookingId?: string) {
 
     if (
 
@@ -2149,6 +2149,8 @@ function App() {
       });
 
 
+
+      if (bookingId) params.set("booking_id", bookingId);
 
       const response = await fetch(
 
@@ -2214,11 +2216,14 @@ function App() {
 
 
 
-      setAvailableClinics(
-
-        Array.isArray(data?.clinics) ? data.clinics : []
-
-      );
+      const clinics = Array.isArray(data?.clinics) ? data.clinics : [];
+      if (bookingId) {
+        const updated = clinics.find(c=>c.booking_id===bookingId);
+        if(updated){
+          setAvailableClinics(previous=>previous.map(c=>c.booking_id===bookingId?updated:c));
+          setSelectedClinic(previous=>previous?.booking_id===bookingId?updated:previous);
+        }
+      } else setAvailableClinics(clinics);
 
     } catch (error) {
 
@@ -2624,7 +2629,7 @@ function App() {
           : clinicRegistrationMessage(memberBody.status));
       }
 
-      await loadMemberClinics();
+      void loadMemberClinics(undefined, clinic.booking_id);
 
     } catch (error) {
 
@@ -5534,7 +5539,7 @@ function App() {
               try {
                 const auth = await supabase.auth.getSession();
                 if (auth.error || auth.data.session?.user.id !== session.user.id) throw new Error("Your session changed. Sign in again.");
-                const response = await fetch(`${API_BASE}/member/clinics?club_id=${encodeURIComponent(currentClubId)}`, { headers: { Authorization: `Bearer ${auth.data.session.access_token}` } });
+                const response = await fetch(`${API_BASE}/member/clinics?club_id=${encodeURIComponent(currentClubId)}&booking_id=${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${auth.data.session.access_token}` } });
                 if (!response.ok) throw new Error("Clinic availability could not be checked. Please try again.");
                 const body = await response.json();
                 const clinic = Array.isArray(body.clinics) ? (body.clinics as MemberClinic[]).find(c => c.booking_id === id) : null;

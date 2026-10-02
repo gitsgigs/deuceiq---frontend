@@ -41,3 +41,7 @@ html .compact-notifications .notification-column-scroll .notification-expand h4{
 .notification-column .management-controls{display:flex;flex-wrap:wrap;}
 .notification-column-scroll:focus-visible{outline:2px solid #294b35;outline-offset:2px;}
 @media(max-width:900px){.notification-columns{display:flex;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:12px;}.notification-column{flex:0 0 min(340px,85vw);box-sizing:border-box;scroll-snap-align:start;}.notification-column-scroll{height:70dvh;}}
+
+.notification-columns.member-notification-column{display:block;}
+.member-notification-column .notification-column{width:100%;}
+.accepted-notification-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#64bd50;box-shadow:0 0 0 1px #39753d;vertical-align:middle;margin-left:5px;}

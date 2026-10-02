@@ -1,3 +1,4 @@
+import "./MemberBookings.css";
 import {bookingDateRange} from "../lib/bookingDateRange";
 import {MyRequestConversations} from "./RequestConversation";
 import { BookingPrice } from "./PricePreview";
@@ -35,19 +36,19 @@ export function MemberBookingsPage(props: { apiBase: string; userId: string; clu
     return () => { cancelled = true; controller.abort(); clearInterval(timer); window.removeEventListener("focus", focus); document.removeEventListener("visibilitychange", focus); };
   }, [props.apiBase, props.userId, props.clubId, history, refresh]);
   const displayRows=history?rows.slice(0,20):rows;
-  const pageCount=Math.max(1,Math.ceil(displayRows.length/7));
+  const pageCount=Math.max(1,Math.ceil(displayRows.length/5));
   const currentPage=Math.min(page,pageCount-1);
-  const visibleRows=displayRows.slice(currentPage*7,currentPage*7+7);
-  return <section className="members-card">
+  const visibleRows=displayRows.slice(currentPage*5,currentPage*5+5);
+  return <section className="members-card compact-my-bookings">
     <div className="card-heading"><div><p className="card-kicker">MY ACCOUNT</p><h3>My Bookings</h3><p className="card-description">Your rentals, lessons and clinic registrations across this club's locations.</p></div><button className="secondary-button" onClick={() => setRefresh(v => v + 1)} disabled={loading}>Refresh</button></div>
     <MyRequestConversations key={`${props.userId}:${props.clubId}`} context={{...props,role:"member"}}/>
     <div role="group" aria-label="Booking view"><button type="button" aria-pressed={!history} onClick={()=>{setHistory(false);setPage(0);}}>Upcoming bookings</button><button type="button" aria-pressed={history} onClick={()=>{setHistory(true);setPage(0);}}>Previous 20 bookings</button></div>
-    {history&&<p>Your latest 20 past bookings, newest first. Up to 7 bookings per page.</p>}
+    {history&&<p>Your latest 20 past bookings, newest first. Up to 5 bookings per page.</p>}
     <p className="card-description">Requests awaiting staff approval and cancelled bookings are not included in this list.</p>
     {loading && <p role="status">Loading your bookings…</p>}
     {error && <p role="alert">{error}</p>}
     {!loading && !error && !rows.length && <div className="empty-state">{history ? "No bookings found." : "No upcoming bookings."}</div>}
-    {visibleRows.map(row => <article key={row.booking_id} style={{ padding: "18px 0", borderBottom: "1px solid #446551" }}>
+    {visibleRows.map(row => <article key={row.booking_id} className="member-reservation">
       <h4>{row.name}</h4><p>{bookingDateRange(row.starts_at,row.ends_at,props.locations.find(l=>l.id===row.location_id)?.timezone||'UTC')}</p>
       <p>{row.location_name || "Location not specified"} · {row.court_name || "Court not assigned"}</p>
       {row.pro_name && <p>Pro: {row.pro_name}</p>}

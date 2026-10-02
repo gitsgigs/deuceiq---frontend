@@ -21,7 +21,7 @@ export function StaffBookings(p:Props){
  const [action,setAction]=useState<{row:Row;kind:"approve"|"decline"|"settle"|"cancel"}|null>(null),[note,setNote]=useState(""),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[blocked,setBlocked]=useState(false),[roster,setRoster]=useState<Row|null>(null);
  const pending=useRef(false),mounted=useRef(true);
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
- const key=JSON.stringify([p.clubId,p.userId,p.role,tab,location,day,status,offset,revision]);
+ const key=JSON.stringify([p.clubId,p.userId,p.role,tab,location,day,status,offset]);
  const current=result?.key===key?result:null,loading=!current;
  useEffect(()=>{if(!allowed.includes(p.role))return;let cancelled=false;const c=new AbortController();
   const q=new URLSearchParams({club_id:p.clubId,limit:"25",offset:String(offset)});
@@ -33,7 +33,7 @@ export function StaffBookings(p:Props){
    if(!cancelled)setResult({key,rows,more:data.has_more});
   }).catch(e=>{if(!cancelled)setResult({key,rows:[],more:false,error:e.message});});
   return()=>{cancelled=true;c.abort();};
- },[key,p.apiBase]);
+ },[key,revision,p.apiBase]);
  function refresh(){setOffset(0);setRevision(v=>v+1);setAction(null);setBlocked(false);}
  function when(row:Row,value:string){return new Date(value).toLocaleString("en-US",{timeZone:row.location?.timezone||p.locations.find(l=>l.id===row.location_id)?.timezone||"UTC",month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}
  async function decide(){if(!action||pending.current||blocked)return;pending.current=true;setBusy(true);setMessage("");

@@ -634,6 +634,7 @@ function App() {
 
 
 
+  const [bookingsScope,setBookingsScope]=useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
 
   const [bookingsLoading, setBookingsLoading] = useState(false);
@@ -1842,7 +1843,7 @@ function App() {
 
         const data: BookingsResponse = await response.json();
 
-        setBookings(data.bookings);
+        if (!controller.signal.aborted) { setBookings(data.bookings); setBookingsScope(`${session?.user.id}:${currentClubId}:${currentLocationId}:${calendarDate}`); }
 
       } catch (error) {
 
@@ -1872,7 +1873,7 @@ function App() {
 
       } finally {
 
-        setBookingsLoading(false);
+        if (!controller.signal.aborted) setBookingsLoading(false);
 
       }
 
@@ -5513,7 +5514,7 @@ function App() {
 
           <CalendarBoard
 
-            bookings={bookings}
+            bookings={bookingsScope===`${session.user.id}:${currentClubId}:${currentLocationId}:${calendarDate}`?bookings:[]}
 
             courts={courts}
 

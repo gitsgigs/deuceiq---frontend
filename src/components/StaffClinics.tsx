@@ -1,5 +1,5 @@
 import "./StaffClinics.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { FullRoster } from "./RosterTools";
 type Clinic = { id: string; club_id: string; starts_at: string; ends_at: string; status: string; location_id: string | null; lesson_type: { name: string; category: string }; court: { name: string | null } | null };
@@ -8,8 +8,9 @@ const roles = ["owner", "director", "manager", "front_desk"];
 export function StaffClinics(p: Props) {
   const [rows,setRows]=useState<Clinic[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState<string|null>(null),[refresh,setRefresh]=useState(0);
   const [history,setHistory]=useState(false),[location,setLocation]=useState(""),[search,setSearch]=useState(""),[selected,setSelected]=useState<Clinic|null>(null);
+  const listScope=useRef("");
   useEffect(()=>{
-    let cancelled=false,running=false;const controller=new AbortController();setRows([]);setError(null);setLoading(true);
+    let cancelled=false,running=false;const controller=new AbortController();const nextScope=JSON.stringify([p.userId,p.clubId,p.role,history,location]);if(listScope.current!==nextScope){setRows([]);setLoading(true);listScope.current=nextScope;}setError(null);
     async function load(){if(running||document.hidden||!roles.includes(p.role))return;running=true;
       try{
         const {data,error}=await supabase.auth.getSession();

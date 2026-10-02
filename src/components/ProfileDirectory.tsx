@@ -57,7 +57,7 @@ export function ProfileDirectory(p: Context) {
   const [page, setPage] = useState<{ key: string; data?: Page; error?: string } | null>(null);
   const [message, setMessage] = useState("");
   const allowed = (p.kind === "members" ? ["owner", "director", "manager", "front_desk"] : ["owner", "director", "manager"]).includes(p.role);
-  const key = JSON.stringify([p.userId, p.clubId, p.kind, query, inactive, offset, revision]);
+  const key = JSON.stringify([p.userId, p.clubId, p.kind, query, inactive, offset]);
   const current = page?.key === key ? page : null;
   useEffect(() => { const timer = setTimeout(() => { setQuery(search.trim()); setOffset(0); }, 250); return () => clearTimeout(timer); }, [search]);
   useEffect(() => {
@@ -78,7 +78,7 @@ export function ProfileDirectory(p: Context) {
       if (!controller.signal.aborted) setPage({ key, data });
     }).catch(error => { if (!controller.signal.aborted) setPage({ key, error: messageFor(error) }); });
     return () => controller.abort();
-  }, [key, allowed, p.apiBase]);
+  }, [key, revision, allowed, p.apiBase]);
   if (!allowed) return <p>You do not have access to edit these profiles.</p>;
   return <section className={`members-card profile-directory ${p.kind === "members" ? "compact-member-directory" : ""}`}>
     <p className="card-kicker">CLUB DATABASE</p><h3>{p.kind === "members" ? "Members" : "Pros"}</h3>

@@ -1,6 +1,6 @@
 import {MyRequestConversations} from "./RequestConversation";
 import { BookingPrice } from "./PricePreview";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { createRequest } from "../lib/createActions";
 
@@ -8,10 +8,11 @@ type Booking = { booking_id: string; starts_at: string; ends_at: string; name: s
 export function MemberBookingsPage(props: { apiBase: string; userId: string; clubId: string; locations: { id: string; timezone?: string | null }[] }) {
   const [history, setHistory] = useState(false), [refresh, setRefresh] = useState(0);
   const [rows, setRows] = useState<Booking[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState<string | null>(null);
+  const listScope=useRef("");
   useEffect(() => {
     let cancelled = false, running = false;
     const controller = new AbortController();
-    setRows([]); setError(null); setLoading(true);
+    const nextScope=JSON.stringify([props.userId,props.clubId,history]);if(listScope.current!==nextScope){setRows([]);setLoading(true);listScope.current=nextScope;}setError(null);
     async function load() {
       if (running || document.hidden) return;
       running = true;

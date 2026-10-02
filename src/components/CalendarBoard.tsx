@@ -276,7 +276,7 @@ export default function CalendarBoard(props: Props) {
     {message && <p role="status" className="calendar-message">{message}</p>}
     {busy && <p role="status">Checking availability and saving…</p>}
     {props.error && <p role="alert">{props.error}</p>}
-    <p>On a phone, swipe across the grid to see every court and tap a booking to open it. Use Create to add a booking.</p>{!props.loading&&!props.courts.length&&<p>No courts are available for this location.</p>}{props.loading ? <p>Loading calendar…</p> : <div className="calendar-board-scroll"><div className="calendar-board-columns" style={{ width: `${76 + props.courts.length * 170}px`, gridTemplateColumns: `76px repeat(${props.courts.length}, 170px)` }}>
+    <p>On a phone, swipe across the grid to see every court and tap a booking to open it. Use Create to add a booking.</p>{!props.loading&&!props.courts.length&&<p>No courts are available for this location.</p>}<p role="status" style={{minHeight:"1.4em",margin:"4px 0"}}>{props.loading?"Updating calendar…":""}</p><div className="calendar-board-scroll" aria-busy={props.loading}><div className="calendar-board-columns" style={{ width: `${76 + props.courts.length * 170}px`, gridTemplateColumns: `76px repeat(${props.courts.length}, 170px)` }}>
       <div><div className="calendar-column-heading">Time</div>{slots.map(m => <div className="calendar-time-label" key={m}>{String(Math.floor(m / 60)).padStart(2, "0")}:{String(m % 60).padStart(2, "0")}</div>)}</div>
       {props.courts.map(c => <div key={c.id}><div className="calendar-column-heading" title={c.name}>{c.court_number != null ? `Court ${c.court_number}` : c.name}{c.court_number != null && c.name && <small>{c.name}</small>}</div><div className="calendar-lane" style={{ height: slots.length * 48 }}
         onPointerDown={e=>{if(e.pointerType==="touch")return;if(e.button!==0||!props.canEdit||busy||uncertain||props.loading||props.error||!(e.target as HTMLElement).classList.contains("calendar-drop-slot"))return;const m=min+Math.max(0,Math.min(slots.length-1,Math.floor((e.clientY-e.currentTarget.getBoundingClientRect().top)/48)))*30;selection.current={court:c.id,anchor:m,end:m};setRange(selection.current);e.currentTarget.setPointerCapture(e.pointerId);e.preventDefault();setHover(null);}}
@@ -304,7 +304,7 @@ export default function CalendarBoard(props: Props) {
           <small>{fmt(b.starts_at)} – {fmt(b.ends_at)}</small>{b.booking_series_id && <small>Recurring</small>}
         </div>)}
       </div></div>)}
-    </div></div>}
+    </div></div>
     {hover && hoverBooking && createPortal(<div className="clinic-hover-pair" style={{ top: hover.top, left: hover.left }} onMouseEnter={keepHover} onMouseLeave={leaveHover} onFocus={keepHover} onBlur={leaveHover} onKeyDown={e => { if (e.key === "Escape") setHover(null); }}>
       <section aria-label="Clinic roster"><h4>Roster</h4>{!info && <p>Loading…</p>}{info?.roster?.participants?.length === 0 && <p>No registrations yet.</p>}
         {info?.roster?.participants?.slice(0, 4).map(p => <div className="roster-preview-row" key={p.enrollment_id}><div><strong>{p.display_name}</strong><br /><small>{p.status.replaceAll("_", " ")}{p.participant_type === "guest" ? " · Guest" : ""}</small></div><PlayerInfoButton name={p.display_name} onClick={() => showPlayer(rosterCard(p, hoverBooking.club_id))} /></div>)}

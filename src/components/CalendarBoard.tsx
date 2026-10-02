@@ -6,7 +6,7 @@ import "./CalendarBoard.css";
 import { FullRoster, PlayerDetails, PlayerInfoButton, rosterCard, displayPlayerName } from "./RosterTools";
 import type { PlayerCard, PlayerProfile, RosterPlayer } from "./RosterTools";
 
-type Court = { id: string; name: string; location_id: string };
+type Court = { id: string; name: string; location_id: string; court_number?: number | null };
 type Pro = { id: string; first_name?: string; last_name?: string };
 type Lesson = { id: string; name?: string; category?: string; active?: boolean };
 type Booking = {
@@ -232,10 +232,10 @@ export default function CalendarBoard(props: Props) {
     {message && <p role="status" className="calendar-message">{message}</p>}
     {busy && <p role="status">Checking availability and saving…</p>}
     {props.error && <p role="alert">{props.error}</p>}
-    {props.loading ? <p>Loading calendar…</p> : <div className="calendar-board-scroll"><div className="calendar-board-columns" style={{ gridTemplateColumns: `76px repeat(${props.courts.length}, minmax(150px, 1fr))` }}>
+    <p>On a phone, swipe across the grid to see every court and tap a booking to open it. Use Create to add a booking.</p>{!props.loading&&!props.courts.length&&<p>No courts are available for this location.</p>}{props.loading ? <p>Loading calendar…</p> : <div className="calendar-board-scroll"><div className="calendar-board-columns" style={{ width: `${76 + props.courts.length * 170}px`, gridTemplateColumns: `76px repeat(${props.courts.length}, 170px)` }}>
       <div><div className="calendar-column-heading">Time</div>{slots.map(m => <div className="calendar-time-label" key={m}>{String(Math.floor(m / 60)).padStart(2, "0")}:{String(m % 60).padStart(2, "0")}</div>)}</div>
-      {props.courts.map(c => <div key={c.id}><div className="calendar-column-heading">{c.name}</div><div className="calendar-lane" style={{ height: slots.length * 48 }}
-        onPointerDown={e=>{if(e.button!==0||!props.canEdit||busy||uncertain||props.loading||props.error||!(e.target as HTMLElement).classList.contains("calendar-drop-slot"))return;const m=min+Math.max(0,Math.min(slots.length-1,Math.floor((e.clientY-e.currentTarget.getBoundingClientRect().top)/48)))*30;selection.current={court:c.id,anchor:m,end:m};setRange(selection.current);e.currentTarget.setPointerCapture(e.pointerId);e.preventDefault();setHover(null);}}
+      {props.courts.map(c => <div key={c.id}><div className="calendar-column-heading">{c.court_number != null ? `Court ${c.court_number}` : c.name}{c.court_number != null && c.name && <><br/><small>{c.name}</small></>}</div><div className="calendar-lane" style={{ height: slots.length * 48 }}
+        onPointerDown={e=>{if(e.pointerType==="touch")return;if(e.button!==0||!props.canEdit||busy||uncertain||props.loading||props.error||!(e.target as HTMLElement).classList.contains("calendar-drop-slot"))return;const m=min+Math.max(0,Math.min(slots.length-1,Math.floor((e.clientY-e.currentTarget.getBoundingClientRect().top)/48)))*30;selection.current={court:c.id,anchor:m,end:m};setRange(selection.current);e.currentTarget.setPointerCapture(e.pointerId);e.preventDefault();setHover(null);}}
         onPointerMove={e=>{if(!selection.current||selection.current.court!==c.id)return;const m=min+Math.max(0,Math.min(slots.length-1,Math.floor((e.clientY-e.currentTarget.getBoundingClientRect().top)/48)))*30;selection.current={...selection.current,end:m};setRange(selection.current);}}
         onPointerUp={e=>{if(selection.current){finishSelection();if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}}
         onPointerCancel={()=>{selection.current=null;setRange(null);}} onLostPointerCapture={()=>{selection.current=null;setRange(null);}}>

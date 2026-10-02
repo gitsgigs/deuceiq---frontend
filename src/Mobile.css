@@ -1,0 +1,75 @@
+.clinic-phone-date{display:none;}
+@media(max-width:760px), (max-width:1100px) and (pointer:coarse){.clinic-phone-date{display:inline;}}
+/* Phone layouts, loaded after component styles. Keep browser zoom available. */
+html{-webkit-text-size-adjust:100%;}
+@media(max-width:760px), (max-width:1100px) and (pointer:coarse){
+ html body{min-width:0;}
+ html #root{width:100%;min-width:0;border:0;}
+ html .app{min-height:100svh;min-width:0;}
+ html .sidebar{box-sizing:border-box;width:100%;min-height:0;padding:calc(14px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 12px max(12px,env(safe-area-inset-left,0px));}
+ html .main-content{min-width:0;padding:14px max(10px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));}
+ html .navigation{gap:6px;grid-template-columns:repeat(2,minmax(0,1fr));}
+ html .navigation .nav-item{min-width:0;min-height:44px;padding:9px;font-size:13px;white-space:normal;}
+ html .sidebar-footer{margin-top:10px;}
+ html :is(.members-card,.overview-grid,.card-heading,.topbar,.topbar-actions,.profile-heading){min-width:0;max-width:100%;box-sizing:border-box;}
+ html .members-card{padding:12px;border-radius:12px;}
+ html .card-heading{flex-wrap:wrap;gap:8px;}
+ html .card-heading>div{min-width:0;}
+ html :is(.profile-details,.profile-form-grid,.history-entry-grid,.club-editor fieldset,.management-editor fieldset){grid-template-columns:minmax(0,1fr);}
+ html :is(.management-controls,.history-filters,.profile-toolbar,.stripe-connection-actions,.onboarding-actions,.approval-actions){flex-wrap:wrap;gap:8px;}
+ html :is(.management-controls,.history-filters,.profile-toolbar,.clinic-schedule-search)>label{min-width:0;max-width:100%;flex:1 1 145px;}
+ html :is(.profile-heading,.roster-row,.roster-dialog header,.roster-dialog footer){flex-wrap:wrap;}
+ html .profile-heading>div:nth-child(2){min-width:0;flex:1 1 130px;}
+ html :is(.member-tier-editor,.request-chat,.profile-payment,.club-editor){min-width:0;max-width:100%;box-sizing:border-box;}
+ html .member-tier-editor label{min-width:0;flex:1 1 140px;}
+ /* iOS focus zoom is avoided with readable 16px form controls. */
+ html body :is(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:16px!important;box-sizing:border-box;min-width:0;max-width:100%;line-height:1.4;}
+ html body :is(button,.onboarding-button){min-height:44px!important;max-width:100%;box-sizing:border-box;white-space:normal;touch-action:manipulation;}
+ html body input:is([type=date],[type=time],[type=datetime-local]){display:block;min-height:44px;}
+ html body :is(input,textarea,select):focus{scroll-margin-block:80px;}
+ html dialog{box-sizing:border-box;width:calc(100% - 20px);max-width:calc(100% - 20px);max-height:calc(100svh - 24px);max-height:calc(100dvh - 24px);padding:14px 12px calc(14px + env(safe-area-inset-bottom,0px));overflow:auto;overscroll-behavior:contain;}
+ html dialog :is(h2,h3){font-size:20px;overflow-wrap:anywhere;}
+ html dialog fieldset{min-width:0;}
+ html .request-chat-history{max-height:35svh;}
+ html .clinic-calendar-scroll{overflow:visible;}
+ html .clinic-calendar-grid{display:block;min-width:0;border:0;background:transparent;}
+ html .clinic-weekday,html .clinic-day-empty{display:none;}
+ html .clinic-day{min-height:0;padding:7px;margin:6px 0;border:1px solid #8fa783;border-radius:8px;}
+ html .clinic-day:not(:has(.clinic-calendar-event)){display:none;}
+ html .clinic-day>time{font-size:13px;}
+ html .clinic-calendar-event{min-height:44px;font-size:13px;}
+ html .clinic-calendar-toolbar{gap:6px;}
+ html .clinic-calendar-toolbar h4{flex:1 1 130px;text-align:center;}
+ html .member-meta{min-width:0;flex-wrap:wrap;}
+ html :is(.profile-card,.history-entry,.management-page article) p{overflow-wrap:anywhere;}
+ html :is(.calendar-board-scroll,.calendar-scroll,.schedule-placeholder){max-width:100%;overscroll-behavior-x:contain;}
+}
+@media(max-width:380px){html .metric-grid{grid-template-columns:minmax(0,1fr);}}
+
+@media(max-width:760px), (max-width:1100px) and (pointer:coarse){
+ html .sidebar{margin-left:0;margin-right:0;max-width:100%;}
+ html .sidebar .navigation{width:100%;min-width:0;}
+ html .sidebar .nav-item{width:100%;box-sizing:border-box;}
+ html .sidebar .nav-label{white-space:normal;overflow-wrap:anywhere;}
+ html .calendar-board{min-width:0;width:100%;box-sizing:border-box;padding:10px;}
+ html .calendar-board-scroll{width:100%;max-width:100%;overflow:auto;touch-action:pan-x pan-y;max-height:65svh;-webkit-overflow-scrolling:touch;}
+ html .calendar-board-columns{min-width:0;}
+ html .calendar-column-heading{position:sticky;top:0;z-index:4;height:44px;box-sizing:border-box;padding:6px;font-size:12px;border-right:1px solid #91ad88;}
+ html .calendar-board-columns>div:first-child{position:sticky;left:0;z-index:5;background:#18291d;}
+ html .calendar-time-label{color:#fff;background:#18291d;height:48px;box-sizing:border-box;border-bottom:1px solid #91ad88;}
+ html .calendar-lane{border-left:1px solid #698562;}
+ html .calendar-drop-slot{height:48px;box-sizing:border-box;border-bottom:1px solid #8da581;touch-action:pan-x pan-y;}
+ html .calendar-event{z-index:2;background:#34442d;color:#fff;touch-action:pan-x pan-y;}
+ html .calendar-event.is-clinic{background:#20513c;color:#fff;}
+ html .calendar-toolbar input{width:100%;flex:1 1 170px;}
+}
+
+@media(max-width:760px), (max-width:1100px) and (pointer:coarse){
+ html .app{display:block;}
+ html .sidebar{display:flex;width:100%;margin:0;min-height:0;}
+ html .sidebar .navigation{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;}
+ html .main-content{width:100%;box-sizing:border-box;}
+}
+@media(min-width:761px) and (max-width:1100px) and (pointer:coarse){
+ html .sidebar .navigation{grid-template-columns:repeat(4,minmax(0,1fr));}
+}

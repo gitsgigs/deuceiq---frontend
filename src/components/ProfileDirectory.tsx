@@ -80,7 +80,7 @@ export function ProfileDirectory(p: Context) {
     return () => controller.abort();
   }, [key, allowed, p.apiBase]);
   if (!allowed) return <p>You do not have access to edit these profiles.</p>;
-  return <section className="members-card profile-directory">
+  return <section className={`members-card profile-directory ${p.kind === "members" ? "compact-member-directory" : ""}`}>
     <p className="card-kicker">CLUB DATABASE</p><h3>{p.kind === "members" ? "Members" : "Pros"}</h3>
     <div className="profile-toolbar"><label>Search by name<input disabled={!!editing} type="search" placeholder={`Search ${p.kind}…`} value={search} onChange={e => setSearch(e.target.value)} /></label>
       <label className="profile-check"><input disabled={!!editing || (p.kind === "pros" && current?.data?.legacy)} type="checkbox" checked={inactive} onChange={e => { setInactive(e.target.checked); setOffset(0); }} />Include inactive</label>

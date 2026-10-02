@@ -1,3 +1,4 @@
+import "./StaffClinics.css";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { FullRoster } from "./RosterTools";
@@ -36,10 +37,10 @@ export function StaffClinics(p: Props) {
   if(!roles.includes(p.role))return <p>You do not have access to staff clinics.</p>;
   const filtered=rows.filter(c=>c.lesson_type.name.toLowerCase().includes(search.trim().toLowerCase()));
   function date(c:Clinic,value:string){const zone=p.locations.find(l=>l.id===c.location_id)?.timezone||"UTC";return new Date(value).toLocaleString("en-US",{timeZone:zone,month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}
-  return <section className="members-card club-pages"><div className="card-heading"><div><p className="card-kicker">CLUB CLINICS</p><h3>Saved Clinics</h3><p>View scheduled clinics and manage their rosters and waitlists.</p></div><button disabled={!p.canCreate} onClick={p.onCreate}>Create clinic</button></div>
+  return <section className="members-card club-pages compact-staff-clinics"><div className="card-heading"><div><p className="card-kicker">CLUB CLINICS</p><h3>Available Clinics</h3><p>Select a clinic to register a member or guest, view its roster, or manage its waitlist.</p></div><button disabled={!p.canCreate} onClick={p.onCreate}>Create clinic</button></div>
     <div className="club-editor"><label>Location <select value={location} onChange={e=>setLocation(e.target.value)}><option value="">All club locations</option>{p.locations.map(l=><option key={l.id} value={l.id}>{l.name}</option>)}</select></label><label>Search clinics <input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Clinic name" /></label><label><input type="checkbox" checked={history} onChange={e=>setHistory(e.target.checked)} /> Include past and cancelled clinics</label><button disabled={loading} onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
     {loading&&<p role="status">Loading clinics...</p>}{error&&<p role="alert">{error}</p>}{!loading&&!error&&!filtered.length&&<p>No clinics match these filters.</p>}
-    {filtered.map(c=><article key={c.id}><h4>{c.lesson_type.name}</h4><p>{date(c,c.starts_at)} - {date(c,c.ends_at)}</p><p>{p.locations.find(l=>l.id===c.location_id)?.name||"Location unavailable"}{c.court?.name?` | Primary court: ${c.court.name}`:""}</p><p>Status: {c.status.replaceAll("_"," ")}</p><button onClick={()=>setSelected(c)}>View / edit roster</button></article>)}
-    {selected&&<FullRoster key={selected.id} bookingId={selected.id} clubId={p.clubId} title={selected.lesson_type.name} apiBase={p.apiBase} userId={p.userId} canEdit={!["cancelled","canceled","completed"].includes(selected.status)} onClose={()=>setSelected(null)} onChanged={()=>setRefresh(v=>v+1)} />}
+    {filtered.map(c=><article key={c.id}><button type="button" className="staff-clinic-select" onClick={()=>setSelected(c)}><h4>{c.lesson_type.name}</h4><p>{date(c,c.starts_at)} - {date(c,c.ends_at)}</p><p>{p.locations.find(l=>l.id===c.location_id)?.name||"Location unavailable"}{c.court?.name?` | Primary court: ${c.court.name}`:""}</p><p>Status: {c.status.replaceAll("_"," ")}</p><span className="staff-clinic-action">{["cancelled","canceled","completed","no_show"].includes(c.status)?"View roster":"Register participant / view roster"}</span></button></article>)}
+    {selected&&<FullRoster key={selected.id} bookingId={selected.id} clubId={p.clubId} title={selected.lesson_type.name} apiBase={p.apiBase} userId={p.userId} canEdit={!["cancelled","canceled","completed","no_show"].includes(selected.status)} onClose={()=>setSelected(null)} onChanged={()=>setRefresh(v=>v+1)} />}
   </section>;
 }

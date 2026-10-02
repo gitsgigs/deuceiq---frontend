@@ -23,7 +23,9 @@ type Roster = {
 };
 type Assignment = { id: string; pro_id: string; court_id: string; starts_at: string; ends_at: string };
 type Detail = { roster?: Roster; assignments?: Assignment[]; pros?: Pro[]; error?: string };
+type PendingRequest = { id:string; club_id:string; court_id:string; starts_at:string; ends_at:string; member?:Pro; lesson_type?:Lesson; request_type?:string };
 type Props = {
+  clubId:string; locationId:string; onOpenRequests:()=>void;
   bookings: Booking[]; courts: Court[]; loading: boolean; error: string | null;
   calendarDate: string; setCalendarDate: (date: string) => void; timeZone: string;
   apiBase: string; userId: string; canEdit: boolean; onUpdated: () => void;
@@ -42,6 +44,37 @@ const person = (p?: Pro | null) => p ? [p.first_name, p.last_name].filter(Boolea
 const mutable = (b: Booking) => !["cancelled", "canceled", "completed"].includes((b.status ?? "").toLowerCase());
 
 export default function CalendarBoard(props: Props) {
+  const [requests,setRequests] = useState<PendingRequest[]>([]);
+  const [requestError,setRequestError] = useState("");
+  useEffect(() => {
+    setRequests([]); setRequestError("");
+    if (!props.canEdit) return;
+    const controller = new AbortController();
+    let running=false;
+    async function refreshRequests() {
+      if(running) return;
+      running=true;
+      try {
+        const auth=await token();
+        const rows:PendingRequest[]=[];
+        for(let offset=0;;offset+=100){
+          const query=new URLSearchParams({club_id:props.clubId,location_id:props.locationId,status:"pending",limit:"100",offset:String(offset)});
+          const response=await fetch(`${props.apiBase.replace(/\/$/, "")}/member-booking-requests?${query}`,{headers:{Authorization:`Bearer ${auth}`},signal:controller.signal});
+          if(!response.ok)throw new Error();
+          const data=await response.json();
+          if(!Array.isArray(data.requests)||typeof data.has_more!=="boolean")throw new Error();
+          rows.push(...data.requests.filter((v:PendingRequest)=>v.club_id===props.clubId));
+          if(!data.has_more)break;
+        }
+        if(!controller.signal.aborted){setRequests(rows);setRequestError("");}
+      }catch{if(!controller.signal.aborted)setRequestError("Pending requests could not be refreshed. Check Bookings before making a decision.");}
+      finally{running=false;}
+    }
+    void refreshRequests();
+    const timer=setInterval(()=>void refreshRequests(),15000);
+    window.addEventListener("focus",refreshRequests);
+    return()=>{controller.abort();clearInterval(timer);window.removeEventListener("focus",refreshRequests);};
+  },[props.clubId,props.locationId,props.userId,props.canEdit,props.apiBase,props.calendarDate,props.bookings]);
   const selection = useRef<{court:string;anchor:number;end:number}|null>(null);
   const [range,setRange] = useState<{court:string;anchor:number;end:number}|null>(null);
   const [rosterBooking, setRosterBooking] = useState<Booking | null>(null);
@@ -116,7 +149,7 @@ export default function CalendarBoard(props: Props) {
       void loadDetails(b);
     }, 1500);
   }
-  async function save(b: Booking, patch: Record<string, unknown>) {
+  async function save(b: Booking, patch: Record<string, unknown>, deleting = false) {
     if (pending.current || !props.canEdit || uncertain) return;
     pending.current = true; setBusy(true); setMessage(null); setHover(null);
     let sent = false;
@@ -124,7 +157,7 @@ export default function CalendarBoard(props: Props) {
       const auth = await token();
       sent = true;
       const response = await fetch(`${props.apiBase.replace(/\/$/, "")}/bookings/${b.id}`, {
-        method: "PATCH", headers: { Authorization: `Bearer ${auth}`, "Content-Type": "application/json" }, body: JSON.stringify(patch),
+        method: deleting ? "DELETE" : "PATCH", headers: { Authorization: `Bearer ${auth}`, "Content-Type": "application/json" }, ...(deleting ? {} : { body: JSON.stringify(patch) }),
       });
       const data = await response.json().catch(() => null);
       if (!mounted.current) return;
@@ -133,14 +166,20 @@ export default function CalendarBoard(props: Props) {
         sent = false;
         throw new Error(typeof data?.detail === "string" ? data.detail : response.status === 401 ? "Your session expired. Sign in again." : "The booking could not be updated. Check the selected values.");
       }
-      if (data?.booking?.id !== b.id) throw new Error("The update could not be confirmed. Refresh the calendar before trying again.");
+      if (data?.booking?.id !== b.id || (deleting && data?.booking?.status !== "cancelled")) throw new Error("The update could not be confirmed. Refresh the calendar before trying again.");
       sent = false;
       setEditing(null);
-      setMessage(["Booking updated.", data.schedule_warning, data.operating_hours_warning].filter(Boolean).join(" "));
+      setMessage(deleting ? null : ["Booking updated.", data.schedule_warning, data.operating_hours_warning].filter(Boolean).join(" "));
       props.onUpdated();
     } catch (e) {
       if (mounted.current) { setMessage(sent ? "The update could not be confirmed. Refresh the calendar before trying again." : e instanceof Error ? e.message : "Unable to update booking."); if (sent) setUncertain(true); }
     } finally { pending.current = false; if (mounted.current) setBusy(false); }
+  }
+  function deleteBooking(b: Booking) {
+    if (!props.canEdit || !mutable(b) || busy || uncertain || props.loading) return;
+    const scope = b.booking_series_id ? " Only this occurrence will be cancelled; the rest of the series stays scheduled." : "";
+    if (!window.confirm(`Delete ${b.lesson_type?.name ?? "this booking"} (${fmt(b.starts_at)} – ${fmt(b.ends_at)})? It will be cancelled and removed from the calendar, with its history retained.${scope}`)) return;
+    void save(b, {}, true);
   }
   function openRoster(b: Booking) {
     if (busy) return;
@@ -211,8 +250,11 @@ export default function CalendarBoard(props: Props) {
   }
   const visible = props.bookings.filter(b => !["cancelled", "canceled"].includes((b.status ?? "").toLowerCase()));
   const minutesAt = (iso: string) => { const local = localDateTime(iso, props.timeZone); const dayDelta = (Date.parse(local.slice(0, 10) + "T00:00:00Z") - Date.parse(props.calendarDate + "T00:00:00Z")) / 86400000; return dayDelta * 1440 + Number(local.slice(11, 13)) * 60 + Number(local.slice(14, 16)); };
-  const min = Math.max(0, Math.min(360, ...visible.map(b => Math.floor(minutesAt(b.starts_at) / 30) * 30)));
-  const max = Math.min(1440, Math.max(1140, ...visible.map(b => Math.ceil(minutesAt(b.ends_at) / 30) * 30)));
+  const pendingRequests=requests.filter(b=>minutesAt(b.starts_at)<1440&&minutesAt(b.ends_at)>0);
+  const cancelledBookings=props.bookings.filter(b=>["cancelled","canceled"].includes(b.status??""));
+  const extent=[...visible,...cancelledBookings,...pendingRequests];
+  const min = Math.max(0, Math.min(360, ...extent.map(b => Math.floor(minutesAt(b.starts_at) / 30) * 30)));
+  const max = Math.min(1440, Math.max(1140, ...extent.map(b => Math.ceil(minutesAt(b.ends_at) / 30) * 30)));
   const slots = Array.from({ length: (max - min) / 30 }, (_, i) => min + i * 30);
   const rangeLocal = (minutes:number) => { const d=new Date(`${props.calendarDate}T00:00:00Z`);d.setUTCMinutes(minutes);return d.toISOString().slice(0,16); };
   function finishSelection() {
@@ -229,17 +271,21 @@ export default function CalendarBoard(props: Props) {
       <button disabled={busy} onClick={() => changeDate(1)} aria-label="Next day">→</button><button disabled={busy} onClick={() => { setEditing(null); setUncertain(false); setMessage(null); props.onUpdated(); }}>Refresh</button>
       <span>{props.timeZone}</span></header>
     {props.canEdit && <p>Drag over empty time slots to create a booking. Drag an existing block to move it, or select it to edit. The backend checks availability before saving.</p>}
+    {props.canEdit && <p>Pending requests appear in amber and do not hold a court. Updated every 15 seconds. Red dotted lines mark cancelled bookings.</p>}
+    {requestError && <p role="alert">{requestError}</p>}
     {message && <p role="status" className="calendar-message">{message}</p>}
     {busy && <p role="status">Checking availability and saving…</p>}
     {props.error && <p role="alert">{props.error}</p>}
     <p>On a phone, swipe across the grid to see every court and tap a booking to open it. Use Create to add a booking.</p>{!props.loading&&!props.courts.length&&<p>No courts are available for this location.</p>}{props.loading ? <p>Loading calendar…</p> : <div className="calendar-board-scroll"><div className="calendar-board-columns" style={{ width: `${76 + props.courts.length * 170}px`, gridTemplateColumns: `76px repeat(${props.courts.length}, 170px)` }}>
       <div><div className="calendar-column-heading">Time</div>{slots.map(m => <div className="calendar-time-label" key={m}>{String(Math.floor(m / 60)).padStart(2, "0")}:{String(m % 60).padStart(2, "0")}</div>)}</div>
-      {props.courts.map(c => <div key={c.id}><div className="calendar-column-heading">{c.court_number != null ? `Court ${c.court_number}` : c.name}{c.court_number != null && c.name && <><br/><small>{c.name}</small></>}</div><div className="calendar-lane" style={{ height: slots.length * 48 }}
+      {props.courts.map(c => <div key={c.id}><div className="calendar-column-heading" title={c.name}>{c.court_number != null ? `Court ${c.court_number}` : c.name}{c.court_number != null && c.name && <small>{c.name}</small>}</div><div className="calendar-lane" style={{ height: slots.length * 48 }}
         onPointerDown={e=>{if(e.pointerType==="touch")return;if(e.button!==0||!props.canEdit||busy||uncertain||props.loading||props.error||!(e.target as HTMLElement).classList.contains("calendar-drop-slot"))return;const m=min+Math.max(0,Math.min(slots.length-1,Math.floor((e.clientY-e.currentTarget.getBoundingClientRect().top)/48)))*30;selection.current={court:c.id,anchor:m,end:m};setRange(selection.current);e.currentTarget.setPointerCapture(e.pointerId);e.preventDefault();setHover(null);}}
         onPointerMove={e=>{if(!selection.current||selection.current.court!==c.id)return;const m=min+Math.max(0,Math.min(slots.length-1,Math.floor((e.clientY-e.currentTarget.getBoundingClientRect().top)/48)))*30;selection.current={...selection.current,end:m};setRange(selection.current);}}
         onPointerUp={e=>{if(selection.current){finishSelection();if(e.currentTarget.hasPointerCapture(e.pointerId))e.currentTarget.releasePointerCapture(e.pointerId);}}}
         onPointerCancel={()=>{selection.current=null;setRange(null);}} onLostPointerCapture={()=>{selection.current=null;setRange(null);}}>
         {slots.map(m => <div className="calendar-drop-slot" key={m} onDragOver={e => { if (dragId && props.canEdit && !busy && !uncertain) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } }} onDrop={e => { e.preventDefault(); drop(c, m); }} />)}
+        {cancelledBookings.filter(b=>b.court?.id===c.id&&minutesAt(b.ends_at)>min&&minutesAt(b.starts_at)<max).map(b=><div key={`cancelled:${b.id}`} className="calendar-cancelled-marker" role="img" aria-label={`Cancelled ${b.lesson_type?.name??"booking"}, ${fmt(b.starts_at)} to ${fmt(b.ends_at)}`} title={`Cancelled: ${fmt(b.starts_at)} – ${fmt(b.ends_at)}`} style={{top:(Math.max(min,minutesAt(b.starts_at))-min)*1.6,height:(Math.min(max,minutesAt(b.ends_at))-Math.max(min,minutesAt(b.starts_at)))*1.6}}/>)}
+        {pendingRequests.filter(b=>b.court_id===c.id).map(b=><button type="button" key={`request:${b.id}`} className="calendar-pending-request" style={{top:(Math.max(min,minutesAt(b.starts_at))-min)*1.6,height:Math.max(24,(Math.min(max,minutesAt(b.ends_at))-Math.max(min,minutesAt(b.starts_at)))*1.6)}} onClick={props.onOpenRequests} title="Review in Bookings"><strong>Pending request</strong><span>{b.lesson_type?.name??"Booking"}</span><span>{person(b.member)}</span><small>{fmt(b.starts_at)} – {fmt(b.ends_at)}</small><small>{b.request_type==="reschedule"?"Reschedule · ":""}Review in Bookings</small></button>)}
         {range?.court===c.id && <div className="calendar-selection" style={{top:(Math.min(range.anchor,range.end)-min)*1.6,height:(Math.abs(range.end-range.anchor)+30)*1.6}}>New booking</div>}
         {visible.filter(b => b.court?.id === c.id && minutesAt(b.ends_at) > min && minutesAt(b.starts_at) < max).map(b => <div key={b.id}
           role="button" tabIndex={0} aria-label={`${b.lesson_type?.name ?? "Booking"}, ${fmt(b.starts_at)} to ${fmt(b.ends_at)}${props.canEdit ? ", select to edit" : ""}`}
@@ -294,7 +340,7 @@ export default function CalendarBoard(props: Props) {
           <label>Lesson type<select value={form.type} onChange={e => setForm(v => ({ ...v, type: e.target.value }))}>{!editing.lesson_type && <option value="">Unassigned</option>}{editing.lesson_type && !choices?.types.some(t => t.id === editing.lesson_type?.id) && <option value={editing.lesson_type.id}>{editing.lesson_type.name} (current)</option>}{choices?.types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
           {editing.lesson_type?.category === "clinic" && <label>Registration capacity<input type="number" min="1" step="1" value={form.capacity} onChange={e => setForm(v => ({ ...v, capacity: e.target.value }))} placeholder="Default capacity" /></label>}
           <label>Notes<textarea value={form.notes} onChange={e => setForm(v => ({ ...v, notes: e.target.value }))} /></label>
-        </fieldset><footer><button type="button" disabled={busy} onClick={() => setEditing(null)}>Cancel</button><button disabled={busy || !choices || uncertain}>Save changes</button></footer>
+        </fieldset><footer><button type="button" className="calendar-delete-booking" disabled={busy || uncertain || props.loading} onClick={() => deleteBooking(editing)}>Delete booking</button><button type="button" disabled={busy} onClick={() => setEditing(null)}>Cancel</button><button disabled={busy || !choices || uncertain}>Save changes</button></footer>
       </form>
     </dialog>}
   </section>;

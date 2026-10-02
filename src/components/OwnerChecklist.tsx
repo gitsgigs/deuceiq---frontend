@@ -83,11 +83,13 @@ export function OwnerChecklist(p: Props) {
   },[p.apiBase,p.clubId,p.userId,p.role,refresh]);
   if(p.role!=="owner" || !p.clubId)return null;
   const essentials=steps.filter(s=>!s.optional), done=essentials.filter(s=>results[s.id]?.done).length;
+  // Avoid flashing a finished checklist while saved progress is checked.
+  if(loading || done===essentials.length)return null;
   return <section className="owner-checklist" aria-labelledby="owner-checklist-title">
     <header><div><p className="card-kicker">GETTING STARTED</p><h3 id="owner-checklist-title">New owner checklist</h3><p>{loading ? "Checking your club setup..." : `${done} of ${essentials.length} essential steps complete`}</p></div><button disabled={loading} onClick={()=>setRefresh(n=>n+1)}>Refresh progress</button></header>
     <progress aria-label="Essential club setup progress" max={essentials.length} value={done}/>
     <p className="owner-checklist-intro">Progress updates from your saved club details. Owners of this club share the same setup progress. You can finish these steps at your own pace.</p>
-    <details open={done!==essentials.length}><summary>{done===essentials.length ? "Essential setup complete — review checklist" : "Your setup steps"}</summary>
+    <details open><summary>Your setup steps</summary>
       <ol>{steps.map(step=>{const result=results[step.id];return <li key={step.id}>
         <span className={`owner-step-marker ${result?.done ? "is-complete" : ""}`} aria-hidden="true">{result?.done ? "✓" : "○"}</span>
         <div><h4>{step.title}{step.optional && <span className="owner-step-optional">Optional</span>}</h4><p>{step.description}</p><p className="owner-step-detail">{result ? `${result.done ? "Complete: " : result.unavailable ? "Not checked: " : ""}${result.detail}` : "Checking..."}</p></div>

@@ -1,0 +1,25 @@
+.member-chat{padding:16px;border:1px solid white;border-radius:16px;text-align:left;min-width:0}
+.member-chat-columns{display:grid;grid-template-columns:minmax(160px,1fr) minmax(0,3fr);gap:16px}.member-chat aside{display:flex;flex-direction:column;gap:8px;min-width:0}.member-chat label{display:grid;gap:6px}.member-chat input,.member-chat textarea{width:100%;box-sizing:border-box;font:inherit}.member-chat button{padding:8px 12px;border-radius:8px;white-space:normal}.member-chat-history{max-height:45vh;overflow:auto;overscroll-behavior:contain}.member-chat article{padding:10px;border:1px solid white;border-radius:8px;margin:8px 0;background:#e4efd9}.member-chat article.mine{background:#b9d8ad}.member-chat time{display:block;font-size:11px}.member-chat article p{white-space:pre-wrap;overflow-wrap:anywhere}.member-chat textarea{min-height:80px}.member-chat form{display:grid;gap:8px;margin-top:12px}@media(max-width:700px){.member-chat-columns{grid-template-columns:1fr}.member-chat aside{max-height:220px;overflow:auto}}
+
+.conversation-summary-dialog{width:min(600px,calc(100vw - 24px));max-height:85dvh;box-sizing:border-box;overflow:auto;border-radius:16px;padding:18px}.conversation-summary-dialog label{display:grid;gap:4px;margin:10px 0}.conversation-summary-dialog textarea{width:100%;box-sizing:border-box;font:inherit}.conversation-summary-dialog footer{display:flex;flex-wrap:wrap;gap:10px;position:sticky;bottom:0;background:#d5ebca;padding:10px 0}.conversation-summary-dialog p{white-space:pre-wrap;overflow-wrap:anywhere}
+
+.room-secret{overflow-wrap:anywhere;padding:10px;border:1px dashed #34523d;border-radius:8px}.member-chat aside form{padding:8px;border:1px solid white;border-radius:8px}
+
+/* Compact club chat, matching the other management panels. */
+html .member-chat { padding:14px 16px; border-radius:14px; font-size:13px; line-height:1.45; }
+html .member-chat h3 { font-size:18px; line-height:1.3; margin:0 0 8px; }
+html .member-chat h4 { font-size:14px; line-height:1.3; margin:10px 0 4px; }
+html .member-chat p { font-size:13px; line-height:1.45; margin:6px 0; }
+html .member-chat small { font-size:11px; line-height:1.4; }
+html .member-chat label { font-size:13px; }
+html .member-chat button { font-size:13px; line-height:1.25; padding:7px 10px; min-height:34px; background:#294432; color:#fff; border:1px solid #fff; border-radius:8px; }
+html .member-chat button:disabled { opacity:.55; }
+html .member-chat button[aria-pressed="true"] { background:#152b1c; outline:2px solid #688462; outline-offset:1px; }
+html .member-chat input,html .member-chat textarea { padding:7px 9px; border-radius:7px; border:1px solid #78936f; font-size:13px; }
+html .member-chat-columns { grid-template-columns:minmax(160px,220px) minmax(0,1fr); gap:14px; margin-top:10px; align-items:start; }
+html .member-chat aside { gap:6px; }
+html .member-chat aside form { margin-top:4px; gap:6px; }
+html .member-chat article { padding:8px 10px; margin:6px 0; }
+html .member-chat textarea { min-height:64px; }
+@media(max-width:700px){ html .member-chat { padding:12px; } html .member-chat-columns { grid-template-columns:1fr; gap:10px; } }
+@media(pointer:coarse){ html .member-chat button { min-height:44px; } html .member-chat input,html .member-chat textarea { font-size:16px; } }

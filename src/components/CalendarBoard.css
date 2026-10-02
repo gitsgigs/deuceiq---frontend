@@ -36,3 +36,25 @@
 
 .calendar-selection { position:absolute; left:3px; right:3px; background:#b7dfaccc; border:2px solid #fff; outline:1px solid #193321; color:#122318; z-index:2; pointer-events:none; padding:6px; font-size:12px; }
 .calendar-drop-slot { touch-action:none; }
+
+/* Preserve the booking's time span while keeping every action reachable. */
+html .calendar-board .calendar-event {
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+html .calendar-board .calendar-event > * { flex-shrink: 0; }
+html .calendar-board .calendar-event button { max-width: 100%; box-sizing: border-box; white-space: normal; }
+html .calendar-board .calendar-event .booking-player-line { gap: 4px; }
+html .calendar-board .calendar-event .booking-player-line > span { min-width: 0; }
+html .calendar-board .calendar-event .booking-player-line > button { flex-shrink: 0; }
+
+html .calendar-edit footer { flex-wrap:wrap; }
+html .calendar-edit .calendar-delete-booking { margin-right:auto; background:#873f3f; color:#fff; border-color:#fff; }
+
+html .calendar-board .calendar-cancelled-marker { position:absolute; left:1px; width:0; border-left:3px dotted #bc2525; z-index:4; pointer-events:none; }
+html .calendar-board .calendar-pending-request { position:absolute; right:3px; width:46%; z-index:3; box-sizing:border-box; display:flex; flex-direction:column; gap:3px; padding:4px; border:2px dashed #9c6400; background:#fff0c7; color:#382600; font-size:11px; min-height:0; overflow:auto; text-align:left; }
+html .calendar-board .calendar-pending-request > * { color:#382600; flex-shrink:0; font-size:inherit; }

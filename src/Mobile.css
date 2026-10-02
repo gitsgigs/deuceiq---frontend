@@ -73,3 +73,14 @@ html{-webkit-text-size-adjust:100%;}
 @media(min-width:761px) and (max-width:1100px) and (pointer:coarse){
  html .sidebar .navigation{grid-template-columns:repeat(4,minmax(0,1fr));}
 }
+
+/* Keep daily calendar labels legible and aligned at every screen size. */
+html .calendar-board .calendar-time-label { color:#fff; background:#18291d; height:48px; box-sizing:border-box; }
+html .calendar-board .calendar-drop-slot { height:48px; box-sizing:border-box; }
+html .calendar-board .calendar-column-heading { height:72px; box-sizing:border-box; padding:8px 6px; display:flex; flex-direction:column; justify-content:center; gap:3px; font-size:13px; line-height:1.2; overflow:hidden; }
+html .calendar-board .calendar-column-heading small { color:#fff; font-size:12px; line-height:1.2; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+html .quick-create { box-sizing:border-box; overflow-y:auto; }
+html .quick-create footer { position:sticky; bottom:-24px; background:#d5ebca; padding:12px 0; z-index:2; border-top:1px solid #91ad88; }
+
+html .sidebar .nav-label { min-width:0; white-space:normal; overflow-wrap:normal; line-height:1.25; text-align:left; }
+html .sidebar .nav-icon { flex-shrink:0; }

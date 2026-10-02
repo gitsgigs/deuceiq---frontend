@@ -1,3 +1,5 @@
+import {MemberChat} from "./components/MemberChat";
+import {StaffConversations} from "./components/ConversationSummary";
 import {MemberClinicCalendar as MemberClinicsPage} from "./components/MemberClinicCalendar";
 import { OwnerChecklist } from "./components/OwnerChecklist";
 import { PlatformAdminLink } from "./components/ClubOnboarding";
@@ -67,6 +69,7 @@ type Court = {
 
 
 type Section =
+  | "conversations"
 
   | "overview"
 
@@ -446,11 +449,12 @@ const navigationItems: {
 
 }[] = [
 
+  { id: "conversations", label: "Conversations", icon: "\u2709", roles: ["member", "manager", "front_desk"] },
   { id: "overview", label: "Overview", icon: "\u2302", roles: ["owner", "director", "manager", "front_desk", "pro", "member"] },
 
   { id: "calendar", label: "Calendar", icon: "\u25a6", roles: ["owner", "director", "manager", "front_desk", "pro"] },
 
-  { id: "bookings", label: "Bookings", icon: "\u25eb", roles: ["owner", "director", "manager", "front_desk", "member"] },
+  { id: "bookings", label: "Booking Requests", icon: "\u25eb", roles: ["owner", "director", "manager", "front_desk", "member"] },
 
   { id: "notifications", label: "Notifications", icon: "!", roles: ["owner", "director", "manager", "front_desk", "pro", "member", "guest"] },
 
@@ -4992,7 +4996,7 @@ function App() {
 
       if (item.id === section) {
 
-        displayPageTitle = item.label;
+        displayPageTitle = item.id === "conversations" && clubRole === "member" ? "Chat Room" : item.label;
 
         break;
 
@@ -5103,7 +5107,7 @@ function App() {
 
                       ? "Available Clinics"
 
-                      : item.label}
+                      : item.id === "conversations" && clubRole === "member" ? "Chat Room" : item.label}
                   {item.id === "notifications" && currentClubId && <NotificationIndicator key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
 
                 </span>
@@ -5417,6 +5421,7 @@ function App() {
 
           <OverviewPage
 
+            onOpenConversations={()=>setSection("conversations")}
             memberContext={{ apiBase: API_BASE, userId: session.user.id, clubId: currentClubId ?? "", locationId: currentLocationId, locationName: currentLocation?.name ?? null, timeZone: selectedTimeZone }}
 
             onOpenAvailability={() => setAvailabilityOpen(true)}
@@ -5509,7 +5514,7 @@ function App() {
 
             timeZone={selectedTimeZone}
 
-            apiBase={API_BASE} userId={session.user.id} canEdit={canManageBookings} onCreateRange={(courtId,start,end)=>{setCreateRange({courtId,start,end});setCreateMessage(null);setCreateAction("booking");}}
+            apiBase={API_BASE} userId={session.user.id} canEdit={canManageBookings} clubId={currentClubId ?? ""} locationId={currentLocationId ?? ""} onOpenRequests={()=>setSection("bookings")} onCreateRange={(courtId,start,end)=>{setCreateRange({courtId,start,end});setCreateMessage(null);setCreateAction("booking");}}
 
             key={`${session.user.id}:${currentClubId}:${currentLocationId}:${calendarDate}`}
 
@@ -5599,6 +5604,7 @@ function App() {
 
         {section === "notifications" && currentClubId && <NotificationsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
 
+        {section === "conversations" && currentClubId && <><MemberChat key={`chat:${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole??""}/><StaffConversations key={`summaries:${session.user.id}:${currentClubId}`} context={{apiBase:API_BASE,userId:session.user.id,clubId:currentClubId,role:clubRole??""}}/></>}
         {section === "history" && currentClubId && ["owner","director","manager","front_desk"].includes(clubRole ?? "") && <HistoryPage key={`${session.user.id}:${currentClubId}`} clubId={currentClubId} userId={session.user.id} role={clubRole ?? ""} locations={locations}/>}
 
         {section === "members" && (
@@ -5896,6 +5902,7 @@ function OverviewPage({
 
   onOpenAvailability,
 
+  onOpenConversations,
   clubRole,
 
   clubName,
@@ -5928,6 +5935,7 @@ function OverviewPage({
 
   onOpenAvailability: () => void;
 
+  onOpenConversations: () => void;
   clubRole: string;
 
   clubName: string;
@@ -5961,6 +5969,7 @@ function OverviewPage({
     <section className="overview">
 
       <div className="overview-grid">
+        {["member","manager","front_desk"].includes(clubRole)&&<button className="metric-card" onClick={onOpenConversations} style={{textAlign:"left",color:"inherit"}}><span>{clubRole==="member"?"Chat Room":"Conversations"}</span><strong>Open</strong><small>{clubRole==="member"?"Chat privately with club members":"Review summaries shared by members"}</small></button>}
 
         <LocationWeather key={memberContext.locationId} {...memberContext} />
         {clubRole !== "member" && <div className="weather-card">

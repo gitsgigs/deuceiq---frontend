@@ -131,6 +131,10 @@ export default function QuickCreate(props: Props) {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending.current || uncertain || newTypeOpen || !ready || !canCreate(props.role)) return;
+    if (props.kind !== "member" && !priceReady) {
+      setError("Booking cannot be saved yet. Check the pricing message above, select the participants and confirm the lesson type and times. Club pricing must be verified before saving.");
+      return;
+    }
     pending.current = true; setSaving(true); setError(null);
     try {
       let payload: Record<string, unknown>;
@@ -267,8 +271,8 @@ export default function QuickCreate(props: Props) {
         </>}
         <label>Notes (optional)<textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} /></label>
       </fieldset>
-      <footer><button type="button" disabled={saving} onClick={props.onClose}>Cancel</button>
-        <button className="primary-button" type="submit" disabled={saving || loading || !ready || uncertain || newTypeOpen || !canCreate(props.role) || (props.kind!=="member"&&!priceReady)}>{saving ? "Saving…" : title}</button></footer>
+      <footer><div>{error && <p role="alert" className="quick-create-error">{error}</p>}<button type="button" disabled={saving} onClick={props.onClose}>Cancel</button></div>
+        <button className="primary-button" type="submit" disabled={saving || loading || !ready || uncertain || newTypeOpen || !canCreate(props.role)}>{saving ? "Saving…" : title}</button></footer>
     </form>
   </dialog>;
 }

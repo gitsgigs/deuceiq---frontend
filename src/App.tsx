@@ -1,3 +1,4 @@
+import {BookingMessageIndicator} from "./components/BookingMessageIndicator";
 import {MemberChat} from "./components/MemberChat";
 import {StaffConversations} from "./components/ConversationSummary";
 import {MemberClinicCalendar as MemberClinicsPage} from "./components/MemberClinicCalendar";
@@ -5108,6 +5109,7 @@ function App() {
                       ? "Available Clinics"
 
                       : item.id === "conversations" && clubRole === "member" ? "Chat Room" : item.label}
+                  {item.id === "bookings" && clubRole === "member" && currentClubId && <BookingMessageIndicator key={`${session.user.id}:${currentClubId}`} context={{apiBase:API_BASE,userId:session.user.id,clubId:currentClubId,role:clubRole}}/>}
                   {item.id === "notifications" && currentClubId && <NotificationIndicator key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
 
                 </span>

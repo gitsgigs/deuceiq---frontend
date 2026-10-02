@@ -23,3 +23,5 @@ html .member-chat article { padding:8px 10px; margin:6px 0; }
 html .member-chat textarea { min-height:64px; }
 @media(max-width:700px){ html .member-chat { padding:12px; } html .member-chat-columns { grid-template-columns:1fr; gap:10px; } }
 @media(pointer:coarse){ html .member-chat button { min-height:44px; } html .member-chat input,html .member-chat textarea { font-size:16px; } }
+
+html .member-chat .chat-member-picker{max-height:220px;overflow-y:auto;border:1px solid #91ad88;border-radius:8px;padding:4px}html .member-chat .chat-member-option{display:flex;align-items:center;gap:8px;padding:7px 4px;cursor:pointer}html .member-chat .chat-member-option input{width:16px;height:16px;flex-shrink:0;margin:0}html .member-chat .chat-member-pages{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:11px}

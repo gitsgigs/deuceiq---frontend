@@ -58,7 +58,23 @@ function CourtSummary({ courts }: { courts: Row[] }) {
   }
   return <div className="court-summary"><strong>{courts.length} active courts</strong><ul>{[...groups].map(([label, count]) => <li key={label}>{label}: {count}</li>)}</ul></div>;
 }
+function ClinicSettings(p: Context) {
+  const [open,setOpen]=useState(false),[message,setMessage]=useState("");
+  return <article><h4>Clinic</h4><p>Add a clinic type, then set its rates under General Pricing and schedule its sessions under Clinics.</p>
+    <button type="button" disabled={open} onClick={()=>{setMessage("");setOpen(true);}}>Add a New Clinic</button>
+    {message&&<p role="status">{message}</p>}
+    {open&&<Editor row={{id:"new-clinic",name:"",duration:"60",notes:""}} fields={[{key:"name",label:"Clinic name",required:true},{key:"duration",label:"Default duration (minutes)",type:"number",required:true},{key:"notes",label:"Notes (optional)"}]} onClose={()=>setOpen(false)} onSave={async values=>{
+      const name=values.name.trim(),duration=Number(values.duration);
+      if(!name)throw new Error("Enter a clinic name.");
+      if(!Number.isInteger(duration)||duration<1)throw new Error("Enter a whole number of minutes greater than zero.");
+      const result=await api(p,"/lesson-types","POST",{club_id:p.clubId,name,category:"clinic",default_duration_minutes:duration,pricing_method:"per_player",member_price:null,non_member_price:null,minimum_players:1,maximum_players:null,active:true,notes:values.notes.trim()||null});
+      if(!result.lesson_type?.id||result.lesson_type.category!=="clinic")throw new Error("The new clinic could not be confirmed.");
+      setOpen(false);setMessage(`${name} added to the Clinic category. Set its pricing below, then create its scheduled sessions.`);p.onChanged?.();
+    }}/>}
+  </article>;
+}
 export function SettingsPage(p: Context) {
+  const [clinicRevision,setClinicRevision]=useState(0);
   const [rows, setRows] = useState<Row[]>([]), [allowed, setAllowed] = useState<boolean | null>(null), [error, setError] = useState<string | null>(null), [loading, setLoading] = useState(true), [refresh, setRefresh] = useState(0), [editing, setEditing] = useState<string | null>(null), [busy, setBusy] = useState(false), [uncertain, setUncertain] = useState(false);
   const [courts, setCourts] = useState<Row[]>([]), [clubName, setClubName] = useState("");
   const pending = useRef(false);
@@ -87,7 +103,8 @@ export function SettingsPage(p: Context) {
       <CourtSummary courts={courts} />
       <CourtManager {...p} locations={rows.map(row=>({id:row.id,name:string(row.name)}))} onChanged={()=>{setRefresh(v=>v+1);p.onChanged?.();}} />
       {courts.some(c => !c.location_id) && <p>{courts.filter(c => !c.location_id).length} courts not assigned to a location.</p>}
-      <GeneralPricing {...p} clubName={clubName} />
+      <ClinicSettings {...p} onChanged={()=>{setClinicRevision(v=>v+1);p.onChanged?.();}} />
+      <GeneralPricing key={clinicRevision} {...p} clubName={clubName} />
     </details>}
     {allowed !== null && <article><h4>Booking rules</h4><p>Allow bookings without an assigned pro: <strong>{allowed ? "Yes" : "No"}</strong></p><button disabled={busy || uncertain} onClick={async () => {
       if (pending.current) return; pending.current = true; setBusy(true); setError(null);

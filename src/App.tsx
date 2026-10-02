@@ -9429,7 +9429,7 @@ function InventoryPage({
 
   return (
 
-    <section className="members-card">
+    <section className="members-card inventory-page">
 
       <div className="card-heading">
 
@@ -9459,7 +9459,7 @@ function InventoryPage({
 
 
 
-        <div
+        <div className="inventory-toolbar"
 
           style={{
 
@@ -9713,7 +9713,7 @@ function InventoryPage({
 
 
 
-                  <div
+                  <div className="inventory-item-actions"
 
                     style={{
 

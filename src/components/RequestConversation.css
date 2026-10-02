@@ -12,3 +12,7 @@
 .my-request-conversations{margin:20px 0;}
 
 .request-unread-dot{display:inline-block;width:9px;height:9px;margin-left:9px;border-radius:50%;background:#20d35b;box-shadow:0 0 0 2px #153824;vertical-align:middle;}
+
+html .request-conversation > button[aria-expanded] {display:inline-flex;align-items:center;justify-content:center;gap:6px;max-width:100%;min-height:40px;padding:9px 18px;border:1px solid #fff;border-radius:999px;background:#8b504e;color:#fff;font:inherit;font-size:14px;line-height:1.35;white-space:normal;cursor:pointer;}
+html .request-conversation > button[aria-expanded]:hover {background:#743e3c;}
+html .request-conversation > button[aria-expanded]:focus-visible {outline:3px solid #542b29;outline-offset:3px;}

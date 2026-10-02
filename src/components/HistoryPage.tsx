@@ -1,3 +1,4 @@
+import {bookingDateRange} from "../lib/bookingDateRange";
 import {useEffect,useState} from "react";
 import {supabase} from "../lib/supabase";
 import "./HistoryPage.css";
@@ -41,7 +42,6 @@ export function HistoryPage(p:{clubId:string;userId:string;role:string;locations
    return()=>{cancelled=true;controller.abort();};
  },[key]);
  if(!roles.includes(p.role))return <p>You do not have access to History.</p>;
- function when(row:Entry,value:string){return new Date(value).toLocaleString("en-US",{timeZone:row.timezone,month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"});}
  function money(row:Entry,value:number|null){if(value===null)return "Not recorded";try{return new Intl.NumberFormat("en-US",{style:"currency",currency:row.currency}).format(value);}catch{return `${value.toFixed(2)} ${row.currency}`;}}
  function courtName(c:Court){return [c.court_number!=null?`#${c.court_number}`:"",c.name].filter(Boolean).join(" · ")||"Court";}
  return <section className="members-card usage-history">
@@ -59,11 +59,11 @@ export function HistoryPage(p:{clubId:string;userId:string;role:string;locations
    {loading&&<p role="status">Loading history…</p>}{current?.error&&<p role="alert">{current.error}</p>}
    {!loading&&!invalid&&!current?.error&&!current?.rows.length&&<p>No saved bookings match these filters.</p>}
    {!invalid&&current?.rows.map(row=><article className="history-entry" key={row.booking_id}>
-     <header><div><h4>{row.activity_name||"Unspecified activity"}</h4><p>{when(row,row.starts_at)} — {when(row,row.ends_at)}</p></div><span className="history-status">{row.status.replaceAll("_"," ")}</span></header>
+     <header><div><h4>{row.activity_name||"Unspecified activity"}</h4><p>{bookingDateRange(row.starts_at,row.ends_at,row.timezone)}</p></div><span className="history-status">{row.status.replaceAll("_"," ")}</span></header>
      <div className="history-entry-grid">
        <div><h5>Location / courts</h5><p>{row.location_name||"Location unavailable"}</p>{row.courts.length?<ul>{row.courts.map(c=><li key={c.id}>{courtName(c)}{c.surface?` (${c.surface})`:""}</li>)}</ul>:<p>No court assigned</p>}<p>Type: {row.category?.replaceAll("_"," ")||"Not recorded"}</p></div>
        <div><h5>Players</h5><details><summary>{row.participants.length} saved participant record{row.participants.length===1?"":"s"}</summary>{row.participants.length?<ul>{row.participants.map(m=><li key={m.record_id}><strong>{m.name||"Name unavailable"}</strong> — {m.kind}, {m.status.replaceAll("_"," ")}{m.waitlist_position!=null?` (waitlist ${m.waitlist_position})`:""}</li>)}</ul>:<p>No participants recorded</p>}</details>
-       <h5>Assigned pros</h5>{row.pros.length?<ul>{row.pros.map((pro,i)=><li key={`${pro.pro_id}:${i}`}><strong>{pro.name}</strong><br/>{when(row,pro.starts_at)} — {when(row,pro.ends_at)}<br/>{row.courts.find(c=>c.id===pro.court_id)?courtName(row.courts.find(c=>c.id===pro.court_id)!):"Court not recorded"}</li>)}</ul>:<p>No pro assigned</p>}</div>
+       <h5>Assigned pros</h5>{row.pros.length?<ul>{row.pros.map((pro,i)=><li key={`${pro.pro_id}:${i}`}><strong>{pro.name}</strong><br/>{bookingDateRange(pro.starts_at,pro.ends_at,row.timezone)}<br/>{row.courts.find(c=>c.id===pro.court_id)?courtName(row.courts.find(c=>c.id===pro.court_id)!):"Court not recorded"}</li>)}</ul>:<p>No pro assigned</p>}</div>
        <div><h5>Charges / payments</h5><dl><dt>Saved booking charge</dt><dd>{money(row,row.booking_charge)}</dd><dt>Amount paid</dt><dd>Not connected</dd><dt>Amount due / balance</dt><dd>Not yet verified</dd><dt>Paid by</dt><dd>Not connected</dd><dt>Receipt</dt><dd>Not connected</dd></dl>{row.booking_charge===null&&<p>No price snapshot is stored for this earlier booking.</p>}</div>
      </div><small>Booking reference: {row.booking_id}</small>
    </article>)}

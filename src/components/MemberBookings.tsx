@@ -48,7 +48,7 @@ export function MemberBookingsPage(props: { apiBase: string; userId: string; clu
       <h4>{row.name}</h4><p>{when(row, row.starts_at)} – {when(row, row.ends_at)}</p>
       <p>{row.location_name || "Location not specified"} · {row.court_name || "Court not assigned"}</p>
       {row.pro_name && <p>Pro: {row.pro_name}</p>}
-      <p>Booking: {row.status?.replaceAll("_", " ") || "Unknown"}{row.registration_status && ` · Registration: ${row.registration_status.replaceAll("_", " ")}`}{row.waitlist_position != null && ` · Waitlist position: ${row.waitlist_position}`}</p>
+      <p>Booking: {row.status?.replaceAll("_", " ") || "Unknown"}{row.registration_status && ` · Registration: ${(row.registration_status === "enrolled" ? "confirmed" : row.registration_status.replaceAll("_", " "))}`}{row.waitlist_position != null && ` · Waitlist position: ${row.waitlist_position}`}</p>
       <BookingPrice bookingId={row.booking_id} userId={props.userId}/>
     </article>)}
   </section>;

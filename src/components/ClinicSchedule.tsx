@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 type Session = { id: string; starts_at: string; ends_at: string };
 type Series = { id:string; name:string; clinic_type:string; location_name:string; timezone:string; recurrence_rule:string; starts_on:string; ends_on:string|null; start_time:string; duration_minutes:number; published:boolean; sessions:Session[] };
-type Props={apiBase:string;clubId:string;userId:string;role:string;onRegister:(id:string)=>void;onCreate:()=>void;canCreate:boolean};
+type Props={apiBase:string;clubId:string;userId:string;role:string;onRegister:(id:string)=>Promise<void>;onCreate:()=>void;canCreate:boolean};
 function recurrence(s:Series) {
   const parts:Record<string,string>=Object.fromEntries(s.recurrence_rule.split(';').map(p=>p.split('=')));
   const names:Record<string,string>={MO:'Monday',TU:'Tuesday',WE:'Wednesday',TH:'Thursday',FR:'Friday',SA:'Saturday',SU:'Sunday'};
@@ -53,7 +53,7 @@ export function ClinicSchedule(p:Props){
       <button type="button" onClick={()=>setCalendar(s)}>View dates ({s.sessions.length})</button>
 
     </article>)}
-    {calendar&&<ClinicDates program={calendar} clubId={p.clubId} userId={p.userId} onClose={()=>setCalendar(null)} onRegister={id=>{const name=calendar.name;setCalendar(null);if(p.role==='member')p.onRegister(id);else setRoster({id,name});}}/>}
+    {calendar&&<ClinicDates program={calendar} clubId={p.clubId} userId={p.userId} onClose={()=>setCalendar(null)} onRegister={async id=>{const name=calendar.name;if(p.role==='member')await p.onRegister(id);else setRoster({id,name});setCalendar(null);}}/>}
     {roster&&<FullRoster bookingId={roster.id} clubId={p.clubId} title={roster.name} apiBase={p.apiBase} userId={p.userId} canEdit={['owner','director','manager','front_desk'].includes(p.role)} onClose={()=>setRoster(null)} onChanged={()=>setRevision(v=>v+1)}/>}
   </section>;
 }

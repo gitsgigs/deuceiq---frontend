@@ -1,3 +1,4 @@
+import {clinicRegistrationMessage} from "./lib/clinicRegistration";
 import {ChatMessageIndicator,StaffSummaryIndicator} from "./components/ChatMessageIndicator";
 import {BookingMessageIndicator} from "./components/BookingMessageIndicator";
 import {MemberChat} from "./components/MemberChat";
@@ -2612,59 +2613,16 @@ function App() {
 
 
 
-        const memberMessage =
-
-          memberAlreadyRegistered
-
-            ? "You were already registered."
-
-            : typeof memberBody?.message === "string"
-
-              ? memberBody.message
-
-              : "You are registered for this clinic.";
-
-
-
-        const friendMessage =
-
-          typeof friendBody?.message === "string"
-
-            ? friendBody.message
-
-            : "Your friend was registered.";
-
-
-
-        setClinicDecisionMessage(
-
-          `${memberMessage} ${friendMessage}`
-
-        );
-
+        const memberMessage = memberAlreadyRegistered
+          ? "You were already registered."
+          : clinicRegistrationMessage(memberBody.status);
+        const friendMessage = clinicRegistrationMessage(friendBody.status, true);
+        setClinicDecisionMessage(`${memberMessage} ${friendMessage}`);
       } else {
-
-        setClinicDecisionMessage(
-
-          memberAlreadyRegistered
-
-            ? memberBody.detail ?? "You are already registered for this clinic."
-
-            : typeof memberBody?.message === "string"
-
-              ? memberBody.message
-
-              : memberBody?.status === "waitlisted"
-
-                ? "You have been added to the waitlist."
-
-                : "You are registered for this clinic."
-
-        );
-
+        setClinicDecisionMessage(memberAlreadyRegistered
+          ? memberBody.detail ?? "You are already registered for this clinic."
+          : clinicRegistrationMessage(memberBody.status));
       }
-
-
 
       await loadMemberClinics();
 
@@ -5572,7 +5530,7 @@ function App() {
         {section === "clinics" && currentClubId && ["owner","director","manager","front_desk","member"].includes(clubRole ?? "") && (
           <ClinicSchedule apiBase={API_BASE} key={`${session.user.id}:${currentClubId}:${dataRevision}`} clubId={currentClubId} userId={session.user.id} role={clubRole ?? ""} canCreate={Boolean(currentLocationId)}
             onCreate={() => { setCreateMessage(null); setCreateAction("clinic"); }}
-            onRegister={id => { void (async () => {
+            onRegister={async id => {
               try {
                 const auth = await supabase.auth.getSession();
                 if (auth.error || auth.data.session?.user.id !== session.user.id) throw new Error("Your session changed. Sign in again.");
@@ -5582,8 +5540,8 @@ function App() {
                 const clinic = Array.isArray(body.clinics) ? (body.clinics as MemberClinic[]).find(c => c.booking_id === id) : null;
                 if (!clinic) throw new Error("This session is no longer available. Refresh the schedule.");
                 setClinicDecisionMessage(null); setSelectedClinic(clinic);
-              } catch (e) { setCreateMessage(e instanceof Error ? e.message : "Unable to open clinic registration."); }
-            })(); }} />
+              } catch (e) { throw new Error(e instanceof Error ? e.message : "Unable to open clinic registration."); }
+            }} />
         )}
 
         {section === "notifications" && currentClubId && <NotificationsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
@@ -6455,7 +6413,7 @@ function ClinicDetailModal({
 
       ? "Join Waitlist"
 
-      : "Attend";
+      : "Confirm registration";
 
 
 
@@ -6709,7 +6667,7 @@ function ClinicDetailModal({
 
           {clinic.is_full && (
 
-            <div className="member-message">
+            <div className="member-message" role="status" aria-live="polite">
 
               This clinic is full. Continuing
 
@@ -6975,7 +6933,7 @@ function ClinicDetailModal({
 
 
 
-              <div className="member-message">
+              <div className="member-message" role="status" aria-live="polite">
 
                 DeuceIQ will check the email
 
@@ -7005,7 +6963,7 @@ function ClinicDetailModal({
 
           {message && (
 
-            <div className="member-message">
+            <div className="member-message" role="status" aria-live="polite">
 
               {message}
 

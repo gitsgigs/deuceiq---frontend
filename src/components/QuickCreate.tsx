@@ -11,11 +11,14 @@ import "./QuickCreate.css";
 
 type Choice = { id: string; name?: string; first_name?: string; last_name?: string; category?: string; active?: boolean };
 type Props = {
+  proposalId?: string;
+  lockProposal?: boolean;
+  initialProId?: string;
   initialRange?: {courtId:string;start:string;end:string}|null;
   kind: CreateKind; apiBase: string; clubId: string; role: string | null;
   userId: string; locationId: string | null; locationName: string; timeZone: string;
   date: string; courts: { id: string; name: string; location_id: string; active?: boolean }[];
-  onClose: () => void; onCreated: (kind: CreateKind, date: string, message: string) => void;
+  onClose: () => void; onCreated: (kind: CreateKind, date: string, message: string, recordId?: string) => void;
 };
 
 export default function QuickCreate(props: Props) {
@@ -37,7 +40,7 @@ export default function QuickCreate(props: Props) {
   const isClinic = types.find(t => t.id === typeId)?.category === "clinic";
   const canManageTypes = ["owner", "director", "manager"].includes(props.role ?? "");
   const [courtId, setCourtId] = useState(props.initialRange?.courtId || "");
-  const [proId, setProId] = useState("");
+  const [proId, setProId] = useState(props.initialProId||"");
   const [start, setStart] = useState(props.initialRange?.start || `${props.date}T09:00`);
   const [end, setEnd] = useState(props.initialRange?.end || `${props.date}T10:00`);
   const [recurring, setRecurring] = useState(false);
@@ -152,7 +155,7 @@ export default function QuickCreate(props: Props) {
         const max = isClinic ? Number(capacity) : null;
         if (!Number.isInteger(count) || count < (isClinic ? 0 : 1)) throw new Error("Select the players before creating this booking.");
         if (max !== null && (!Number.isInteger(max) || max < 1 || max > 6)) throw new Error("A single-court clinic can have 1–6 registration spots.");
-        payload = { club_id: props.clubId, location_id: props.locationId, court_id: courtId,
+        payload = { proposal_id:props.proposalId, club_id: props.clubId, location_id: props.locationId, court_id: courtId,
           lesson_type_id: typeId, pro_id: proId || null, starts_at: startsAt, ends_at: endsAt,
           member_ids: pickedPlayers.map(p=>p.id), pricing_mode: isClinic ? "split" : pricingMode,
           player_count: count, clinic_registration_capacity: max, status: "confirmed", source: "staff", notes: notes.trim() || null };
@@ -207,7 +210,7 @@ export default function QuickCreate(props: Props) {
         throw new CreateApiError(`Booking ${record.id} was created; ${assigned} player assignments confirmed. Some assignments were not completed or could not be confirmed. Close this form and check the booking/roster before adding the remaining players or pros. ${e instanceof Error?e.message:""}`,true);
       }
       const warnings = ["schedule_warning", "operating_hours_warning"].map(k => (result as Record<string, unknown>)[k]).filter(v => typeof v === "string");
-      if (alive.current) props.onCreated(props.kind, start.slice(0, 10), `${title === "Add Member" ? "Member added" : isClinic ? "Clinic created" : "Booking created"} successfully.${warnings.length ? " " + warnings.join(" ") : ""}`);
+      if (alive.current) props.onCreated(props.kind, start.slice(0, 10), `${title === "Add Member" ? "Member added" : isClinic ? "Clinic created" : "Booking created"} successfully.${warnings.length ? " " + warnings.join(" ") : ""}`,record.id);
     } catch (e) {
       if (alive.current) {
         setError(e instanceof Error ? e.message : "Unable to save.");
@@ -248,21 +251,21 @@ export default function QuickCreate(props: Props) {
             <p>Saved for this club with per-player pricing; prices remain unset. Booking times below stay unchanged.</p>
             <button type="button" onClick={() => void saveClinicType()}>Save clinic type</button>
           </div>}
-          <label>Court<select required value={courtId} onChange={e => setCourtId(e.target.value)}>
+          <label>Court<select disabled={props.lockProposal} required value={courtId} onChange={e => setCourtId(e.target.value)}>
             <option value="">Select a court</option>{props.courts.filter(c => c.location_id === props.locationId && c.active !== false).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select></label>
-          <label>Pro<select value={proId} onChange={e => setProId(e.target.value)}><option value="">Unassigned (if permitted by club settings)</option>
+          <label>Pro<select disabled={props.lockProposal} value={proId} onChange={e => setProId(e.target.value)}><option value="">Unassigned (if permitted by club settings)</option>
             {pros.map(p => <option key={p.id} value={p.id}>{[p.first_name, p.last_name].filter(Boolean).join(" ")}</option>)}
           </select></label>
-          {isClinic && <label><input type="checkbox" checked={recurring} onChange={e => setRecurring(e.target.checked)} /> Repeat weekly</label>}
+          {isClinic && !props.lockProposal && <label><input type="checkbox" checked={recurring} onChange={e => setRecurring(e.target.checked)} /> Repeat weekly</label>}
           {isClinic && recurring && <p>Choose the first clinic's date and time below. It repeats on that weekday at the same local time.</p>}
-          <label>Starts<input type="datetime-local" required value={start} onChange={e => setStart(e.target.value)} /></label>
-          <label>Ends<input type="datetime-local" required value={end} onChange={e => setEnd(e.target.value)} /></label>
+          <label>Starts<input type="datetime-local" disabled={props.lockProposal} required value={start} onChange={e => setStart(e.target.value)} /></label>
+          <label>Ends<input type="datetime-local" disabled={props.lockProposal} required value={end} onChange={e => setEnd(e.target.value)} /></label>
           {isClinic && recurring && <label>Repeat through (maximum one year)<input type="date" required min={start.slice(0,10)} max={anniversary(start.slice(0,10))} value={repeatUntil} onChange={e=>setRepeatUntil(e.target.value)} /></label>}
           {isClinic && recurring && <p>Dates with court or pro conflicts are skipped and listed in the result. Each clinic has its own roster.</p>}
           {savedSeries && <p>Saved series reference: {savedSeries}</p>}
           {!(isClinic && recurring) && <PlayerPicker apiBase={props.apiBase} clubId={props.clubId} userId={props.userId} selected={pickedPlayers} onChange={setPickedPlayers} max={category==="private"?1:category==="semi_private"?2:isClinic?Number(capacity):100} />}
-          {isClinic && !recurring && <div><h4>Additional clinic pros</h4>{extraPros.map((p,i)=><div key={i}><label>Pro<select required value={p.id} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,id:e.target.value}:x))}><option value="">Select a pro</option>{pros.filter(x=>x.id!==proId&&!extraPros.some((y,j)=>j!==i&&y.id===x.id)).map(x=><option key={x.id} value={x.id}>{x.first_name} {x.last_name}</option>)}</select></label><label>Starts<input required type="datetime-local" value={p.start} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,start:e.target.value}:x))}/></label><label>Ends<input required type="datetime-local" value={p.end} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,end:e.target.value}:x))}/></label><button type="button" onClick={()=>setExtraPros(v=>v.filter((_,j)=>j!==i))}>Remove pro</button></div>)}<button type="button" onClick={()=>setExtraPros(v=>[...v,{id:"",start,end}])}>Add pro</button></div>}
+          {isClinic && !recurring && !props.lockProposal && <div><h4>Additional clinic pros</h4>{extraPros.map((p,i)=><div key={i}><label>Pro<select required value={p.id} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,id:e.target.value}:x))}><option value="">Select a pro</option>{pros.filter(x=>x.id!==proId&&!extraPros.some((y,j)=>j!==i&&y.id===x.id)).map(x=><option key={x.id} value={x.id}>{x.first_name} {x.last_name}</option>)}</select></label><label>Starts<input required type="datetime-local" value={p.start} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,start:e.target.value}:x))}/></label><label>Ends<input required type="datetime-local" value={p.end} onChange={e=>setExtraPros(v=>v.map((x,j)=>j===i?{...x,end:e.target.value}:x))}/></label><button type="button" onClick={()=>setExtraPros(v=>v.filter((_,j)=>j!==i))}>Remove pro</button></div>)}<button type="button" onClick={()=>setExtraPros(v=>[...v,{id:"",start,end}])}>Add pro</button></div>}
           {isClinic ? <label>Registration capacity<input type="number" min="1" max="6" step="1" required value={capacity} onChange={e => setCapacity(e.target.value)} /></label>
             : <p>Selected players: {pickedPlayers.length}</p>}
           {(category==="rental"||category==="semi_private") && <PricingChoice value={pricingMode} onChange={setPricingMode}/>}

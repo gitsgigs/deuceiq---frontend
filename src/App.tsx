@@ -1,3 +1,4 @@
+import {ChatMessageIndicator,StaffSummaryIndicator} from "./components/ChatMessageIndicator";
 import {BookingMessageIndicator} from "./components/BookingMessageIndicator";
 import {MemberChat} from "./components/MemberChat";
 import {StaffConversations} from "./components/ConversationSummary";
@@ -5129,6 +5130,8 @@ function App() {
                       ? "Available Clinics"
 
                       : item.id === "conversations" && clubRole === "member" ? "Chat Room" : item.label}
+                  {item.id === "conversations" && ["manager","front_desk"].includes(clubRole??"") && currentClubId && <StaffSummaryIndicator key={`${session.user.id}:${currentClubId}`} clubId={currentClubId} userId={session.user.id}/>}
+                  {item.id === "conversations" && clubRole === "member" && currentClubId && <ChatMessageIndicator key={`${session.user.id}:${currentClubId}`} clubId={currentClubId} userId={session.user.id}/>}
                   {item.id === "bookings" && clubRole === "member" && currentClubId && <BookingMessageIndicator key={`${session.user.id}:${currentClubId}`} context={{apiBase:API_BASE,userId:session.user.id,clubId:currentClubId,role:clubRole}}/>}
                   {item.id === "notifications" && currentClubId && <NotificationIndicator key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
 

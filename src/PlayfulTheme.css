@@ -1,0 +1,75 @@
+/* DeuceIQ: midnight frame, bright accents, soft colorful work surfaces. */
+html:root {
+  --text:#35304c;--text-h:#201b35;--bg:#151326;--border:#ddd5f1;
+  --accent:#7653d6;--accent-bg:#eee7ff;--accent-border:#c4b2f2;
+  --play-ink:#252039;--play-muted:#5e5574;--play-paper:#faf7ff;
+  color-scheme:light;background:#151326;color:var(--play-ink);
+}
+html body {
+  color:var(--play-ink);
+  background:radial-gradient(ellipse at 90% 0%,#45306980,transparent 48%),radial-gradient(ellipse at 10% 95%,#1d576b66,transparent 45%),#151326;
+}
+html #root {border-color:#ffffff18;}
+html .sidebar {background:linear-gradient(180deg,#211b36,#151326);border-color:#ffffff20;}
+html .sidebar :is(.brand-copy h1,.user-copy strong){color:#fff7fd;}
+html .sidebar :is(.brand-copy p,.sidebar-label,.user-copy span,.nav-icon){color:#c3b8df;}
+html .sidebar .nav-item {color:#eae3fa;}
+html .sidebar .nav-item:hover {background:#3b3054;border-color:#b6a2dd;}
+html .sidebar .nav-item.active {color:#231b38;background:#d9c5ff;border-color:#ebdfff;box-shadow:inset 3px 0 0 #ffad83;}
+html .sidebar .nav-item.active .nav-icon {color:#553588;}
+html .main-content {background:transparent;}
+html .main-content > :is(header,.topbar,.page-header) :is(h1,h2,h3,p,span,label){color:#f4edff;}
+html .main-content > :is(h1,h2,h3){color:#f4edff;}
+html :is(.weather-card,.quick-actions-card,.schedule-card,.metric-card,.placeholder-card,.members-card,.full-calendar,.calendar-board,.approval-card,.login-card,.weather-setup){
+  color:var(--play-ink);background:#f5efff;border:1px solid #ddd1f0;box-shadow:0 8px 28px #07051230;
+}
+html .weather-card {background:linear-gradient(135deg,#d8f4f1,#e6f5ff);border-color:#ade0dd;}
+html .quick-actions-card {background:#ffe7da;border-color:#f3c7b0;}
+html .metric-card:nth-child(3n+1){background:#fff1c9;border-color:#e9d797;}
+html .metric-card:nth-child(3n+2){background:#d9f3e8;border-color:#acd6c6;}
+html .metric-card:nth-child(3n){background:#eadfff;border-color:#cdb8ed;}
+html :is(dialog,.quick-create,.clinic-hover-pair section,.clinic-roster-popover){color:var(--play-ink);background:var(--play-paper);border-color:#cfc0e8;color-scheme:light;}
+html dialog::backdrop {background:#100b24b3;}
+html :is(.main-content,.login-card,dialog,.quick-create,.clinic-hover-pair) :is(h1,h2,h3,h4,h5,strong,label){color:var(--play-ink);}
+html :is(.main-content,.login-card,dialog,.quick-create,.clinic-hover-pair) :is(p,small,.card-description,.empty-state,.member-main span,.booking-details span,.metric-card span,.metric-card small){color:var(--play-muted);}
+html :is(.eyebrow,.card-kicker,.quick-actions button span){color:#694491;}
+html .main-content > :is(header,.topbar,.page-header) :is(h1,h2,h3,p,span,label){color:#f4edff;}
+html :is(input,select,textarea){color:#2c2541;background:#fffdfd;border-color:#c9bfda;color-scheme:light;accent-color:#7653d6;}
+html :is(input,textarea)::placeholder {color:#756a87;}
+html button:not(.nav-item){border-color:#c9bddf;}
+html :is(.secondary-button,.quick-actions button,.calendar-board button,.clinic-hover-pair button,.calendar-edit button,.roster-dialog button,.member-availability-dialog button,.weather-setup button){background:#e7dcfa;color:#33204f;border-color:#c7b4e4;}
+html :is(.primary-button,.login-button,.quick-create .primary-button,.brand-logo,.login-logo){color:white;background:linear-gradient(135deg,#7653d6,#5c3cb1);border-color:#aa8be9;box-shadow:0 4px 14px #6243b033;}
+html :is(.primary-button,.login-button,.quick-create .primary-button):hover {background:#5635aa;}
+html :is(.secondary-button,.quick-actions button,.member-slot-list button):hover:not(:disabled){background:#d8c6f4;}
+html .login-help-row .login-link {background:#a83d65;border-color:#a83d65;color:white;}
+html .login-help-row .login-link:hover {background:#883051;color:white;}
+html .member-availability-callout {background:#ffe3b4;border-color:#efbf74;color:#342648;}
+html .member-availability-callout :is(span,strong,p){color:#342648;}
+html .member-slot-list button[aria-pressed="true"]{background:#6241b2;color:white;outline-color:#c7a8ff;}
+html .member-slot-list button[aria-pressed="true"] strong{color:white;}
+html .calendar-board :is(.calendar-column-heading,.calendar-time-label){color:#f8f3ff;background:#302642;border-color:#5d4b77;}
+html .calendar-board .calendar-column-heading small{color:#e9dcff;}
+html .calendar-lane {background:#faf6ff;border-color:#d0c2e4;}
+html .calendar-drop-slot {border-color:#e2d8ef;}
+html .calendar-drop-slot:hover {background:#eee1ff;}
+html .calendar-event {color:#2e2440;background:#f8d9ac;border-color:#d6a362;}
+html .calendar-event.is-clinic {background:#c9e9f5;border-color:#80bfd3;}
+html .calendar-event :is(strong,span,small){color:#2e2440;}
+html :is(.member-row,.live-booking-row,.roster-row){border-color:#dbd0ea;}
+html :is(.member-row,.live-booking-row):hover{background:#eee4fc;}
+html .main-content .member-meta span {color:#fff;background:#564170;border-color:#796094;}
+html .member-weather a{color:#5d3ca4;}
+html .usage-history .history-entry {background:#fbf7ff;border-color:#d6c4ec;}
+html .usage-history .history-notice {background:#fff0cb;border-color:#e6d196;}
+html .notification-column:nth-child(1){background:#ffe8df;border-color:#e5bfae;}
+html .notification-column:nth-child(2){background:#e0f1f8;border-color:#aecfdf;}
+html .notification-column:nth-child(3){background:#e9e0fb;border-color:#c6b5e0;}
+html .notification-column article {background:#fffafc;border-color:#d6c7e2;}
+html .compact-staff-clinics .staff-clinic-select {background:#e4f3f6;color:#252039;border-color:#b0d3da;}
+html .compact-staff-clinics .staff-clinic-select:hover {box-shadow:inset 0 0 0 1px #8db5c6;}
+html .quick-create footer {background:var(--play-paper);border-color:#d6c7e2;}
+html :is(.member-message.error,.login-error,.calendar-message.error,[role="alert"]){color:#a21b40;}
+html :is(button,input,select,textarea,a):focus-visible{outline:3px solid #7b4ac3;outline-offset:3px;}
+html .sidebar :is(button,a):focus-visible{outline-color:#f2c982;}
+html .notification-dot,html .accepted-notification-dot {background:#17894c;box-shadow:0 0 0 2px #ffffffc9;}
+html .history-uncharged-dot,html .clinic-red-dot {background:#ce2543;}

@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import { ClubOnboarding } from './components/ClubOnboarding'
 import './Mobile.css'
+import './PlayfulTheme.css'
 
 createRoot(document.getElementById('root')!, {
   onUncaughtError: reportReactError,

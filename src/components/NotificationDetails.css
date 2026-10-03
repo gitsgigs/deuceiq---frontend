@@ -63,3 +63,11 @@ html .compact-notifications .notification-detail-body dd {
 html .compact-notifications .notification-detail-body dd:last-child {
   margin-bottom: 0;
 }
+
+html .compact-notifications .clinic-registration-card h4{font-size:15px;line-height:1.35;margin:0 0 4px;}
+html .compact-notifications .clinic-session-time{font-weight:600;}
+html .compact-notifications .clinic-roster-count{margin-top:9px;font-weight:600;}
+.clinic-registration-participants{list-style:none;padding:0;margin:6px 0 10px;max-height:300px;overflow-y:auto;overscroll-behavior:contain;}
+.clinic-registration-participants li{display:flex;flex-direction:column;gap:2px;padding:6px 0;border-top:1px solid #80977755;}
+.clinic-registration-participants li>span{min-width:0;overflow-wrap:anywhere;}
+.clinic-registration-participants small{font-size:11px;line-height:1.4;}

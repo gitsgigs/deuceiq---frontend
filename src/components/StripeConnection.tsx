@@ -35,10 +35,10 @@ export function StripeConnection(p: Props) {
   if (p.role !== "owner") return null;
   const labels = {not_connected: "Not connected", incomplete: "Setup started", needs_information: "Complete Stripe setup", ready: "Account ready"};
   return <article className="stripe-connection">
-    <div className="stripe-connection-heading"><h4>Club payments</h4><span>{status?.mode === "live" ? "Live connection" : "Test mode"}</span></div>
+    <div className="stripe-connection-heading"><h4>Club payments</h4><span>{status ? status.mode === "live" ? "Live connection" : "Test mode" : "Mode not confirmed"}</span></div>
     <p>{status ? labels[status.state] : error ? "Connection unavailable" : "Checking Stripe connection..."}</p>
     <p>Connect your club's Stripe account. DeuceIQ's fee is $1 per successful payment and is retained after full or partial refunds. Stripe charges its fees separately to your club.</p>
-    <p className="stripe-connection-note">{status?.mode === "live" ? status.collection_enabled ? "Live collection is enabled. Members must authorize their card before staff can charge it." : "Live collection has not been activated yet. Complete the payment deployment steps first." : "Test mode: card setup and payments use test data only. No real money moves."}</p>
+    <p className="stripe-connection-note">{!status ? "Payment mode could not be confirmed until the connection check succeeds." : status.mode === "live" ? status.collection_enabled ? "Live collection is enabled. Members must authorize their card before staff can charge it." : "Live collection has not been activated yet. Complete the payment deployment steps first." : "Test mode: card setup and payments use test data only. No real money moves."}</p>
     {status?.state === "not_connected" && <label className="stripe-fee-consent"><input type="checkbox" checked={accepted} disabled={busy} onChange={e => setAccepted(e.target.checked)} />I acknowledge the DeuceIQ fee policy for this club.</label>}
     <div className="stripe-connection-actions">
       {status && status.state !== "ready" && <button disabled={busy || (status.state === "not_connected" && !accepted)} onClick={async () => {

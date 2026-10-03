@@ -71,7 +71,7 @@ export function PlayerDetails({ player, apiBase, userId, canReadMembers, onClose
   </dialog>;
 }
 type RosterData = { booking_id: string; booking_status?: string; participants: RosterPlayer[]; capacity?: number; enrolled_count?: number; waitlist_count?: number };
-type RosterProps = { bookingId: string; clubId: string; title: string; apiBase: string; userId: string; canEdit: boolean; onClose: () => void; onChanged: () => void };
+type RosterProps = { compact?: boolean; bookingId: string; clubId: string; title: string; apiBase: string; userId: string; canEdit: boolean; onClose: () => void; onChanged: () => void };
 export function FullRoster(props: RosterProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const alive = useRef(true), pending = useRef(false);
@@ -148,8 +148,8 @@ export function FullRoster(props: RosterProps) {
     } catch (e) { if (alive.current) { setMessage(sent ? "The change could not be confirmed. Refresh the roster before retrying." : e instanceof Error ? e.message : "Unable to update roster."); if (sent) setUncertain(true); } }
     finally { pending.current = false; if (alive.current) setBusy(false); }
   }
-  return <dialog ref={dialog} className="roster-dialog" onCancel={e => { e.preventDefault(); if (!pending.current) props.onClose(); }}>
-    <header><h3>{props.title} — entire roster</h3><button disabled={busy} onClick={props.onClose} aria-label="Close roster">×</button></header>
+  return <dialog ref={dialog} className={`roster-dialog${props.compact?" compact-clinic-roster":""}`} onCancel={e => { e.preventDefault(); if (!pending.current) props.onClose(); }}>
+    <header><h3>{props.title} — roster</h3><button disabled={busy} onClick={props.onClose} aria-label="Close roster">×</button></header>
     <p>Enrolled: {roster?.enrolled_count ?? "—"} / {roster?.capacity ?? "—"} · Waitlisted: {roster?.waitlist_count ?? "—"}</p>
     {message && <p role="status">{message}</p>}<button disabled={busy || loading} onClick={() => { setMessage(null); setRemoving(null); void load(); }}>Refresh roster</button>
     {loading && <p role="status">Loading roster…</p>}
@@ -158,14 +158,14 @@ export function FullRoster(props: RosterProps) {
       {editable && p.status !== "cancelled" && <button disabled={busy || loading || uncertain} onClick={() => setRemoving(p)}>Remove</button>}
     </div>)}{roster?.participants.length === 0 && <p>No registrations yet.</p>}</div>
     {removing && <div className="roster-confirm" role="group" aria-label="Confirm removal"><p>Remove {removing.display_name}? This cancels their enrollment and promotes a waitlisted player when applicable.</p><button disabled={busy || uncertain} onClick={() => void mutate("remove")}>Confirm removal</button><button disabled={busy} onClick={() => setRemoving(null)}>Keep player</button></div>}
-    {editable && <form onSubmit={e => { e.preventDefault(); void mutate("add"); }}><h4>Add player</h4><fieldset disabled={busy || loading || uncertain}>
+    {editable && <details className="roster-add-participant" open={props.compact?undefined:true}><summary>Add participant</summary><form onSubmit={e => { e.preventDefault(); void mutate("add"); }}><h4>Add player</h4><fieldset disabled={busy || loading || uncertain}>
       <label>Participant type<select value={mode} onChange={e => setMode(e.target.value as "member" | "guest")}><option value="member">Member</option><option value="guest">Guest</option></select></label>
       {mode === "member" ? <><label>Find member<input value={search} onChange={e => setSearch(e.target.value)} placeholder="Enter at least two letters" /></label>{searching && <p>Searching…</p>}{searchError && <p role="alert">{searchError}</p>}
         <label>Select member<select required value={memberId} onChange={e => setMemberId(e.target.value)}><option value="">Select a member</option>{members.filter(m => m.active !== false).map(m => <option key={m.id} value={m.id}>{displayPlayerName(m)}{m.email ? ` (${m.email})` : ""}</option>)}</select></label><p>Search results show up to 50 members. Refine the name if needed.</p></>
         : <><label>First name<input required value={first} onChange={e => setFirst(e.target.value)} /></label><label>Last name<input required value={last} onChange={e => setLast(e.target.value)} /></label><label>Email (optional)<input type="email" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Phone (optional)<input type="tel" value={phone} onChange={e => setPhone(e.target.value)} /></label></>}
       {(mode==="guest"||memberId)&&<PricePreview clubId={props.clubId} userId={props.userId} bookingId={props.bookingId} memberIds={mode==="member"?[memberId]:[]} guestCount={mode==="guest"?1:0}/>}
       <button disabled={searching && mode === "member"}>Add player</button><p>When the clinic is full, the backend applies its waitlist rules.</p>
-    </fieldset></form>}
+    </fieldset></form></details>}
     <footer><button disabled={busy} onClick={props.onClose}>Close roster</button></footer>
     {selected && <PlayerDetails player={selected} apiBase={props.apiBase} userId={props.userId} canReadMembers={props.canEdit} onClose={() => setSelected(null)} />}
   </dialog>;

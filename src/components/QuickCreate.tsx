@@ -1,3 +1,4 @@
+import {clinicWeekdays,weekdayForDate,validateClinicSlots,type ClinicTimeSlot} from "../lib/recurringClinicSlots";
 import { PricePreview, PricingChoice } from "./PricePreview";
 import type { PricingMode } from "./PricePreview";
 import { PlayerPicker } from "./PlayerPicker";
@@ -44,6 +45,8 @@ export default function QuickCreate(props: Props) {
   const [start, setStart] = useState(props.initialRange?.start || `${props.date}T09:00`);
   const [end, setEnd] = useState(props.initialRange?.end || `${props.date}T10:00`);
   const [recurring, setRecurring] = useState(false);
+  const [repeatDays,setRepeatDays]=useState<string[]>([weekdayForDate(props.initialRange?.start.slice(0,10)||props.date)]);
+  const [extraSlots,setExtraSlots]=useState<ClinicTimeSlot[]>([]);
   const [repeatUntil, setRepeatUntil] = useState("");
   const [savedSeries, setSavedSeries] = useState<string | null>(null);
   const anniversary = (day: string) => { const [y,m,d] = day.split("-").map(Number); return `${y+1}-${String(m).padStart(2,"0")}-${String(Math.min(d,new Date(Date.UTC(y+1,m,0)).getUTCDate())).padStart(2,"0")}`; };
@@ -172,26 +175,38 @@ export default function QuickCreate(props: Props) {
         const firstDate = start.slice(0,10);
         if (!repeatUntil || repeatUntil < firstDate || repeatUntil > anniversary(firstDate)) throw new Error("Choose an end date within one year of the first clinic.");
         if (start.slice(0,10) !== end.slice(0,10)) throw new Error("Recurring clinics must start and end on the same local day.");
-        if (Date.parse(String(payload.starts_at)) <= Date.now()) throw new Error("Choose a future first clinic.");
         const minutes = (Date.parse(String(payload.ends_at)) - Date.parse(String(payload.starts_at))) / 60000;
         if (!Number.isInteger(minutes) || minutes <= 0) throw new Error("Choose a valid whole-minute duration.");
-        const weekday = ["SU","MO","TU","WE","TH","FR","SA"][new Date(`${firstDate}T12:00:00Z`).getUTCDay()];
-        const result = await createRequest(props.apiBase, data.session.access_token, "/booking-series", { payload: {
-          club_id: props.clubId, name: types.find(t => t.id === typeId)?.name || "Recurring clinic", lesson_type_id: typeId,
-          pro_id: proId || null, default_location_id: props.locationId, default_court_id: courtId,
-          recurrence_rule: `FREQ=WEEKLY;BYDAY=${weekday}`, timezone: props.timeZone,
-          starts_on: firstDate, ends_on: repeatUntil, start_time: start.slice(11), duration_minutes: minutes,
-          clinic_registration_capacity: Number(capacity), notes: notes.trim() || null, active: true
-        }});
-        const series = !Array.isArray(result) ? result.booking_series as {id?: string} : null;
-        if (!series?.id) throw new CreateApiError("Series creation could not be confirmed. Check with staff before retrying.", true);
-        if (alive.current) setSavedSeries(series.id);
-        try {
-          const generated = await createRequest(props.apiBase, data.session.access_token, `/booking-series/${series.id}/generate`, {payload: {}});
-          if (Array.isArray(generated) || typeof generated.created_count !== "number" || !Array.isArray(generated.conflicts) || !Array.isArray(generated.skipped)) throw new Error("Incomplete generation response.");
-          const conflicts = (generated.conflicts as {date:string;reason:string}[]).map(c => `${c.date}: ${c.reason.replaceAll("_"," ")}`).join("; ");
-          if (alive.current) props.onCreated(props.kind, firstDate, `Recurring clinic: ${generated.created_count} created, ${generated.skipped.length} already generated, ${generated.conflicts.length} not created.${conflicts ? " Unavailable dates: " + conflicts : ""}`);
-        } catch { throw new CreateApiError(`Series ${series.id} was saved, but occurrence generation could not be confirmed. Some dates may have been created. Check saved clinics before attempting another series.`, true); }
+        const slots=validateClinicSlots([{days:repeatDays,start:start.slice(11,16),end:end.slice(11,16)},...extraSlots],firstDate,repeatUntil);
+        // Validate every slot before saving the first schedule.
+        for(const slot of slots){
+          let next=firstDate;
+          while(!slot.days.includes(weekdayForDate(next))){const date=new Date(`${next}T12:00:00Z`);date.setUTCDate(date.getUTCDate()+1);next=date.toISOString().slice(0,10);}
+          if(Date.parse(locationTimeToIso(`${next}T${slot.start}`,props.timeZone))<=Date.now())throw new Error('Every time slot must have a future first session.');
+        }
+        const saved:string[]=[];let created=0,skipped=0;const conflicts:string[]=[];
+        try{
+          for(const slot of slots){
+            const result=await createRequest(props.apiBase,data.session.access_token,"/booking-series",{payload:{
+              club_id:props.clubId,name:types.find(t=>t.id===typeId)?.name||"Recurring clinic",lesson_type_id:typeId,
+              pro_id:proId||null,default_location_id:props.locationId,default_court_id:courtId,
+              recurrence_rule:`FREQ=WEEKLY;BYDAY=${slot.days.join(',')}`,timezone:props.timeZone,
+              starts_on:firstDate,ends_on:repeatUntil,start_time:slot.start,duration_minutes:slot.duration_minutes,
+              clinic_registration_capacity:Number(capacity),notes:notes.trim()||null,active:true
+            }});
+            const series=!Array.isArray(result)?result.booking_series as {id?:string}:null;
+            if(!series?.id)throw new CreateApiError('Schedule save could not be confirmed.',true);
+            saved.push(series.id);if(alive.current)setSavedSeries(saved.join(', '));
+            const generated=await createRequest(props.apiBase,data.session.access_token,`/booking-series/${series.id}/generate`,{payload:{}});
+            if(Array.isArray(generated)||typeof generated.created_count!=="number"||!Array.isArray(generated.conflicts)||!Array.isArray(generated.skipped))throw new CreateApiError('Session generation could not be confirmed.',true);
+            created+=generated.created_count;skipped+=generated.skipped.length;
+            conflicts.push(...(generated.conflicts as {date:string;reason:string}[]).map(c=>`${c.date} ${slot.start}: ${c.reason.replaceAll('_',' ')}`));
+          }
+        }catch(e){
+          if(saved.length||e instanceof CreateApiError&&e.uncertain)throw new CreateApiError(`${saved.length} time-slot schedules saved; ${created} sessions confirmed. Creation stopped. Check saved clinics before retrying to avoid duplicates. ${e instanceof Error?e.message:''}`,true);
+          throw e;
+        }
+        if(alive.current)props.onCreated(props.kind,firstDate,`Recurring clinic: ${slots.length} weekly time slot(s), ${created} sessions created, ${skipped} already generated, ${conflicts.length} not created.${conflicts.length?' Unavailable dates: '+conflicts.join('; '):''}`);
         return;
       }
       const result = await createRequest(props.apiBase, data.session.access_token,
@@ -258,10 +273,15 @@ export default function QuickCreate(props: Props) {
             {pros.map(p => <option key={p.id} value={p.id}>{[p.first_name, p.last_name].filter(Boolean).join(" ")}</option>)}
           </select></label>
           {isClinic && !props.lockProposal && <label><input type="checkbox" checked={recurring} onChange={e => setRecurring(e.target.checked)} /> Repeat weekly</label>}
-          {isClinic && recurring && <p>Choose the first clinic's date and time below. It repeats on that weekday at the same local time.</p>}
+          {isClinic && recurring && <p>Choose the date range, weekdays and local times. Add another time slot for a different time or set of days. All slots use the selected court, pro and capacity.</p>}
           <label>Starts<input type="datetime-local" disabled={props.lockProposal} required value={start} onChange={e => setStart(e.target.value)} /></label>
           <label>Ends<input type="datetime-local" disabled={props.lockProposal} required value={end} onChange={e => setEnd(e.target.value)} /></label>
           {isClinic && recurring && <label>Repeat through (maximum one year)<input type="date" required min={start.slice(0,10)} max={anniversary(start.slice(0,10))} value={repeatUntil} onChange={e=>setRepeatUntil(e.target.value)} /></label>}
+          {isClinic&&recurring&&<section className="recurring-clinic-slots" aria-label="Weekly clinic time slots">
+            <fieldset><legend>Days for the first time slot</legend><div className="recurring-day-choices">{clinicWeekdays.map(d=><label key={d.code}><input type="checkbox" checked={repeatDays.includes(d.code)} onChange={e=>setRepeatDays(v=>e.target.checked?[...v,d.code]:v.filter(x=>x!==d.code))}/>{d.label}</label>)}</div></fieldset>
+            {extraSlots.map((slot,i)=><fieldset key={i}><legend>Time slot {i+2}</legend><div className="recurring-day-choices">{clinicWeekdays.map(d=><label key={d.code}><input type="checkbox" checked={slot.days.includes(d.code)} onChange={e=>setExtraSlots(v=>v.map((s,j)=>j===i?{...s,days:e.target.checked?[...s.days,d.code]:s.days.filter(x=>x!==d.code)}:s))}/>{d.label}</label>)}</div><div className="recurring-time-pair"><label>From<input type="time" required value={slot.start} onChange={e=>setExtraSlots(v=>v.map((s,j)=>j===i?{...s,start:e.target.value}:s))}/></label><label>To<input type="time" required value={slot.end} onChange={e=>setExtraSlots(v=>v.map((s,j)=>j===i?{...s,end:e.target.value}:s))}/></label></div><button type="button" onClick={()=>setExtraSlots(v=>v.filter((_,j)=>j!==i))}>Remove slot</button></fieldset>)}
+            <button type="button" disabled={extraSlots.length>=5} onClick={()=>setExtraSlots(v=>[...v,{days:[...repeatDays],start:'',end:''}])}>Add time slot</button>
+          </section>}
           {isClinic && recurring && <p>Dates with court or pro conflicts are skipped and listed in the result. Each clinic has its own roster.</p>}
           {savedSeries && <p>Saved series reference: {savedSeries}</p>}
           {!(isClinic && recurring) && <PlayerPicker apiBase={props.apiBase} clubId={props.clubId} userId={props.userId} selected={pickedPlayers} onChange={setPickedPlayers} max={category==="private"?1:category==="semi_private"?2:isClinic?Number(capacity):100} />}

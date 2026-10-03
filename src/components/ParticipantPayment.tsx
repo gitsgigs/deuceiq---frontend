@@ -6,16 +6,16 @@ type Payment={id:string;amount_cents:number;paid_cents:number;refunded_cents:num
 type Info={url?:string|null;mode:string;name:string;eligible:boolean;card:string|null;payment:Payment|null;refunds:{id:string;status:string;amount_cents:number}[]};
 const dollars=(v:number)=>(v/100).toLocaleString('en-US',{style:'currency',currency:'USD'});
 const cents=(v:string)=>/^\d+(\.\d{1,2})?$/.test(v)?Math.round(Number(v)*100):NaN;
-export function ParticipantPayment({context:p,bookingId,recordId,name}:{context:Context;bookingId:string;recordId:string;name:string}){
+export function ParticipantPayment({context:p,bookingId,recordId,name,onPaymentChange}:{context:Context;bookingId:string;recordId:string;name:string;onPaymentChange?:()=>void}){
  const [open,setOpen]=useState(false),[data,setData]=useState<Info|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[amount,setAmount]=useState(''),[reason,setReason]=useState(''),[action,setAction]=useState('card'),[review,setReview]=useState(false),[url,setUrl]=useState(''),[revision,setRevision]=useState(0);
  const dialog=useRef<HTMLDialogElement>(null),pending=useRef(false);
  const base=`/payments/bookings/${bookingId}/participants/${recordId}`;
  const query=`?club_id=${encodeURIComponent(p.clubId)}`;
- useEffect(()=>{if(!open)return;dialog.current?.showModal();const c=new AbortController();setError('');setData(null);void staffApi<Info>(p,base+query,'GET',undefined,c.signal).then(d=>{if(!c.signal.aborted){setData(d);setAction(d.card?"card":"checkout");if(d.url){const u=new URL(d.url);if(u.protocol==="https:"&&u.hostname==="checkout.stripe.com")setUrl(d.url);}}}).catch(e=>{if(!c.signal.aborted)setError(e.message);});return()=>c.abort();},[open,revision,p.clubId,p.userId,base,query]);
+ useEffect(()=>{if(!open)return;dialog.current?.showModal();const c=new AbortController();setError('');setData(null);void staffApi<Info>(p,base+query,'GET',undefined,c.signal).then(d=>{if(!c.signal.aborted){setData(d);onPaymentChange?.();setAction(d.card?"card":"checkout");if(d.url){const u=new URL(d.url);if(u.protocol==="https:"&&u.hostname==="checkout.stripe.com")setUrl(d.url);}}}).catch(e=>{if(!c.signal.aborted)setError(e.message);});return()=>c.abort();},[open,revision,p.clubId,p.userId,base,query]);
  async function submit(){if(pending.current||!data)return;pending.current=true;setBusy(true);setError('');try{
   const refund=!!data.payment;
   const result=await staffApi<{payment:Payment;url?:string;refund_status?:string}>(p,refund?`/payments/records/${data.payment!.id}/refund${query}`:`${base}/charge${query}`,'POST',refund?{amount_cents:cents(amount),baseline_cents:data.payment!.refunded_cents,reason}:{amount_cents:cents(amount),reason,channel:action});
-  setData({...data,payment:result.payment});setReview(false);setAmount('');setReason('');
+  setData({...data,payment:result.payment});onPaymentChange?.();setReview(false);setAmount('');setReason('');
   if(result.url){const u=new URL(result.url);if(u.protocol==='https:'&&u.hostname==='checkout.stripe.com')setUrl(result.url);}
   if(result.refund_status)setError(`Refund status: ${result.refund_status}. DeuceIQ retains its $1 fee.`);
  }catch(e){setError(e instanceof Error?e.message:'Payment result uncertain. Refresh before retrying.');setReview(false);}finally{pending.current=false;setBusy(false);}}

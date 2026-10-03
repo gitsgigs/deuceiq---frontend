@@ -46,3 +46,5 @@ html .usage-history .history-pages {gap:10px;margin-top:12px;}
 
 html .usage-history .history-entry p {font-size:12px;line-height:1.35;margin:3px 0;}
 html .usage-history .history-entry :is(li,dt,dd,summary) {font-size:12px;line-height:1.35;}
+
+html .usage-history .history-uncharged-dot {display:inline-block;width:9px;height:9px;border-radius:50%;background:#c92b2b;box-shadow:0 0 0 1px #fff;vertical-align:middle;margin-left:4px;}

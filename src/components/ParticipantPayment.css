@@ -1,0 +1,10 @@
+.participant-payment-button{display:block;margin:5px 0 8px;font-size:12px;padding:5px 9px;border-radius:10px;}
+html .participant-payment-dialog{position:fixed;inset:0;margin:auto;width:min(520px,calc(100vw - 24px));max-height:85dvh;overflow:auto;box-sizing:border-box;padding:18px;border:1px solid white;border-radius:16px;background:#e5efdb;color:#17291c;font-size:14px;text-align:left;}
+.participant-payment-dialog::backdrop{background:#0007;}
+.participant-payment-dialog label{display:block;margin:10px 0;font-weight:600;}
+.participant-payment-dialog input,.participant-payment-dialog select{display:block;width:100%;box-sizing:border-box;font-size:16px;padding:9px;margin-top:4px;}
+.participant-payment-dialog button,.member-payment-settings button{border-radius:10px;margin:5px 6px 5px 0;min-height:40px;padding:7px 10px;}
+.payment-review{padding:10px;border:1px solid #507250;border-radius:10px;}
+.member-payment-settings{padding:12px;border:1px solid white;border-radius:12px;margin:10px 0;text-align:left;font-size:14px;}
+.member-payment-settings label{display:block;line-height:1.5;margin:8px 0;}
+.member-payment-settings input{width:auto;display:inline;}

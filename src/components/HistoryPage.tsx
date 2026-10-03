@@ -1,3 +1,4 @@
+import {ParticipantPayment} from "./ParticipantPayment";
 import {bookingDateRange} from "../lib/bookingDateRange";
 import {useEffect,useState} from "react";
 import {supabase} from "../lib/supabase";
@@ -11,7 +12,7 @@ type Entry={booking_id:string;starts_at:string;ends_at:string;timezone:string;st
 type Page={key:string;rows:Entry[];more:boolean;next:Cursor|null;error?:string};
 const roles=["front_desk","manager","owner","director"];
 
-export function HistoryPage(p:{clubId:string;userId:string;role:string;locations:{id:string;name:string}[]}) {
+export function HistoryPage(p:{apiBase:string;clubId:string;userId:string;role:string;locations:{id:string;name:string}[]}) {
  const [location,setLocation]=useState(""),[from,setFrom]=useState(""),[through,setThrough]=useState("");
  const [search,setSearch]=useState(""),[query,setQuery]=useState(""),[upcoming,setUpcoming]=useState(false),[refresh,setRefresh]=useState(0);
  const [paging,setPaging]=useState<{key:string;index:number;cursors:(Cursor|null)[]}>({key:"",index:0,cursors:[null]});
@@ -46,7 +47,7 @@ export function HistoryPage(p:{clubId:string;userId:string;role:string;locations
  function courtName(c:Court){return [c.court_number!=null?`#${c.court_number}`:"",c.name].filter(Boolean).join(" · ")||"Court";}
  return <section className="members-card usage-history">
    <div className="card-heading"><div><p className="card-kicker">CLUB RECORDS</p><h3>History</h3><p>Saved court bookings across every activity. Each entry includes all courts assigned to that booking.</p></div><button type="button" onClick={()=>setRefresh(v=>v+1)}>Refresh</button></div>
-   <div className="history-notice"><strong>Payments will appear here when connected.</strong><p>Booking charges are saved prices, not proof of payment. Amount paid, balance due, payer, and receipts remain unknown until your payment system is connected.</p></div>
+   <div className="history-notice"><strong>Participant payments</strong><p>Open a participant’s Charge / Refund controls to view verified payment status and receipts. Saved booking prices are not proof of payment. Review each participant’s amount before charging.</p></div>
    <div className="history-filters">
      <label>Location<select value={location} onChange={e=>setLocation(e.target.value)}><option value="">All locations</option>{p.locations.map(l=><option key={l.id} value={l.id}>{l.name}</option>)}</select></label>
      <label>From<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
@@ -62,9 +63,9 @@ export function HistoryPage(p:{clubId:string;userId:string;role:string;locations
      <header><div><h4>{row.activity_name||"Unspecified activity"}</h4><p>{bookingDateRange(row.starts_at,row.ends_at,row.timezone)}</p></div><span className="history-status">{row.status.replaceAll("_"," ")}</span></header>
      <div className="history-entry-grid">
        <div><h5>Location / courts</h5><p>{row.location_name||"Location unavailable"}</p>{row.courts.length?<ul>{row.courts.map(c=><li key={c.id}>{courtName(c)}{c.surface?` (${c.surface})`:""}</li>)}</ul>:<p>No court assigned</p>}<p>Type: {row.category?.replaceAll("_"," ")||"Not recorded"}</p></div>
-       <div><h5>Players</h5><details><summary>{row.participants.length} saved participant record{row.participants.length===1?"":"s"}</summary>{row.participants.length?<ul>{row.participants.map(m=><li key={m.record_id}><strong>{m.name||"Name unavailable"}</strong> — {m.kind}, {m.status.replaceAll("_"," ")}{m.waitlist_position!=null?` (waitlist ${m.waitlist_position})`:""}</li>)}</ul>:<p>No participants recorded</p>}</details>
+       <div><h5>Players</h5><details><summary>{row.participants.length} saved participant record{row.participants.length===1?"":"s"}</summary>{row.participants.length?<ul>{row.participants.map(m=><li key={m.record_id}><strong>{m.name||"Name unavailable"}</strong> — {m.kind}, {m.status.replaceAll("_"," ")}{m.waitlist_position!=null?` (waitlist ${m.waitlist_position})`:""}<ParticipantPayment context={p} bookingId={row.booking_id} recordId={m.record_id} name={m.name}/></li>)}</ul>:<p>No participants recorded</p>}</details>
        <h5>Assigned pros</h5>{row.pros.length?<ul>{row.pros.map((pro,i)=><li key={`${pro.pro_id}:${i}`}><strong>{pro.name}</strong><br/>{bookingDateRange(pro.starts_at,pro.ends_at,row.timezone)}<br/>{row.courts.find(c=>c.id===pro.court_id)?courtName(row.courts.find(c=>c.id===pro.court_id)!):"Court not recorded"}</li>)}</ul>:<p>No pro assigned</p>}</div>
-       <div><h5>Charges / payments</h5><dl><dt>Saved booking charge</dt><dd>{money(row,row.booking_charge)}</dd><dt>Amount paid</dt><dd>Not connected</dd><dt>Amount due / balance</dt><dd>Not yet verified</dd><dt>Paid by</dt><dd>Not connected</dd><dt>Receipt</dt><dd>Not connected</dd></dl>{row.booking_charge===null&&<p>No price snapshot is stored for this earlier booking.</p>}</div>
+       <div><h5>Charges / payments</h5><dl><dt>Saved booking charge</dt><dd>{money(row,row.booking_charge)}</dd><dt>Payments / refunds</dt><dd>See each participant</dd><dt>Balance</dt><dd>Review participant charges</dd><dt>Receipts</dt><dd>Open Charge / Refund</dd></dl>{row.booking_charge===null&&<p>No price snapshot is stored for this earlier booking.</p>}</div>
      </div><small>Booking reference: {row.booking_id}</small>
    </article>)}
    <div className="history-pages"><button type="button" disabled={index===0||loading||invalid} onClick={()=>setPaging({key:filterKey,cursors,index:index-1})}>Previous</button><span>Page {index+1}</span><button type="button" disabled={loading||invalid||!current?.more||!current?.next} onClick={()=>{if(current?.next)setPaging({key:filterKey,index:index+1,cursors:[...cursors.slice(0,index+1),current.next]});}}>Next</button></div>

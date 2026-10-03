@@ -5552,7 +5552,7 @@ function App() {
         {section === "notifications" && currentClubId && <NotificationsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""}/>}
 
         {section === "conversations" && currentClubId && <><MemberChat key={`chat:${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole??""}/><StaffConversations key={`summaries:${session.user.id}:${currentClubId}`} context={{apiBase:API_BASE,userId:session.user.id,clubId:currentClubId,role:clubRole??""}}/></>}
-        {section === "history" && currentClubId && ["owner","director","manager","front_desk"].includes(clubRole ?? "") && <HistoryPage key={`${session.user.id}:${currentClubId}`} clubId={currentClubId} userId={session.user.id} role={clubRole ?? ""} locations={locations}/>}
+        {section === "history" && currentClubId && ["owner","director","manager","front_desk"].includes(clubRole ?? "") && <HistoryPage apiBase={API_BASE} key={`${session.user.id}:${currentClubId}`} clubId={currentClubId} userId={session.user.id} role={clubRole ?? ""} locations={locations}/>}
 
         {section === "members" && (
 
@@ -5685,6 +5685,7 @@ function App() {
 
 
 
+        {clubRole === "member" && new URLSearchParams(window.location.search).has("payment_setup") && <div role="status" className="members-card"><p>Returned from Stripe. Open My Bookings to verify your card or payment status.</p><button onClick={() => setSection("bookings")}>Open My Bookings</button></div>}
         {clubRole === "owner" && new URLSearchParams(window.location.search).has("stripe_connect") && <div role="status" className="members-card"><p>Returned from Stripe. Open your club's payment settings to check its connection or continue setup.</p><button onClick={() => {setSection("settings"); const url = new URL(window.location.href); url.searchParams.delete("stripe_connect"); url.searchParams.delete("stripe_club"); window.history.replaceState({}, "", url);}}>Open payment settings</button></div>}
         {section === "settings" && <SettingsPage key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId ?? ""} role={clubRole ?? ""} onChanged={() => setDataRevision(v=>v+1)} />}
 

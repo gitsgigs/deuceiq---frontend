@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase";
 import "./StripeConnection.css";
 
 type Props = { apiBase: string; userId: string; clubId: string; role: string };
-type Status = { mode: "test"; state: "not_connected" | "incomplete" | "needs_information" | "ready"; collection_enabled: false };
+type Status = { mode: "test" | "live"; state: "not_connected" | "incomplete" | "needs_information" | "ready"; collection_enabled: boolean };
 async function call(p: Props, body?: {accept_fee_policy: boolean}, signal?: AbortSignal) {
   const {data, error} = await supabase.auth.getSession();
   if (error || data.session?.user.id !== p.userId) throw new Error("Your session changed. Sign in again.");
@@ -15,7 +15,7 @@ async function call(p: Props, body?: {accept_fee_policy: boolean}, signal?: Abor
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(response.status === 404 ? "Stripe connection setup is not deployed yet." : typeof result.detail === "string" ? result.detail : "Stripe is temporarily unavailable.");
-  if (result.mode !== "test") throw new Error("Test-mode response could not be confirmed.");
+  if (!["test","live"].includes(result.mode)) throw new Error("Payment mode could not be confirmed.");
   return result;
 }
 
@@ -27,18 +27,18 @@ export function StripeConnection(p: Props) {
     if (p.role !== "owner" || !p.clubId) return;
     const controller = new AbortController(); setStatus(null); setError(""); setAccepted(false);
     call(p, undefined, controller.signal).then(result => {
-      if (!["not_connected", "incomplete", "needs_information", "ready"].includes(result.state) || result.collection_enabled !== false) throw new Error("Stripe status could not be confirmed.");
+      if (!["not_connected", "incomplete", "needs_information", "ready"].includes(result.state) || typeof result.collection_enabled !== "boolean") throw new Error("Stripe status could not be confirmed.");
       if (!controller.signal.aborted) setStatus(result);
     }).catch(e => {if (!controller.signal.aborted) setError(e.message);});
     return () => controller.abort();
   }, [p.apiBase, p.userId, p.clubId, p.role, refresh]);
   if (p.role !== "owner") return null;
-  const labels = {not_connected: "Not connected", incomplete: "Setup started", needs_information: "Complete Stripe setup", ready: "Test account ready"};
+  const labels = {not_connected: "Not connected", incomplete: "Setup started", needs_information: "Complete Stripe setup", ready: "Account ready"};
   return <article className="stripe-connection">
-    <div className="stripe-connection-heading"><h4>Club payments</h4><span>Test mode</span></div>
+    <div className="stripe-connection-heading"><h4>Club payments</h4><span>{status?.mode === "live" ? "Live connection" : "Test mode"}</span></div>
     <p>{status ? labels[status.state] : error ? "Connection unavailable" : "Checking Stripe connection..."}</p>
     <p>Connect your club's Stripe account. DeuceIQ's fee is $1 per successful payment and is retained after full or partial refunds. Stripe charges its fees separately to your club.</p>
-    <p className="stripe-connection-note">This update connects a test account only. Card saving and payment collection are not enabled yet.</p>
+    <p className="stripe-connection-note">{status?.mode === "live" ? status.collection_enabled ? "Live collection is enabled. Members must authorize their card before staff can charge it." : "Live collection has not been activated yet. Complete the payment deployment steps first." : "Test mode: card setup and payments use test data only. No real money moves."}</p>
     {status?.state === "not_connected" && <label className="stripe-fee-consent"><input type="checkbox" checked={accepted} disabled={busy} onChange={e => setAccepted(e.target.checked)} />I acknowledge the DeuceIQ fee policy for this club.</label>}
     <div className="stripe-connection-actions">
       {status && status.state !== "ready" && <button disabled={busy || (status.state === "not_connected" && !accepted)} onClick={async () => {

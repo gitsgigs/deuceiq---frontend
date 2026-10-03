@@ -1,3 +1,4 @@
+import {MemberPaymentSettings} from "./ParticipantPayment";
 import "./MemberBookings.css";
 import {bookingDateRange} from "../lib/bookingDateRange";
 import {MyRequestConversations} from "./RequestConversation";
@@ -39,7 +40,7 @@ export function MemberBookingsPage(props: { apiBase: string; userId: string; clu
   const pageCount=Math.max(1,Math.ceil(displayRows.length/5));
   const currentPage=Math.min(page,pageCount-1);
   const visibleRows=displayRows.slice(currentPage*5,currentPage*5+5);
-  return <section className="members-card compact-my-bookings">
+  return <section className="members-card compact-my-bookings"><MemberPaymentSettings {...props} role="member"/>
     <div className="card-heading"><div><p className="card-kicker">MY ACCOUNT</p><h3>My Bookings</h3><p className="card-description">Your rentals, lessons and clinic registrations across this club's locations.</p></div><button className="secondary-button" onClick={() => setRefresh(v => v + 1)} disabled={loading}>Refresh</button></div>
     <MyRequestConversations key={`${props.userId}:${props.clubId}`} context={{...props,role:"member"}}/>
     <div role="group" aria-label="Booking view"><button type="button" aria-pressed={!history} onClick={()=>{setHistory(false);setPage(0);}}>Upcoming bookings</button><button type="button" aria-pressed={history} onClick={()=>{setHistory(true);setPage(0);}}>Previous 20 bookings</button></div>

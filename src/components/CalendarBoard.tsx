@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "../lib/supabase";
 import { createRequest, locationTimeToIso } from "../lib/createActions";
@@ -25,6 +26,8 @@ type Assignment = { id: string; pro_id: string; court_id: string; starts_at: str
 type Detail = { roster?: Roster; assignments?: Assignment[]; pros?: Pro[]; error?: string };
 type PendingRequest = { id:string; club_id:string; court_id:string; starts_at:string; ends_at:string; member?:Pro; lesson_type?:Lesson; request_type?:string };
 type Props = {
+  fullView?: boolean; onFullViewChange?: (full: boolean) => void;
+  fullViewControls?: ReactNode; onCreate?: () => void;
   clubId:string; locationId:string; onOpenRequests:()=>void;
   bookings: Booking[]; courts: Court[]; loading: boolean; error: string | null;
   calendarDate: string; setCalendarDate: (date: string) => void; timeZone: string;
@@ -44,6 +47,21 @@ const person = (p?: Pro | null) => p ? [p.first_name, p.last_name].filter(Boolea
 const mutable = (b: Booking) => !["cancelled", "canceled", "completed"].includes((b.status ?? "").toLowerCase());
 
 export default function CalendarBoard(props: Props) {
+  const fullViewToggle = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!props.fullView) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented || document.querySelector('dialog[open], .clinic-hover-pair')) return;
+      props.onFullViewChange?.(false);
+      fullViewToggle.current?.focus();
+    };
+    const resize = () => { if (window.innerWidth <= 760) props.onFullViewChange?.(false); };
+    window.addEventListener("keydown", escape);
+    window.addEventListener("resize", resize);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", escape); window.removeEventListener("resize", resize); };
+  }, [props.fullView, props.onFullViewChange]);
   const [requests,setRequests] = useState<PendingRequest[]>([]);
   const [requestError,setRequestError] = useState("");
   useEffect(() => {
@@ -265,18 +283,21 @@ export default function CalendarBoard(props: Props) {
   }
   const hoverBooking = props.bookings.find(b => b.id === hover?.id);
   const info = hoverBooking ? details[hoverBooking.id] : undefined;
-  return <section className="calendar-board">
+  return <section className={props.fullView ? "calendar-board is-full-view" : "calendar-board"} aria-label={props.fullView ? "Calendar full view" : "Daily calendar"}>
     <header className="calendar-toolbar"><h3>Daily Calendar</h3><button disabled={busy} onClick={() => changeDate(-1)} aria-label="Previous day">←</button>
       <input aria-label="Calendar date" type="date" value={props.calendarDate} disabled={busy} onChange={e => { if (e.target.value) props.setCalendarDate(e.target.value); }} />
       <button disabled={busy} onClick={() => changeDate(1)} aria-label="Next day">→</button><button disabled={busy} onClick={() => { setEditing(null); setUncertain(false); setMessage(null); props.onUpdated(); }}>Refresh</button>
-      <span>{props.timeZone}</span></header>
+      <span>{props.timeZone}</span>
+      {props.fullView && <div className="calendar-full-controls">{props.fullViewControls}{props.canEdit && props.onCreate && <button type="button" disabled={busy || props.loading || !props.locationId} onClick={props.onCreate}>+ Create Booking</button>}</div>}
+      {props.onFullViewChange && <button ref={fullViewToggle} type="button" className="calendar-full-view-toggle" aria-pressed={Boolean(props.fullView)} onClick={() => props.onFullViewChange?.(!props.fullView)}>{props.fullView ? "Exit full view" : "Full view"}</button>}
+    </header>
     {props.canEdit && <p>Drag over empty time slots to create a booking. Drag an existing block to move it, or select it to edit. The backend checks availability before saving.</p>}
     {props.canEdit && <p>Pending requests appear in amber and do not hold a court. Updated every 15 seconds. Red dotted lines mark cancelled bookings.</p>}
     {requestError && <p role="alert">{requestError}</p>}
     {message && <p role="status" className="calendar-message">{message}</p>}
     {busy && <p role="status">Checking availability and saving…</p>}
     {props.error && <p role="alert">{props.error}</p>}
-    <p>On a phone, swipe across the grid to see every court and tap a booking to open it. Use Create to add a booking.</p>{!props.loading&&!props.courts.length&&<p>No courts are available for this location.</p>}<p role="status" style={{minHeight:"1.4em",margin:"4px 0"}}>{props.loading?"Updating calendar…":""}</p><div className="calendar-board-scroll" aria-busy={props.loading}><div className="calendar-board-columns" style={{ width: `${76 + props.courts.length * 170}px`, gridTemplateColumns: `76px repeat(${props.courts.length}, 170px)` }}>
+    <p>On a phone, swipe across the grid to see every court and tap a booking to open it. Use Create to add a booking.</p>{!props.loading&&!props.courts.length&&<p>No courts are available for this location.</p>}<p role="status" style={{minHeight:"1.4em",margin:"4px 0"}}>{props.loading?"Updating calendar…":""}</p><div className="calendar-board-scroll" aria-busy={props.loading}><div className="calendar-board-columns" style={{ width: props.fullView ? "100%" : `${76 + props.courts.length * 170}px`, minWidth: `${76 + props.courts.length * 170}px`, gridTemplateColumns: props.fullView ? `76px repeat(${props.courts.length}, minmax(170px, 1fr))` : `76px repeat(${props.courts.length}, 170px)` }}>
       <div><div className="calendar-column-heading">Time</div>{slots.map(m => <div className="calendar-time-label" key={m}>{String(Math.floor(m / 60)).padStart(2, "0")}:{String(m % 60).padStart(2, "0")}</div>)}</div>
       {props.courts.map(c => <div key={c.id}><div className="calendar-column-heading" title={c.name}>{c.court_number != null ? `Court ${c.court_number}` : c.name}{c.court_number != null && c.name && <small>{c.name}</small>}</div><div className="calendar-lane" style={{ height: slots.length * 48 }}
         onPointerDown={e=>{if(e.pointerType==="touch")return;if(e.button!==0||!props.canEdit||busy||uncertain||props.loading||props.error||!(e.target as HTMLElement).classList.contains("calendar-drop-slot"))return;const m=min+Math.max(0,Math.min(slots.length-1,Math.floor((e.clientY-e.currentTarget.getBoundingClientRect().top)/48)))*30;selection.current={court:c.id,anchor:m,end:m};setRange(selection.current);e.currentTarget.setPointerCapture(e.pointerId);e.preventDefault();setHover(null);}}

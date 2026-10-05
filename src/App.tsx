@@ -562,6 +562,8 @@ function App() {
   const [dataRevision, setDataRevision] = useState(0);
 
   const [section, setSection] = useState<Section>("overview");
+  const [calendarFullView, setCalendarFullView] = useState(false);
+  useEffect(() => { if (section !== "calendar") setCalendarFullView(false); }, [section]);
 
   const [session, setSession] = useState<Session | null>(null);
 
@@ -5004,7 +5006,7 @@ function App() {
 
   return (
 
-    <div className="app">
+    <div className={section === "calendar" && calendarFullView ? "app calendar-full-view" : "app"}>
 
       <aside className="sidebar">
 
@@ -5489,6 +5491,12 @@ function App() {
         {section === "calendar" && (
 
           <CalendarBoard
+            fullView={calendarFullView} onFullViewChange={setCalendarFullView}
+            onCreate={() => { setCreateRange(null); setCreateMessage(null); setCreateAction("booking"); }}
+            fullViewControls={<>
+              {clubMemberships.length > 1 && <label>Club<select aria-label="Calendar club" value={currentClubId ?? ""} onChange={e => handleClubChange(e.target.value)}>{clubMemberships.map(m => <option key={m.club_id} value={m.club_id}>{m.club_id}</option>)}</select></label>}
+              {locations.length > 0 && <label>Location<select aria-label="Calendar location" value={currentLocationId ?? ""} onChange={e => handleLocationChange(e.target.value)}>{locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></label>}
+            </>}
 
             bookings={bookingsScope===`${session.user.id}:${currentClubId}:${currentLocationId}:${calendarDate}`?bookings:[]}
 

@@ -58,3 +58,22 @@ html .calendar-edit .calendar-delete-booking { margin-right:auto; background:#87
 html .calendar-board .calendar-cancelled-marker { position:absolute; left:1px; width:0; border-left:3px dotted #bc2525; z-index:4; pointer-events:none; }
 html .calendar-board .calendar-pending-request { position:absolute; right:3px; width:46%; z-index:3; box-sizing:border-box; display:flex; flex-direction:column; gap:3px; padding:4px; border:2px dashed #9c6400; background:#fff0c7; color:#382600; font-size:11px; min-height:0; overflow:auto; text-align:left; }
 html .calendar-board .calendar-pending-request > * { color:#382600; flex-shrink:0; font-size:inherit; }
+
+
+/* Desktop isolation keeps the original calendar and its dialogs mounted. */
+.calendar-full-controls { display:flex; flex-wrap:wrap; align-items:end; gap:10px; }
+.calendar-full-controls label { display:flex; align-items:center; gap:6px; font-size:13px; }
+.calendar-full-controls select { max-width:220px; font:inherit; border-radius:8px; padding:8px; }
+@media (min-width:761px) {
+  html .calendar-full-view .sidebar, html .calendar-full-view .main-content > .topbar { display:none; }
+  html .calendar-full-view .main-content { width:100%; padding:0; }
+  html .calendar-board.is-full-view { position:fixed; inset:12px; z-index:100; box-sizing:border-box; display:flex; flex-direction:column; width:auto; max-width:none; min-width:0; margin:0; padding:16px; background:#211b31; border-radius:16px; }
+  html .calendar-board.is-full-view .calendar-toolbar { flex-shrink:0; margin-bottom:6px; }
+  html .calendar-board.is-full-view > p { flex-shrink:0; margin:4px 0; }
+  html .calendar-board.is-full-view .calendar-board-scroll { flex:1; min-height:0; max-height:none; width:100%; margin-top:8px; overflow:auto; }
+  html .calendar-board.is-full-view .calendar-board-columns { min-width:0; }
+  html .calendar-board.is-full-view .calendar-column-heading { position:sticky; top:0; z-index:5; }
+  html .calendar-board.is-full-view .calendar-board-columns > div:first-child { position:sticky; left:0; z-index:6; background:#18291d; }
+}
+@media (max-width:760px) { .calendar-full-view-toggle { display:none; } }
+html.native-app .calendar-full-view-toggle { display:none; }

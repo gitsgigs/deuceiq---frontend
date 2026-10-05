@@ -1600,3 +1600,8 @@ html .login-help-row .login-link:hover {
   background: #8e303c;
   color: #ffffff;
 }
+
+label.keep-signed-in{display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer}label.keep-signed-in input{width:17px;height:17px;margin:0;accent-color:#7853a3;flex-shrink:0}
+
+/* Sidebar icon alignment */
+.nav-item .nav-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 22px;line-height:1;align-self:center}.nav-item .nav-icon svg{display:block;flex-shrink:0}

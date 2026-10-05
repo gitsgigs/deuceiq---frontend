@@ -73,3 +73,17 @@ html :is(button,input,select,textarea,a):focus-visible{outline:3px solid #7b4ac3
 html .sidebar :is(button,a):focus-visible{outline-color:#f2c982;}
 html .notification-dot,html .accepted-notification-dot {background:#17894c;box-shadow:0 0 0 2px #ffffffc9;}
 html .history-uncharged-dot,html .clinic-red-dot {background:#ce2543;}
+
+/* Topbar dropdowns match the adjacent lavender controls. */
+html .topbar-actions select {
+  appearance:none;-webkit-appearance:none;
+  min-height:42px;max-width:100%;padding:10px 38px 10px 16px;
+  border:1px solid #c7b4e4;border-radius:9px;
+  font:inherit;line-height:1.4;color:#33204f;background-color:#e7dcfa;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%235e4084' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;
+  cursor:pointer;transition:background-color .15s ease;
+}
+html .topbar-actions select:hover{background-color:#d8c6f4;}
+html .topbar-actions select:focus-visible{outline:2px solid #bda1f2;outline-offset:3px;}
+html .topbar-actions select option{background:#f5efff;color:#33204f;}

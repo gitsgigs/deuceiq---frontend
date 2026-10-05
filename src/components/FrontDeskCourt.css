@@ -1,0 +1,12 @@
+.front-desk-court{display:none}
+@media(min-width:1100px) and (hover:hover) and (pointer:fine){
+  .front-desk-court{display:block;margin:24px auto 0;width:100%;max-width:580px}
+  .front-desk-court svg{display:block;width:100%;height:auto;max-height:290px}
+  .front-desk-ball{transform:translate(68px, 70px);animation:front-desk-rally 12s ease-in-out infinite}
+  .front-desk-court.is-paused .front-desk-ball{animation-play-state:paused}
+  .front-desk-court-caption{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;font-size:11px;color:#66517c}
+  html .front-desk-court-caption button{padding:5px 9px;font-size:10px;border:1px solid #9c86b4;border-radius:20px;background:#f6effc;color:#503663}
+}
+@keyframes front-desk-rally{0%,100%{transform:translate(62px, 70px)}25%{transform:translate(313px,148px)}50%{transform:translate(72px,160px)}75%{transform:translate(310px,66px)}}
+@media(prefers-reduced-motion:reduce){.front-desk-ball{animation:none;transform:translate(72px,110px)}.front-desk-court-caption button{display:none}}
+

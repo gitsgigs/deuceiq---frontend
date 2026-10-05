@@ -1,3 +1,5 @@
+import { LoginPassword } from "./components/LoginPassword";
+import { FrontDeskCourt } from "./components/FrontDeskCourt";
 import {clinicRegistrationMessage} from "./lib/clinicRegistration";
 import {ChatMessageIndicator,StaffSummaryIndicator} from "./components/ChatMessageIndicator";
 import {BookingMessageIndicator} from "./components/BookingMessageIndicator";
@@ -15,7 +17,7 @@ import { ClinicSchedule } from "./components/ClinicSchedule";
 
 import { SettingsPage, ProsPage } from "./components/ClubPages";
 import { MemberBookingsPage } from "./components/MemberBookings";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import type { Session } from "@supabase/supabase-js";
 
@@ -33,15 +35,20 @@ import QuickCreate from "./components/QuickCreate";
 
 import type { CreateKind } from "./lib/createActions";
 
-import { supabase } from "./lib/supabase";
+import { supabase, setKeepSignedIn as configureLoginPersistence } from "./lib/supabase";
 
 
+
+const OpportunityCenter = lazy(() => import("./components/OpportunityCenter"));
+
+const MorningBrief = lazy(() => import("./components/MorningBrief"));
 
 type ClubUser = { club_id: string; user_id: string; role: string; active: boolean };
 
 type Club = { id: string; name: string };
 
 type Location = {
+  opening_time?: string | null;
 
   id: string;
 
@@ -471,7 +478,7 @@ const navigationItems: {
 
   { id: "approvals", label: "Invitations", icon: "\u2709", roles: ["owner", "director", "manager", "front_desk"] },
 
-  { id: "opportunity", label: "Opportunity Center", icon: "\u2726", roles: ["owner", "director", "manager"] },
+  { id: "opportunity", label: "Opportunity Center", icon: "\u2726", roles: ["owner", "director", "manager", "front_desk"] },
 
   { id: "inventory", label: "Inventory", icon: "\u25a4", roles: ["owner", "director", "manager"] },
 
@@ -585,6 +592,7 @@ function App() {
   const [email, setEmail] = useState("");
 
   const [password, setPassword] = useState("");
+  const [keepSignedIn, setKeepSignedIn] = useState(false);
 
   const [passwordRecoveryMode, setPasswordRecoveryMode] = useState(false);
 
@@ -3605,13 +3613,13 @@ function App() {
 
       const { error } =
 
-        await supabase.auth.signInWithPassword({
+        (configureLoginPersistence(keepSignedIn), await supabase.auth.signInWithPassword({
 
           email: email.trim(),
 
           password,
 
-        });
+        }));
 
 
 
@@ -3663,13 +3671,13 @@ function App() {
 
     const { error } =
 
-      await supabase.auth.signInWithPassword({
+      (configureLoginPersistence(keepSignedIn), await supabase.auth.signInWithPassword({
 
         email: email.trim(),
 
         password,
 
-      });
+      }));
 
 
 
@@ -4170,9 +4178,7 @@ function App() {
 
 
 
-              <input
-
-                type="password"
+              <LoginPassword
 
                 value={password}
 
@@ -4195,6 +4201,8 @@ function App() {
             </label>
 
 
+
+            <label className="keep-signed-in"><input type="checkbox" checked={keepSignedIn} onChange={event => setKeepSignedIn(event.target.checked)} /><span>Keep me signed in</span></label>
 
             {inviteMessage && (
 
@@ -4654,9 +4662,7 @@ function App() {
 
               <span>Password</span>
 
-              <input
-
-                type="password"
+              <LoginPassword
 
                 value={password}
 
@@ -4675,6 +4681,8 @@ function App() {
           )}
 
 
+
+          {!resetMode && (<label className="keep-signed-in"><input type="checkbox" checked={keepSignedIn} onChange={event => setKeepSignedIn(event.target.checked)} /><span>Keep me signed in</span></label>)}
 
           {!resetMode && (
 
@@ -5067,7 +5075,9 @@ function App() {
 
                 <span className="nav-icon">
 
-                  {item.icon}
+                  {item.id === "conversations" && clubRole === "front_desk" ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9H13a8.5 8.5 0 0 1 8 8v.5Z" /></svg>
+                  ) : item.icon}
 
                 </span>
 
@@ -5406,6 +5416,9 @@ function App() {
         )}
 
         {section === "overview" && clubRole === "owner" && currentClubId && <OwnerChecklist key={`${session.user.id}:${currentClubId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole} onNavigate={destination => setSection(destination)} />}
+        {section === "overview" && currentClubId && ["owner", "director", "manager", "front_desk"].includes(clubRole ?? "") && (
+          <Suspense fallback={<p>Loading morning brief…</p>}><MorningBrief key={`${session.user.id}:${currentClubId}:${currentLocationId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""} locationId={currentLocationId} onOpen={() => setSection("opportunity")} /></Suspense>
+        )}
         {section === "overview" && (
 
           <OverviewPage
@@ -5631,19 +5644,9 @@ function App() {
 
 
 
-        {section === "opportunity" && (
-
-          <PlaceholderPage
-
-            title="Opportunity Center"
-
-            description="Surface openings, member opportunities and intelligent recommendations."
-
-          />
-
+        {section === "opportunity" && currentClubId && ["owner", "director", "manager", "front_desk"].includes(clubRole ?? "") && (
+          <Suspense fallback={<p>Loading opportunities…</p>}><OpportunityCenter key={`${session.user.id}:${currentClubId}:${currentLocationId}`} apiBase={API_BASE} userId={session.user.id} clubId={currentClubId} role={clubRole ?? ""} locationId={currentLocationId} /></Suspense>
         )}
-
-
 
         {section === "inventory" && canManageInventory && (
 
@@ -5991,6 +5994,8 @@ function OverviewPage({
 
 
 
+
+          {clubRole === "front_desk" && <FrontDeskCourt />}
 
         </div>}
 
@@ -9824,56 +9829,6 @@ function MetricCard({
       <small>{detail}</small>
 
     </div>
-
-  );
-
-}
-
-
-
-function PlaceholderPage({
-
-  title,
-
-  description,
-
-}: {
-
-  title: string;
-
-  description: string;
-
-}) {
-
-  return (
-
-    <section className="placeholder-card">
-
-      <p className="card-kicker">
-
-        DEUCEIQ
-
-      </p>
-
-
-
-      <h3>{title}</h3>
-
-      <p>{description}</p>
-
-
-
-      <div className="placeholder-orbit">
-
-        <span></span>
-
-        <span></span>
-
-        <span></span>
-
-      </div>
-
-    </section>
 
   );
 

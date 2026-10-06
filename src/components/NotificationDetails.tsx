@@ -1,3 +1,4 @@
+import {CourtOverlapDetails} from "./CourtOverlapDetails";
 import {RequestConversation} from "./RequestConversation";
 import {useEffect,useRef,useState} from "react";
 import {staffApi,type Context} from "../lib/staffApi";
@@ -18,7 +19,7 @@ export function NotificationDetails({context:p,notice:n}:{context:Context;notice
  return <div ref={ref} className="notification-detail-body">
  {n.notification_type==="booking_request_message"&&typeof n.payload?.request_id==="string"?<RequestConversation context={p} requestId={n.payload.request_id}/>:clinic?<><dl><dt>Who registered</dt><dd>{value("registrant_name")}</dd><dt>Participant</dt><dd>{value("participant_type")}</dd><dt>Registration status at notification</dt><dd>{value("registration_status")}</dd></dl>
  {opened&&!result&&<p role="status">Loading clinic details…</p>}
- {result?.error?<p role="alert">{result.error} <button onClick={()=>setRetry(v=>v+1)}>Retry details</button></p>:b?<><p className="notification-created">Current clinic schedule · {b.location?.timezone||"your device's time zone"}</p><dl><dt>Activity</dt><dd>{b.lesson_type?.name||"Clinic"}</dd><dt>Starts</dt><dd>{when(b.starts_at)}</dd><dt>Ends</dt><dd>{when(b.ends_at)}</dd><dt>Location</dt><dd>{b.location?.name||"Not recorded"}</dd><dt>Court</dt><dd>{b.court?.name|| (b.court?.court_number?`Court ${b.court.court_number}`:"Not assigned")}</dd><dt>Pro</dt><dd>{[b.pro?.first_name,b.pro?.last_name].filter(Boolean).join(" ")||"Not assigned"}</dd><dt>Booking status</dt><dd>{b.status}</dd></dl></>:result&&<p>The linked clinic is no longer available, or its details were not recorded.</p>}</>:<p>{n.message}</p>}
+ {result?.error?<p role="alert">{result.error} <button onClick={()=>setRetry(v=>v+1)}>Retry details</button></p>:b?<><p className="notification-created">Current clinic schedule · {b.location?.timezone||"your device's time zone"}</p><dl><dt>Activity</dt><dd>{b.lesson_type?.name||"Clinic"}</dd><dt>Starts</dt><dd>{when(b.starts_at)}</dd><dt>Ends</dt><dd>{when(b.ends_at)}</dd><dt>Location</dt><dd>{b.location?.name||"Not recorded"}</dd><dt>Court</dt><dd>{b.court?.name|| (b.court?.court_number?`Court ${b.court.court_number}`:"Not assigned")}</dd><dt>Pro</dt><dd>{[b.pro?.first_name,b.pro?.last_name].filter(Boolean).join(" ")||"Not assigned"}</dd><dt>Booking status</dt><dd>{b.status}</dd></dl></>:result&&<p>The linked clinic is no longer available, or its details were not recorded.</p>}</>:n.notification_type==="court_overlap"?<CourtOverlapDetails payload={n.payload}/>:<p>{n.message}</p>}
  <p className="notification-created">Notification created: {new Date(n.created_at).toLocaleString()}</p>
  </div>;
 }

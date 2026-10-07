@@ -17,7 +17,7 @@ export function StaffClinics(p: Props) {
         if(error||data.session?.user.id!==p.userId)throw new Error("Your session changed. Sign in again.");
         const all: Clinic[]=[];const now=new Date().toISOString();
         for(let offset=0;;offset+=250){
-          let query=supabase.from("bookings").select("id,club_id,starts_at,ends_at,status,location_id,lesson_type:lesson_types!inner(name,category),court:courts(name)").eq("club_id",p.clubId).eq("lesson_type.category","clinic").order("starts_at").order("id").range(offset,offset+249);
+          let query=supabase.from("bookings").select("id,club_id,starts_at,ends_at,status,location_id,lesson_type:lesson_types!inner(name,category),court:courts!bookings_court_id_fkey(name)").eq("club_id",p.clubId).eq("lesson_type.category","clinic").order("starts_at").order("id").range(offset,offset+249);
           if(!history)query=query.gte("ends_at",now).neq("status","cancelled").neq("status","canceled");
           if(location)query=query.eq("location_id",location);
           const result=await query.abortSignal(controller.signal);

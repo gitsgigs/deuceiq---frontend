@@ -6,6 +6,10 @@ import App from './App.tsx'
 import { ClubOnboarding } from './components/ClubOnboarding'
 import './Mobile.css'
 import './PlayfulTheme.css'
+import './NativeApp.css'
+import { initializeMobile } from './lib/mobile'
+
+void initializeMobile().catch(() => console.error('Native lifecycle initialization failed'));
 
 createRoot(document.getElementById('root')!, {
   onUncaughtError: reportReactError,

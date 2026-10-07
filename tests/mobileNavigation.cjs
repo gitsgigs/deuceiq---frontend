@@ -1,0 +1,17 @@
+const fs = require('fs'), vm = require('vm'), assert = require('assert/strict');
+const ts = require('../node_modules/typescript');
+const source = fs.readFileSync(require('path').join(__dirname, '../src/lib/mobileNavigation.ts'), 'utf8');
+const exportsObject = {};
+vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: exportsObject });
+const { mobileTabs, mobileLabel } = exportsObject;
+const items = ids => ids.map(id => ({ id, label: id, icon: '*' }));
+assert.deepEqual(Array.from(mobileTabs(items(['overview','bookings','clinics','conversations']), 'member'), x => x.id), ['overview','bookings','clinics','conversations']);
+assert.deepEqual(Array.from(mobileTabs(items(['overview','calendar','bookings','history','opportunity']), 'front_desk'), x => x.id), ['overview','calendar','bookings']);
+assert.deepEqual(Array.from(mobileTabs(items(['overview','calendar','notifications','pros']), 'pro'), x => x.id), ['overview','calendar']);
+assert.equal(mobileTabs([], null).length, 0);
+assert.equal(mobileTabs(items(['notifications']), 'guest').length, 0);
+assert.ok(!mobileTabs(items(['overview','bookings','clinics']), 'member').some(x => ['calendar','opportunity','members'].includes(x.id)));
+assert.equal(mobileLabel('bookings', 'Booking requests', 'member'), 'My bookings');
+assert.equal(mobileLabel('bookings', 'Booking requests', 'front_desk'), 'Requests');
+assert.equal(mobileLabel('history', 'History', 'front_desk'), 'History');
+console.log('9 mobile navigation permission and label checks passed');

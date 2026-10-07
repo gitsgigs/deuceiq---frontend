@@ -7,9 +7,20 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:mobile": "vite --port 5174",
+    "build:mobile": "tsc -b && vite build --mode mobile",
+    "test:mobile": "node tests/mobileNavigation.cjs",
+    "mobile:sync": "npm run build:mobile && cap sync",
+    "mobile:android": "cap open android",
+    "mobile:ios": "cap open ios"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@sentry/react": "^11.1.0",
     "@stripe/stripe-js": "^10.0.0",
     "@supabase/supabase-js": "^2.112.4",
@@ -17,6 +28,7 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.4.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

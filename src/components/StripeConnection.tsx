@@ -1,3 +1,4 @@
+import { openStripePage } from "../lib/mobile";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import "./StripeConnection.css";
@@ -23,6 +24,7 @@ export function StripeConnection(p: Props) {
   const [status, setStatus] = useState<Status | null>(null), [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0), [busy, setBusy] = useState(false), [accepted, setAccepted] = useState(false);
   const pending = useRef(false);
+  useEffect(() => { const refreshStatus = () => setRefresh(value => value + 1); window.addEventListener("focus", refreshStatus); return () => window.removeEventListener("focus", refreshStatus); }, []);
   useEffect(() => {
     if (p.role !== "owner" || !p.clubId) return;
     const controller = new AbortController(); setStatus(null); setError(""); setAccepted(false);
@@ -47,7 +49,7 @@ export function StripeConnection(p: Props) {
           const result = await call(p, {accept_fee_policy: accepted});
           const url = new URL(result.url);
           if (url.protocol !== "https:" || !["connect.stripe.com", "accounts.stripe.com"].includes(url.hostname) || url.username || url.password) throw new Error("Stripe address could not be verified.");
-          window.location.assign(url.href);
+          await openStripePage(url.href);
         } catch (e) {setError(e instanceof Error ? e.message : "Stripe could not be opened.");}
         finally {pending.current = false; setBusy(false);}
       }}>{busy ? "Opening Stripe..." : status.state === "not_connected" ? "Connect Stripe" : "Continue Stripe setup"}</button>}

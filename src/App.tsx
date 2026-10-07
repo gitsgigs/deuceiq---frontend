@@ -1,3 +1,5 @@
+import { MobileNavigation } from "./components/MobileNavigation";
+import { publicWebOrigin } from "./lib/mobile";
 import { LoginPassword } from "./components/LoginPassword";
 import { FrontDeskCourt } from "./components/FrontDeskCourt";
 import {clinicRegistrationMessage} from "./lib/clinicRegistration";
@@ -3441,7 +3443,7 @@ function App() {
 
             redirectTo:
 
-              `${window.location.origin}/reset-password`,
+              `${publicWebOrigin()}/reset-password`,
 
           }
 
@@ -4254,7 +4256,7 @@ function App() {
 
                       redirectTo:
 
-                        `${window.location.origin}/invite?token=${encodeURIComponent(
+                        `${publicWebOrigin()}/invite?token=${encodeURIComponent(
 
                           inviteToken ?? ""
 
@@ -5846,6 +5848,7 @@ function App() {
         )}
 
       </main>
+      <MobileNavigation key={`${session.user.id}:${currentClubId}`} items={visibleNavigationItems} selected={section} role={clubRole} email={session.user.email} onNavigate={setSection} onSignOut={handleLogout} />
 
     </div>
 

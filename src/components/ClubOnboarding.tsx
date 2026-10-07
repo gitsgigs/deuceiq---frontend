@@ -1,3 +1,4 @@
+import { publicWebOrigin } from "../lib/mobile";
 import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
@@ -43,7 +44,7 @@ function SignIn({onMessage,setupToken}:{onMessage:(s:string)=>void;setupToken?:s
   <label>Email<input required type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label>
   <label>Password<input required type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)}/></label>
   <button disabled={busy}>Sign in</button>
-  {setupToken&&<button type="button" disabled={busy||!email.trim()} onClick={async()=>{setBusy(true);try{const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:`${window.location.origin}/owner-setup?setup=${encodeURIComponent(setupToken)}`});if(error)throw error;onMessage("If eligible, a password setup email has been sent. Open its link to continue.");}catch(e){onMessage(errorText(e));}finally{setBusy(false);}}}>Set or reset password</button>}
+  {setupToken&&<button type="button" disabled={busy||!email.trim()} onClick={async()=>{setBusy(true);try{const {error}=await supabase.auth.resetPasswordForEmail(email.trim(),{redirectTo:`${publicWebOrigin()}/owner-setup?setup=${encodeURIComponent(setupToken)}`});if(error)throw error;onMessage("If eligible, a password setup email has been sent. Open its link to continue.");}catch(e){onMessage(errorText(e));}finally{setBusy(false);}}}>Set or reset password</button>}
  </form>;
 }
 
